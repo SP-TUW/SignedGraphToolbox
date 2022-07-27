@@ -1,42 +1,48 @@
-from scipy.sparse import csr_matrix, eye, issparse
+from ._node_learner import NodeLearner
+
+
+from scipy.sparse import csr_matrix, eye, issparse, spdiags
 from scipy.sparse.linalg import spsolve, eigsh
 import numpy as np
 from numpy import sqrt
 from src.tools.projections import unitarization
 from src.metric_learning import seeded_kmeans
-from sklearn import KMeans
+from sklearn.cluster import KMeans
 
 
 def _get_objective_matrices_and_eig_selector(graph, objective, num_clusters):
+    weight_matrix = graph.weights
 
+    force_unsigned = True
     if objective == "RC":
         d = abs(weight_matrix).sum(axis=1).T
         d_nz = np.where(d == 0, 1, d)
-        deg_matrix = diags(data=d_nz, diags=0, m=graph.N, n=graph.N)
+        deg_matrix = spdiags(data=d_nz, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = deg_matrix - weight_matrix
-        normalization = np.ones((graph.N, 1))
+        normalization = np.ones((graph.num_nodes, 1))
         eig_sel = 'SM'
     elif objective == "NC":
         d = abs(weight_matrix).sum(axis=1).T
         d_nz = np.where(d == 0, 1, d)
-        deg_matrix = diags(data=d_nz, diags=0, m=graph.N, n=graph.N)
+        deg_matrix = spdiags(data=d_nz, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = deg_matrix - weight_matrix
         dd = sqrt(d)
         dd = np.where(dd == 0, 1, dd)
-        inv_sqrt_deg_matrix = diags(data=1 / dd, diags=0, m=graph.N, n=graph.N)
+        inv_sqrt_deg_matrix = spdiags(data=1 / dd, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = inv_sqrt_deg_matrix.dot(a.dot(inv_sqrt_deg_matrix))
 
         normalization = np.array(1 / dd).T
         eig_sel = 'SM'
     elif objective == "BNC":
         inv_sqrt_sig_deg = 1 / sqrt(abs(weight_matrix).sum(axis=1)).T
-        inv_sqrt_sig_deg_matrix = diags(data=inv_sqrt_sig_deg, diags=0, m=graph.N, n=graph.N)
+        inv_sqrt_sig_deg_matrix = spdiags(data=inv_sqrt_sig_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         neg_weight_matrix = -weight_matrix.minimum(0)
         neg_deg = neg_weight_matrix.sum(axis=1).T
-        neg_deg_matrix = diags(data=neg_deg, diags=0, m=graph.N, n=graph.N)
+        neg_deg_matrix = spdiags(data=neg_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = inv_sqrt_sig_deg_matrix.dot((neg_deg_matrix + weight_matrix)).dot(inv_sqrt_sig_deg_matrix)
-        normalization = np.ones((graph.N, 1))
+        normalization = np.ones((graph.num_nodes, 1))
         eig_sel = 'LM'
+        force_unsigned = False
 
     return a, eig_sel, normalization, force_unsigned
 
@@ -140,11 +146,10 @@ def _sequential_multiclass(obj_matrix, B, c, random_init,
         return v
 
 
-class spectral_learning:
+class SpectralLearning(NodeLearner):
 
-    def __init__(self, n_classes=2, objective='RC', multiclass_method='joint',
-                random_init=False, verbose=0, eps=1e-5, t_max=1e5, save_intermediate=False):
-        self.n_classes = n_classes
+    def __init__(self, num_classes=2, verbose=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
+        self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
         self.random_init=random_init
@@ -153,15 +158,18 @@ class spectral_learning:
         self.t_max = t_max
         self.save_intermediate = save_intermediate
         self.intermediate_results = None
+        super().__init__(num_classes=num_classes, verbose=verbose, save_intermediate=save_intermediate)
 
-    def estimate_labels(self, graph, labels=None):
-        num_nodes = graph.N
+    def estimate_labels(self, graph, labels=None, guess=None):
+        num_nodes = graph.num_nodes
+
+        if self.num_classes is None:
+            self.num_classes = graph.num_classes
 
         a, eig_sel, normalization, force_unsigned = _get_objective_matrices_and_eig_selector(graph, self.objective,
-                                                                                               self.num_clusters,
-                                                                                               self.force_unsigned)
+                                                                                               self.num_classes)
         if labels is None:
-            n_eigs = self.n_classes
+            n_eigs = self.num_classes
 
             v0 = np.random.rand(min(a.shape))
 
@@ -169,7 +177,9 @@ class spectral_learning:
 
             x = vec * normalization
 
-            l_est = kmeans.predict(x, num_clusters=self.n_classes, **kwargs)
+            kmeans = KMeans(n_clusters=self.num_classes, init='k-means++',
+                               max_iter=self.t_max, n_init=10, random_state=0)
+            l_est = kmeans.fit_predict(x)
 
             l_est = l_est.astype(int)
 
@@ -180,7 +190,7 @@ class spectral_learning:
                 eig_upper_bound = max(abs(a).sum(1))
                 obj_matrix = eig_upper_bound * eye(a.shape[0]) - a
 
-            B, c = _labels_to_lin_const(labels, num_nodes=num_nodes, num_clusters=self.n_classes)
+            B, c = _labels_to_lin_const(labels, num_nodes=num_nodes, num_clusters=self.num_classes)
 
             if self.multiclass_method == 'joint':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=False,
@@ -199,4 +209,4 @@ class spectral_learning:
             l_est = seeded_kmeans.cluster(x, num_clusters=self.num_clusters, labels=labels)
             self.l_est = l_est.astype(int)
 
-        returl self.l_est
+        return self.l_est
