@@ -141,7 +141,7 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
             c_ = c[:, k][:, None]
 
         r_val = _joint_multiclass(obj_matrix, B_, c_, random_init=random_init, return_intermediate=return_intermediate,
-                                 eps=eps, t_max=t_max)
+                                 eps=eps, t_max=t_max, use_qr=False)
 
         if return_intermediate:
             v[:, k] = r_val[0]
@@ -157,19 +157,19 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
 
 class SpectralLearning(NodeLearner):
 
-    def __init__(self, num_classes=2, verbose=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
+    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
         self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
         self.random_init=random_init
-        self.verbose = verbose
+        self.verbosity = verbosity
         self.eps=eps
         self.t_max = t_max
         self.save_intermediate = save_intermediate
         self.intermediate_results = None
         self.kmeans = None
         self.embedding = None
-        super().__init__(num_classes=num_classes, verbose=verbose, save_intermediate=save_intermediate)
+        super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
         num_nodes = graph.num_nodes
@@ -214,7 +214,7 @@ class SpectralLearning(NodeLearner):
                                           return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
 
             if self.save_intermediate:
-                self.intermediate_results = x.copy()
+                self.intermediate_results = x
                 x = x[0]
 
             self.kmeans = SeededKMeans(num_classes=self.num_classes)

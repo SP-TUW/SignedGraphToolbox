@@ -39,15 +39,9 @@ def calcNErr(l, l0, K, K0):
             rk.pop(0)
     return e, float(np.sum(np.bitwise_or(l < 0, l >= K0)))
 
-def args_to_pid(args, get_sim_name=False):
+def args_to_pid(args):
     if args.pop(0) == '-m':
         args.pop(0)
-
-    if get_sim_name:
-        if len(args) > 0:
-            sim_name = args.pop(0)
-        else:
-            sim_name = 'n_err'
 
     if len(args) > 0:
         pid_offset = int(args.pop(0))
@@ -60,12 +54,9 @@ def args_to_pid(args, get_sim_name=False):
         rel_pid = 0
 
     pid = pid_offset + rel_pid
-    if get_sim_name:
-        return pid, sim_name
-    else:
-        return pid
+    return pid
 
-def args_to_pid_and_rep(args):
+def args_to_pid_and_sim_id(args):
     if args.pop(0) == '-m':
         args.pop(0)
 
@@ -80,10 +71,10 @@ def args_to_pid_and_rep(args):
         rel_pid = 0
 
     if len(args) > 0:
-        sim_rep = int(args.pop(0))
+        sim_id = int(args.pop(0))
     else:
-        sim_rep = 1
+        sim_id = 1
 
     pid = pid_offset + rel_pid
 
-    return pid, sim_rep
+    return pid, sim_id

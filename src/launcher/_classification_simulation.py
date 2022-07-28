@@ -20,7 +20,7 @@ class ClassificationSimulation:
         if methods_list is not None:
             self.add_method(methods_list)
 
-        self.x = {}
+        self.embedding = {}
         self.l_est = {}
         self.t_run = {}
         self.sim_id = -1
@@ -116,7 +116,7 @@ class ClassificationSimulation:
             # l_guess = self.l_est[]
             t_start = time.time()
             self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
-            self.x[name] = method['method'].embedding
+            self.embedding[name] = method['method'].embedding
             t_stop = time.time()
             self.t_run[name] = t_stop - t_start
             n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
@@ -137,9 +137,9 @@ class ClassificationSimulation:
             num_classes = self.graph.num_classes
             num_labels = len(self.labels['i'])
 
-            # x_gt = -np.ones((num_nodes,num_classes))
-            # x_gt[np.arange(num_nodes), self.graph.class_labels] = 1
-            # tv_gt = TV(self.graph.W0,x_gt,1)
+            # embedding_gt = -np.ones((num_nodes,num_classes))
+            # embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
+            # tv_gt = TV(self.graph.W0,embedding_gt,1)
 
             results = {}
             results__ = {'pid': self.sim_id,
@@ -170,9 +170,9 @@ class ClassificationSimulation:
                 f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
                 f1_macro = f1_score(self.graph.class_labels, l_est, average='macro')
 
-                # x = -np.ones((num_nodes,num_classes))
-                # x[np.arange(num_nodes), l_est] = 1
-                # tv = TV(self.graph.weights,x,1)
+                # embedding = -np.ones((num_nodes,num_classes))
+                # embedding[np.arange(num_nodes), l_est] = 1
+                # tv = TV(self.graph.weights,embedding,1)
 
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
