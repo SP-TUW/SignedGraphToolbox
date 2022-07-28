@@ -36,26 +36,26 @@ def select_labels(graph, label_amount, is_percentage=False, sorting_level=0):
     :return: dictionary of labeled nodes with node indices 'i' and corresponding class association 'k'. Both fields each contain a single python list.
     '''
 
-    num_clusters = graph.num_classes
+    num_classes = graph.num_classes
     num_nodes = graph.num_nodes
-    nodes_in_cluster = np.zeros((num_nodes,num_clusters), dtype=bool)
-    for k in range(num_clusters):
-        nodes_in_cluster[:,k] = graph.class_labels == k
-    num_nodes_in_cluster = np.sum(nodes_in_cluster,axis=0)
+    nodes_in_class = np.zeros((num_nodes,num_classes), dtype=bool)
+    for k in range(num_classes):
+        nodes_in_class[:,k] = graph.class_labels == k
+    num_nodes_in_class = np.sum(nodes_in_class,axis=0)
     labels = {"i": np.array([],dtype=int), "k": []}
     if is_percentage:
-        labels_per_cluster = np.round((num_nodes_in_cluster * label_amount) // 100).astype(dtype=int)
+        labels_per_class = np.round((num_nodes_in_class * label_amount) // 100).astype(dtype=int)
     else:
-        labels_per_cluster = np.round(label_amount * np.ones(num_clusters)).astype(dtype=int)
-    print('{n} labels in cluster'.format(n=labels_per_cluster))
-    for k in range(num_clusters):
-        if num_nodes_in_cluster[k] < labels_per_cluster[k]:
-            raise ValueError("Class {k} should have {l} labels but it has only {n} nodes".format(k=k, l=labels_per_cluster[k], n=num_nodes_in_cluster[k]))
-        labels_i = np.random.choice(np.flatnonzero(nodes_in_cluster[:, k]), labels_per_cluster[k], replace=False)
+        labels_per_class = np.round(label_amount * np.ones(num_classes)).astype(dtype=int)
+    print('{n} labels in class'.format(n=labels_per_class))
+    for k in range(num_classes):
+        if num_nodes_in_class[k] < labels_per_class[k]:
+            raise ValueError("Class {k} should have {l} labels but it has only {n} nodes".format(k=k, l=labels_per_class[k], n=num_nodes_in_class[k]))
+        labels_i = np.random.choice(np.flatnonzero(nodes_in_class[:, k]), labels_per_class[k], replace=False)
         if sorting_level == 1:
             labels_i = np.sort(labels_i)
         labels["i"] = np.r_[labels["i"], labels_i]
-        labels["k"] += [k] * labels_per_cluster[k]
+        labels["k"] += [k] * labels_per_class[k]
     if sorting_level == 2:
         i_sort = np.argsort(labels["i"])
         labels["i"] = labels["i"][i_sort]
