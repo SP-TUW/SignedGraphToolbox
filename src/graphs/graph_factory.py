@@ -17,7 +17,7 @@ import numpy as np
 import scipy.sparse as sps
 import itertools
 
-def make_graph(model, num_largest_clusters=None, **kwargs):
+def make_graph(model, num_largest_classes=None, **kwargs):
     # models = Enum('models', 'SBM TM UCI_GAMA MULTI_CIRC SNAP WIKI_EDITOR WIKI_ELEC WIKI_RFA KNN TVMinimization DYN_SBM')
     models = Enum('models', 'SBM')
     model_enum = str_to_enum(model, models)
@@ -44,8 +44,8 @@ def make_graph(model, num_largest_clusters=None, **kwargs):
     else:
         raise ValueError("{dn} not yet implemented".format(dn=model))
 
-    if num_largest_clusters is not None:
-        graph.reduce_to_largest(num_largest_clusters)
+    if num_largest_classes is not None:
+        graph.reduce_to_largest(num_largest_classes)
 
     return graph
 

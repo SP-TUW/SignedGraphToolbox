@@ -6,10 +6,9 @@ import warnings
 
 from sklearn.metrics import adjusted_rand_score, f1_score
 
-# from src.clustering import cluster_wrapper
 from src.graphs import graph_factory
 from src.tools.graph_tools import select_labels
-# from src.clustering.TVMinimization import TV
+# from src.node_learning.TVMinimization import TV
 
 
 class ClassificationSimulation:
@@ -109,17 +108,18 @@ class ClassificationSimulation:
         for method in self.methods_list:
             name = method.pop('name')
             print('method: {name}'.format(name=name))
-            # if 'num_clusters' not in method.keys() and 'num_classes' in method.keys():
-            #     method['num_clusters'] = method.pop('num_classes')
-            # elif 'num_clusters' not in method.keys():
-            #     method['num_clusters'] = self.graph.K0
+            # if 'num_classes' not in method.keys() and 'num_classes' in method.keys():
+            #     method['num_classes'] = method.pop('num_classes')
+            # elif 'num_classes' not in method.keys():
+            #     method['num_classes'] = self.graph.K0
 
             # l_guess = self.l_est[]
             t_start = time.time()
-            self.x[name], self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
+            self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
+            self.x[name] = method['method'].embedding
             t_stop = time.time()
             self.t_run[name] = t_stop - t_start
-            n_err_sep = np.sum(self.l_est[name] != self.graph.l0)
+            n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
             print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
         self.current_graph_config = graph_config.copy()
         self.current_percentage_labeled = percentage_labeled
@@ -133,13 +133,13 @@ class ClassificationSimulation:
         if self.sim_id >= 0:
             # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
             # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
-            num_nodes = self.graph.N
-            num_classes = self.graph.K0
+            num_nodes = self.graph.num_nodes
+            num_classes = self.graph.num_classes
             num_labels = len(self.labels['i'])
 
-            x_gt = -np.ones((num_nodes,num_classes))
-            x_gt[np.arange(num_nodes), self.graph.l0] = 1
-            tv_gt = TV(self.graph.W0,x_gt,1)
+            # x_gt = -np.ones((num_nodes,num_classes))
+            # x_gt[np.arange(num_nodes), self.graph.class_labels] = 1
+            # tv_gt = TV(self.graph.W0,x_gt,1)
 
             results = {}
             results__ = {'pid': self.sim_id,
@@ -147,16 +147,17 @@ class ClassificationSimulation:
                          'graph_config': self.current_graph_config,
                          'percentage_labeled': self.current_percentage_labeled,
                          'num_nodes': num_nodes,
-                         'tv_gt': tv_gt}
+                         # 'tv_gt': tv_gt
+                         }
 
             if 'result_fields' in self.current_graph_config.keys():
-                results__.update(self.current_graph_config['results_fields'])
+                results__.update(self.current_graph_config['result_fields'])
 
             if not split_file:
                 results = results__
 
             for name, l_est in self.l_est.items():
-                is_wrong = np.array(self.graph.l0) != np.array(l_est)
+                is_wrong = np.array(self.graph.class_labels) != np.array(l_est)
                 is_label = np.zeros(num_nodes, dtype=bool)
                 is_label[self.labels['i']] = True
                 n_err_total = int(np.sum(is_wrong))
@@ -165,13 +166,13 @@ class ClassificationSimulation:
                 acc_total = 1 - n_err_total / num_nodes
                 acc_labeled = 1 - n_err_labeled / num_labels
                 acc_unlabeled = 1 - n_err_unlabeled / (num_nodes - num_labels)
-                ari = adjusted_rand_score(l_est, self.graph.l0)
-                f1_micro = f1_score(self.graph.l0, l_est, average='micro')
-                f1_macro = f1_score(self.graph.l0, l_est, average='macro')
+                ari = adjusted_rand_score(l_est, self.graph.class_labels)
+                f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
+                f1_macro = f1_score(self.graph.class_labels, l_est, average='macro')
 
-                x = -np.ones((num_nodes,num_classes))
-                x[np.arange(num_nodes), l_est] = 1
-                tv = TV(self.graph.W0,x,1)
+                # x = -np.ones((num_nodes,num_classes))
+                # x[np.arange(num_nodes), l_est] = 1
+                # tv = TV(self.graph.weights,x,1)
 
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
@@ -182,12 +183,12 @@ class ClassificationSimulation:
                             'ari': ari,
                             'f1_micro': f1_micro,
                             'f1_macro': f1_macro,
-                            'tv': tv,
+                            # 'tv': tv,
                             't_run': self.t_run[name]}
 
                 if not split_file:
-                    for key in results_.keys():
-                        results_['{k}_{n}'.format(k=key, n=name)] = results_.pop(key)
+                    keys = ['{k}_{n}'.format(k=key, n=name) for key in results_.keys()]
+                    results_ = dict(zip(keys,list(results_.values())))
                     results.update(results_)
                 else:
                     results[name] = results_
@@ -196,13 +197,13 @@ class ClassificationSimulation:
 
             if not split_file:
                 results_file_name = os.path.join(results_dir, '{id}.json'.format(id=self.sim_id))
-                with open(results_file_name, 'weights') as results_file:
+                with open(results_file_name, 'w') as results_file:
                     json.dump(results, results_file)
             else:
                 for name in self.l_est.keys():
                     result = results[name]
                     results_file_name = os.path.join(results_dir, '{id}_{n}.json'.format(id=self.sim_id, n=name))
-                    with open(results_file_name, 'weights') as results_file:
+                    with open(results_file_name, 'w') as results_file:
                         json.dump(result, results_file)
 
         else:

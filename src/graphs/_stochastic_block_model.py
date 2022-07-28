@@ -74,7 +74,7 @@ class StochasticBlockModel(Graph):
 
         nodes_in_class = []
         if l0 is None:
-            l0 = np.zeros(num_nodes)
+            l0 = np.zeros(num_nodes,dtype=int)
             for k in range(num_classes):
                 l0[cumsum_nodes_in_class[k]:cumsum_nodes_in_class[k + 1]] = k
                 nodes_in_class.append(np.arange(cumsum_nodes_in_class[k],cumsum_nodes_in_class[k + 1]))

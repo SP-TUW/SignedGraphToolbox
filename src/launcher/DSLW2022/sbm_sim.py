@@ -1,6 +1,6 @@
 from src.launcher.DSLW2022 import constants
 from src.launcher import SBMSimulation
-from src.node_learning import SpectralLearning
+from src.node_classification import SpectralLearning
 import numpy as np
 
 

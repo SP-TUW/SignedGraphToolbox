@@ -1,16 +1,17 @@
 from ._node_learner import NodeLearner
 
 
-from scipy.sparse import csr_matrix, eye, issparse, spdiags
+from scipy.sparse import csc_matrix, eye, issparse, spdiags
 from scipy.sparse.linalg import spsolve, eigsh
+from scipy.linalg import qr
 import numpy as np
 from numpy import sqrt
 from src.tools.projections import unitarization
-from src.metric_learning import seeded_kmeans
+from src.metric_learning import SeededKMeans
 from sklearn.cluster import KMeans
 
 
-def _get_objective_matrices_and_eig_selector(graph, objective, num_clusters):
+def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
     weight_matrix = graph.weights
 
     force_unsigned = True
@@ -47,36 +48,45 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_clusters):
     return a, eig_sel, normalization, force_unsigned
 
 
-def _labels_to_lin_const(labels, num_nodes, num_clusters):
+def _labels_to_lin_const(labels, num_nodes, num_classes):
     num_labels = len(labels['i'])
 
     labels_i = np.array(labels['i'])
     labels_k = np.array(labels['k'])
-    B = csr_matrix((np.ones(num_labels), (np.arange(num_labels), labels_i)), shape=(num_labels, num_nodes))
-    c = np.zeros((num_labels, num_clusters))
+    B = csc_matrix((np.ones(num_labels), (np.arange(num_labels), labels_i)), shape=(num_labels, num_nodes))
+    c = np.zeros((num_labels, num_classes))
     c[np.arange(num_labels), labels_k] = 1
     c = unitarization(c) * np.sqrt(num_labels / num_nodes)
 
     return B, c
 
 
-def _joint_multiclass(self, obj_matrix, B, c, random_init, return_intermediate, eps=1e-5, t_max=1e5):
+def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr, eps, t_max):
     '''
     This function implements our joint multiclass algorithm where the linear constraints are given by the labels
 
     In the case of c.shape[1]==1 it is equivalent to the method from :cite:p:`Xu09LinConstCut`
 
     :param obj_matrix: matrix for quadratic objective. Needs to be positive semi-definite
-    :param B, c: the linear constraints on X of the form BX=c
+    :param B, c: the linear constraints on data of the form BX=c
     :return: vector v which maximizes the optimization problem.
     '''
 
     num_labels = c.shape[0]
     if len(c.shape) > 1:
-        num_clusters = c.shape[1]
+        num_classes = c.shape[1]
     else:
-        num_clusters = 1
+        num_classes = 1
     num_nodes = obj_matrix.shape[0]
+
+    if use_qr:
+        def normalization(X_):
+            X, R = qr(X_,mode='economic')
+            return X
+    else:
+        def normalization(X_):
+            X = unitarization(X_)
+            return X
 
     obj_list = []
 
@@ -100,12 +110,12 @@ def _joint_multiclass(self, obj_matrix, B, c, random_init, return_intermediate, 
     while not converged:
         v_old = v.copy()
         PAv = P.dot(obj_matrix.dot(v_old))
-        PAv_unit = unitarization(PAv)
+        PAv_unit = normalization(PAv)
         u = gamma * PAv_unit
         v = u + n0
         obj_list.append(np.trace(v.T.dot(obj_matrix.dot(v))))
         t += 1
-        converged = np.linalg.norm(v - v_old) < eps * sqrt((num_nodes - num_labels) * num_clusters)
+        converged = np.linalg.norm(v - v_old) < eps * sqrt((num_nodes - num_labels) * num_classes)
         if not converged and t >= t_max:
             break
 
@@ -115,15 +125,14 @@ def _joint_multiclass(self, obj_matrix, B, c, random_init, return_intermediate, 
         return v
 
 
-def _sequential_multiclass(obj_matrix, B, c, random_init,
-                           return_intermediate, eps, t_max):
-    num_clusters = c.shape[1]
+def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, eps, t_max):
+    num_classes = c.shape[1]
     num_nodes = obj_matrix.shape[0]
 
     obj_list = []
 
-    v = np.zeros((num_nodes, num_clusters))
-    for k in range(num_clusters):
+    v = np.zeros((num_nodes, num_classes))
+    for k in range(num_classes):
         if k > 0:
             B_ = np.vstack([B.A, v[:, :k].T])
             c_ = np.concatenate((c[:, k], np.zeros((k))), axis=0)[:, None]
@@ -158,6 +167,8 @@ class SpectralLearning(NodeLearner):
         self.t_max = t_max
         self.save_intermediate = save_intermediate
         self.intermediate_results = None
+        self.kmeans = None
+        self.embedding = None
         super().__init__(num_classes=num_classes, verbose=verbose, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -177,9 +188,9 @@ class SpectralLearning(NodeLearner):
 
             x = vec * normalization
 
-            kmeans = KMeans(n_clusters=self.num_classes, init='k-means++',
+            self.kmeans = KMeans(n_clusters=self.num_classes, init='k-means++',
                                max_iter=self.t_max, n_init=10, random_state=0)
-            l_est = kmeans.fit_predict(x)
+            l_est = self.kmeans.fit_predict(x)
 
             l_est = l_est.astype(int)
 
@@ -190,7 +201,7 @@ class SpectralLearning(NodeLearner):
                 eig_upper_bound = max(abs(a).sum(1))
                 obj_matrix = eig_upper_bound * eye(a.shape[0]) - a
 
-            B, c = _labels_to_lin_const(labels, num_nodes=num_nodes, num_clusters=self.num_classes)
+            B, c = _labels_to_lin_const(labels, num_nodes=num_nodes, num_classes=self.num_classes)
 
             if self.multiclass_method == 'joint':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=False,
@@ -206,7 +217,10 @@ class SpectralLearning(NodeLearner):
                 self.intermediate_results = x.copy()
                 x = x[0]
 
-            l_est = seeded_kmeans.cluster(x, num_clusters=self.num_clusters, labels=labels)
-            self.l_est = l_est.astype(int)
+            self.kmeans = SeededKMeans(num_classes=self.num_classes)
+            l_est = self.kmeans.estimate_labels(data=x, labels=labels)
+
+        self.embedding = x
+        self.l_est = l_est.astype(int)
 
         return self.l_est
