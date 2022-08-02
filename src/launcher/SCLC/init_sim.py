@@ -37,13 +37,13 @@ def plot():
     for column in grouped_results:
         list_df[column] = grouped_results[column]['objective']
 
-
+    list_df.sort_index(axis='columns',inplace=True)
     for num_classes in list_df.columns.get_level_values('num_classes').unique():
         for eps in list_df[num_classes].columns.get_level_values('eps').unique():
             for percentage_labeled in list_df[num_classes,eps].columns.get_level_values('percentage_labeled').unique():
                 fig_name = 'conv_K{k}_eps{eps}_pl{pl}'.format(k=num_classes,eps=eps,pl=percentage_labeled)
                 print('plotting {s}'.format(s=fig_name))
-                for i_rep in reversed(np.sort(list_df[num_classes, eps, percentage_labeled].columns.get_level_values(
+                for i_rep in reversed(np.sort(list_df[num_classes, eps, percentage_labeled].sort_index().columns.get_level_values(
                     'i_rep').unique())):
                     if i_rep==0:
                         plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'k')
