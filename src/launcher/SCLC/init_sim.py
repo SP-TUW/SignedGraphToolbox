@@ -108,7 +108,7 @@ def get_config(pid, sim_id, suppress_output=False):
     sim_id = sim_id // len_percentage
 
     num_nodes = 300*num_classes
-    pi = min(1,num_classes * (num_classes + 2) / num_nodes)
+    pi = min(1, num_classes * (num_classes + 2) / num_nodes)
     graph_config = {'model': 'SBM',
                     'type': 'Bernoulli',
                     'class_distribution': [1] * num_classes,
