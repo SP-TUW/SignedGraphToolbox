@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo $HOSTNAME
-cd ~/GSPSimulator/GSP/
+cd ~/GSPSimulator/SignedGraphToolboxPrivate/
 echo $(pwd)
 python3 -m $*
 ls
