@@ -70,6 +70,8 @@ def plot():
 
     sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='percentage_labeled', style='name')
     plt.show()
+    sns.lineplot(data=results_mean, x='eps', y='t_run', hue='percentage_labeled', style='name')
+    plt.show()
 
     x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
     with open(x_filename) as x_file:
