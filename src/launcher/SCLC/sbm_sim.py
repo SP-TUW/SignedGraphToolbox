@@ -131,6 +131,10 @@ if __name__ == '__main__':
             make_result_dirs()
         elif args[1] == '-c':
             combine_results()
+        elif args[1] == '-n':
+            config_lists = get_graph_config_lists()
+            sim = SBMSimulation(**config_lists)
+            print('{n} configs in this simulation'.format(n=len(sim.graph_config_list)))
         elif args[1] == '-p':
             plot()
         else:
