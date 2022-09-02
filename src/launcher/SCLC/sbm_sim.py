@@ -101,7 +101,8 @@ def get_graph_config_lists():
 
 def get_methods():
     methods = [{'name': 'joint', 'method': SpectralLearning(num_classes=None,multiclass_method='joint')},
-               {'name': 'seq', 'method': SpectralLearning(num_classes=None,multiclass_method='sequential')}]
+               {'name': 'seq', 'method': SpectralLearning(num_classes=None,multiclass_method='sequential')},
+               {'name': 'rand', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',random_init=True)}]
     return methods
 
 
