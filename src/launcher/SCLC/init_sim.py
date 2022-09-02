@@ -90,7 +90,7 @@ def print_all_configs():
 
 def get_config(pid, sim_id, suppress_output=False):
     num_classes_list = [3, 5, 10]
-    t_max_list = [20000]
+    t_max_list = [20000, 20000, 20000]
     eps_list = [0.4]  # np.linspace(0, 0.5, 11)
     percentage_labeled_list = [1, 5, 10]
     assert len(num_classes_list) == len(t_max_list)
