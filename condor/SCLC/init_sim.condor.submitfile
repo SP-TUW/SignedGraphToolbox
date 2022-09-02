@@ -2,7 +2,7 @@
 ## -- SIMULATION Parameters (User Section)
 ## ---------------------------------------------------------
 nr_jobs         =       NRJOBS
-num_rep         =       NUMREP
+sim_id          =       PARAM
 pid_offset      =       OFFSET
 project         =       SCLC
 
@@ -21,5 +21,5 @@ executable      =       condor/pythonWrapper.sh
 log             =       condor/$(project)/condor_log/init_sim/sim.log
 output          =       condor/$(project)/condor_log/init_sim/sim.out.$(Process).log
 error           =       condor/$(project)/condor_log/init_sim/sim.err.$(Process).log
-Arguments       =       src.launcher.SCLC.init_sim $(pid_offset) $(Process) $(num_rep)
+Arguments       =       src.launcher.SCLC.init_sim $(pid_offset) $(Process) $(sim_id)
 Queue $(nr_jobs)
