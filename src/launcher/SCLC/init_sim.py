@@ -43,34 +43,37 @@ def plot():
             for percentage_labeled in list_df[num_classes,eps].columns.get_level_values('percentage_labeled').unique():
                 fig_name = 'conv_K{k}_eps{eps}_pl{pl}'.format(k=num_classes,eps=eps,pl=percentage_labeled)
                 print('plotting {s}'.format(s=fig_name))
-                for i_rep in reversed(np.sort(list_df[num_classes, eps, percentage_labeled].sort_index().columns.get_level_values(
-                    'i_rep').unique())):
-                    if i_rep==0:
-                        plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'k')
-                    else:
-                        plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'lightgrey')
                 min_ = np.min(np.array(list_df[num_classes, eps, percentage_labeled]), axis=1)
                 max_ = np.max(np.array(list_df[num_classes, eps, percentage_labeled]), axis=1)
                 diff = max_[-1]-min_[-1]
-                y_min = max_[-1]-0.02#min_[-1]-3*diff
-                y_max = max_[-1]+0.005#max_[-1]+diff/2
-                x_max = 20000#int(np.argmax(max_[-1]-min_<diff*1.01)+100)
-                plt.ylim([y_min, y_max])
-                plt.xlim([10, x_max])
-                config={'ylim':[y_min, y_max],
-                        'xlim':[10, x_max],
-                        'max': max_[-1],
-                        'min': min_[-1]}
-                axis_filename = os.path.join(constants.plots_dir['init_sim'],'axis_{n}.png'.format(n=fig_name))
-                filename = os.path.join(constants.plots_dir['init_sim'],'{n}.png'.format(n=fig_name))
-                config_filename = os.path.join(constants.plots_dir['init_sim'],'config_{n}.txt'.format(n=fig_name))
-                plt.savefig(axis_filename)
-                plt.axis('off')
-                plt.tight_layout(pad=0)
-                plt.savefig(filename)
-                plt.close()
-                with open(config_filename,'w') as config_file:
-                    json.dump(config,config_file)
+                for i, (y_min, y_max) in enumerate(zip([max_[-1]-0.02, min_[-1]-3*diff],[max_[-1]+0.005,max_[-1]+diff/2])):
+                    for i_rep in reversed(np.sort(list_df[num_classes, eps, percentage_labeled].sort_index().columns.get_level_values(
+                        'i_rep').unique())):
+                        if i_rep==0:
+                            plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'k')
+                        else:
+                            plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'lightgrey')
+                    # y_min = max_[-1]-0.02
+                    # y_max = max_[-1]+0.005
+                    # y_min = min_[-1]-3*diff
+                    # y_max = max_[-1]+diff/2
+                    x_max = 20000#int(np.argmax(max_[-1]-min_<diff*1.01)+100)
+                    plt.ylim([y_min, y_max])
+                    plt.xlim([10, x_max])
+                    config={'ylim':[y_min, y_max],
+                            'xlim':[10, x_max],
+                            'max': max_[-1],
+                            'min': min_[-1]}
+                    axis_filename = os.path.join(constants.plots_dir['init_sim'],'axis_{n}_scale_{i}.png'.format(i=i,n=fig_name))
+                    filename = os.path.join(constants.plots_dir['init_sim'],'{n}_scale_{i}.png'.format(i=i,n=fig_name))
+                    config_filename = os.path.join(constants.plots_dir['init_sim'],'config_{n}_scale_{i}.txt'.format(i=i,n=fig_name))
+                    plt.savefig(axis_filename)
+                    plt.axis('off')
+                    plt.tight_layout(pad=0)
+                    plt.savefig(filename)
+                    plt.close()
+                    with open(config_filename,'w') as config_file:
+                        json.dump(config,config_file)
 
 
 def print_num_configs():
@@ -86,7 +89,7 @@ def print_all_configs():
 
 
 def get_config(pid, sim_id, suppress_output=False):
-    num_classes_list = [3]
+    num_classes_list = [3, 5, 10]
     t_max_list = [20000]
     eps_list = [0.4]  # np.linspace(0, 0.5, 11)
     percentage_labeled_list = [1, 5, 10]
