@@ -41,6 +41,7 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
         neg_deg = neg_weight_matrix.sum(axis=1).T
         neg_deg_matrix = spdiags(data=neg_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = inv_sqrt_sig_deg_matrix.dot((neg_deg_matrix + weight_matrix)).dot(inv_sqrt_sig_deg_matrix)
+        a = a+eye(graph.num_nodes)
         normalization = np.ones((graph.num_nodes, 1))
         eig_sel = 'LM'
         force_unsigned = False
