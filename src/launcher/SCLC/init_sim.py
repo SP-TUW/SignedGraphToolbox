@@ -27,53 +27,46 @@ def plot():
     result_dir = constants.results_dir['init_sim']
     results_file_name = os.path.join(result_dir,'comb.json')
     print('loading {f}'.format(f=results_file_name))
-    with open(results_file_name) as results_file:
-        results = json.load(results_file)
+    results_df = pd.read_json(results_file_name)
     print('done loading')
-    results_df = pd.DataFrame(results)
-    grouped_results = results_df.set_index(['num_classes','eps','percentage_labeled','i_rep']).T
+    decimals = pd.Series([2], index=['eps'])
+    results_df.round(decimals)
+    grouped_results = results_df.set_index(['num_classes','percentage_labeled','eps','i_rep']).sort_index()
 
-    list_df = pd.DataFrame(columns=grouped_results.columns)
-    for column in grouped_results:
-        list_df[column] = grouped_results[column]['objective']
+    list_df = pd.DataFrame(grouped_results.objective.tolist(),index=grouped_results.index)
 
-    list_df.sort_index(axis='columns',inplace=True)
-    for num_classes in list_df.columns.get_level_values('num_classes').unique():
-        for eps in list_df[num_classes].columns.get_level_values('eps').unique():
-            for percentage_labeled in list_df[num_classes,eps].columns.get_level_values('percentage_labeled').unique():
-                fig_name = 'conv_K{k}_eps{eps}_pl{pl}'.format(k=num_classes,eps=eps,pl=percentage_labeled)
-                print('plotting {s}'.format(s=fig_name))
-                min_ = np.min(np.array(list_df[num_classes, eps, percentage_labeled]), axis=1)
-                max_ = np.max(np.array(list_df[num_classes, eps, percentage_labeled]), axis=1)
-                diff = max_[-1]-min_[-1]
-                for i, (y_min, y_max) in enumerate(zip([max_[-1]-0.02, min_[-1]-3*diff],[max_[-1]+0.005,max_[-1]+diff/2])):
-                    for i_rep in reversed(np.sort(list_df[num_classes, eps, percentage_labeled].sort_index().columns.get_level_values(
-                        'i_rep').unique())):
-                        if i_rep==0:
-                            plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'k')
-                        else:
-                            plt.semilogx(list_df[num_classes, eps, percentage_labeled, i_rep],'lightgrey')
-                    # y_min = max_[-1]-0.02
-                    # y_max = max_[-1]+0.005
-                    # y_min = min_[-1]-3*diff
-                    # y_max = max_[-1]+diff/2
-                    x_max = 20000#int(np.argmax(max_[-1]-min_<diff*1.01)+100)
-                    plt.ylim([y_min, y_max])
-                    plt.xlim([10, x_max])
-                    config={'ylim':[y_min, y_max],
-                            'xlim':[10, x_max],
-                            'max': max_[-1],
-                            'min': min_[-1]}
-                    axis_filename = os.path.join(constants.plots_dir['init_sim'],'axis_{n}_scale_{i}.png'.format(i=i,n=fig_name))
-                    filename = os.path.join(constants.plots_dir['init_sim'],'{n}_scale_{i}.png'.format(i=i,n=fig_name))
-                    config_filename = os.path.join(constants.plots_dir['init_sim'],'config_{n}_scale_{i}.txt'.format(i=i,n=fig_name))
-                    plt.savefig(axis_filename)
-                    plt.axis('off')
-                    plt.tight_layout(pad=0)
-                    plt.savefig(filename)
-                    plt.close()
-                    with open(config_filename,'w') as config_file:
-                        json.dump(config,config_file)
+    for (num_classes, eps, percentage_labeled), pl_df in list_df.groupby(level=['num_classes', 'eps', 'percentage_labeled']):
+        pl_df = pl_df.droplevel(['num_classes', 'eps', 'percentage_labeled'])
+        fig_name = 'conv_K{k}_eps{eps}_pl{pl}'.format(k=num_classes,eps=eps,pl=percentage_labeled)
+        print('plotting {s}'.format(s=fig_name))
+        min_ = np.min(np.array(pl_df), axis=0)
+        max_ = np.max(np.array(pl_df), axis=0)
+        diff = max_[-1]-min_[-1]
+        pl_df.reindex(index=pl_df.index[::-1])
+        for i, (y_min, y_max) in enumerate(zip([max_[-1]-0.02, min_[-1]-3*diff],[max_[-1]+0.005,max_[-1]+diff/2])):
+            for i_rep in reversed(pl_df.index):
+                rep = pl_df.loc[i_rep]
+                if i_rep == 0:
+                    plt.semilogx(rep,'k')
+                else:
+                    plt.semilogx(rep,'lightgrey')
+            x_max = 20000
+            plt.ylim([y_min, y_max])
+            plt.xlim([10, x_max])
+            config={'ylim':[y_min, y_max],
+                    'xlim':[10, x_max],
+                    'max': max_[-1],
+                    'min': min_[-1]}
+            axis_filename = os.path.join(constants.plots_dir['init_sim'],'axis_{n}_scale_{i}.png'.format(i=i,n=fig_name))
+            filename = os.path.join(constants.plots_dir['init_sim'],'{n}_scale_{i}.png'.format(i=i,n=fig_name))
+            config_filename = os.path.join(constants.plots_dir['init_sim'],'config_{n}_scale_{i}.txt'.format(i=i,n=fig_name))
+            plt.savefig(axis_filename)
+            plt.axis('off')
+            plt.tight_layout(pad=0)
+            plt.savefig(filename)
+            plt.close()
+            with open(config_filename,'w') as config_file:
+                json.dump(config,config_file)
 
 
 def print_num_configs():
