@@ -94,9 +94,6 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
 
     obj_list = []
 
-    # The algorithm says
-    # P = I-B^T(BB^T)^{-1}B
-    # but for our case BB^T=I and so we can leave this out
     if issparse(B):
         P = eye(num_nodes) - B.T.dot(spsolve(B.dot(B.T), B))
     else:

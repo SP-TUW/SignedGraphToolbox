@@ -25,7 +25,6 @@ def plot():
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from pathlib import Path
     import itertools
 
     results_file_name = os.path.join(constants.results_dir['sbm_sim'], 'comb.json')
@@ -60,13 +59,6 @@ def plot():
         pass
     results_df = pd.concat(name_dfs, ignore_index=True)
     results_mean = results_df.groupby(['name', 'eps', 'percentage_labeled']).mean().reset_index()
-    # n_err_test = None
-    # for name in ['joint','seq']:
-    #     if n_err_test is None:
-    #         n_err_test = results_mean['n_err_unlabeled_joint']
-    #         n_err_test['name'] = name
-    #     else:
-    #         n_err_test = n_err_test.append(results_mean['n_err_unlabeled_{n}'.format(n=name)])
 
     sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='percentage_labeled', style='name')
     plt.show()
@@ -90,7 +82,7 @@ def get_graph_config_lists():
     num_classes_list = [3, 5, 10]
     num_nodes_list = [300*nc for nc in num_classes_list]
     class_distribution_list = [[1]*nc for nc in num_classes_list]
-    eps_list = np.linspace(0, 0.5, 21)
+    eps_list = np.linspace(0, 0.5, 11)
     percentage_labeled_list = [1, 5, 10, 15]
     config_lists = {'eps_list': eps_list,
                     'percentage_labeled_list': percentage_labeled_list,
