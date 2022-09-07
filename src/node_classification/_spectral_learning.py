@@ -83,6 +83,9 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
     if use_qr:
         def normalization(X_):
             X, R = qr(X_,mode='economic')
+            S = np.diag(np.sign(np.diag(R)))
+            X = X.dot(S)
+            R = S.dot(R)
             return X
     else:
         def normalization(X_):
