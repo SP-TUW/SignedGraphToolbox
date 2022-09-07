@@ -100,10 +100,10 @@ def get_graph_config_lists():
 
 
 def get_methods():
-    methods = [{'name': 'joint', 'method': SpectralLearning(num_classes=None,multiclass_method='joint')},
-               {'name': 'qr', 'method': SpectralLearning(num_classes=None, multiclass_method='qr')},
-               {'name': 'seq', 'method': SpectralLearning(num_classes=None,multiclass_method='sequential')},
-               {'name': 'joint_rand', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',random_init=True)}]
+    methods = [{'name': 'joint', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',eps=1e-10)},
+               {'name': 'qr', 'method': SpectralLearning(num_classes=None, multiclass_method='qr',eps=1e-10)},
+               {'name': 'seq', 'method': SpectralLearning(num_classes=None,multiclass_method='sequential',eps=1e-10)},
+               {'name': 'joint_rand', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',random_init=True,eps=1e-10)}]
     return methods
 
 
