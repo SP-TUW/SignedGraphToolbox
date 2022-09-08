@@ -62,7 +62,7 @@ def _labels_to_lin_const(labels, num_nodes, num_classes):
     return B, c
 
 
-def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr, eps, t_max):
+def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr, eps, t_max, verbosity):
     '''
     This function implements our joint multiclass algorithm where the linear constraints are given by the labels
 
@@ -116,9 +116,13 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
         v = u + n0
         obj_list.append(np.trace(v.T.dot(obj_matrix.dot(v))))
         t += 1
-        converged = np.linalg.norm(v - v_old) < eps * sqrt((num_nodes - num_labels) * num_classes)
+        diff = np.linalg.norm(v - v_old)
+        converged = diff < eps * sqrt((num_nodes - num_labels) * num_classes)
         if not converged and t >= t_max:
             break
+
+    if verbosity>0:
+        print('finished with obj={o} after t={t} with diff={d}'.format(o=obj_list[-1],t=t,d=diff))
 
     if return_intermediate:
         return v, obj_list, obj_matrix.copy()
@@ -126,7 +130,7 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
         return v
 
 
-def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, eps, t_max):
+def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, eps, t_max, verbosity):
     num_classes = c.shape[1]
     num_nodes = obj_matrix.shape[0]
 
@@ -142,7 +146,7 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
             c_ = c[:, k][:, None]
 
         r_val = _joint_multiclass(obj_matrix, B_, c_, random_init=random_init, return_intermediate=return_intermediate,
-                                 eps=eps, t_max=t_max, use_qr=False)
+                                 eps=eps, t_max=t_max, use_qr=False, verbosity=verbosity)
 
         if return_intermediate:
             v[:, k] = r_val[0]
@@ -158,11 +162,12 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
 
 class SpectralLearning(NodeLearner):
 
-    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
+    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, allow_negative_eig=False, eps=1e-5, t_max=1e5):
         self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
         self.random_init=random_init
+        self.allow_negative_eig=allow_negative_eig
         self.verbosity = verbosity
         self.eps=eps
         self.t_max = t_max
@@ -206,13 +211,13 @@ class SpectralLearning(NodeLearner):
 
             if self.multiclass_method == 'joint':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=False,
-                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
             if self.multiclass_method == 'qr':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=True,
-                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
             elif self.multiclass_method == 'sequential':
                 x = _sequential_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init,
-                                          return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                          return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
 
             if self.save_intermediate:
                 self.intermediate_results = x
