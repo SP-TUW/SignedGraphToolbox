@@ -16,7 +16,7 @@ def make_result_dirs():
 def combine_results():
     print('combining results')
     from src.tools.combine_results import combine_results as cr
-    cr(constants.results_dir['sbm_sim'],has_lists=False)
+    cr(constants.results_dir['sbm_sim'], has_lists=False)
 
 
 def plot():
@@ -52,7 +52,7 @@ def plot():
         name_df.columns = global_cols + cols
 
         pd.options.mode.chained_assignment = None
-        name_df.loc[:,'name'] = name
+        name_df.loc[:, 'name'] = name
         pd.options.mode.chained_assignment = 'warn'
 
         name_dfs.append(name_df)
@@ -74,20 +74,20 @@ def plot():
         x_array = np.array(val)
         for n in range(x_array.shape[1]):
             x_array_style['{k}{n}'.format(k=key, n=n)] = x_array[:, n]
-    x_df=pd.DataFrame(x_array_style)
+    x_df = pd.DataFrame(x_array_style)
     x_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], 'x.csv'))
 
 
 def get_graph_config_lists():
     num_classes_list = [3, 5, 10]
-    num_nodes_list = [300*nc for nc in num_classes_list]
-    class_distribution_list = [[1]*nc for nc in num_classes_list]
+    num_nodes_list = [300 * nc for nc in num_classes_list]
+    class_distribution_list = [[1] * nc for nc in num_classes_list]
     eps_list = np.linspace(0, 0.5, 11)
     percentage_labeled_list = [1, 5, 10, 15]
     config_lists = {'eps_list': eps_list,
                     'percentage_labeled_list': percentage_labeled_list,
                     'sbm_config_list': [{'num_classes': cnd[0], 'num_nodes': cnd[1], 'class_distribution': cnd[2]}
-                                          for cnd in zip(num_classes_list,num_nodes_list,class_distribution_list)]}
+                                        for cnd in zip(num_classes_list, num_nodes_list, class_distribution_list)]}
     return config_lists
 
 
@@ -109,11 +109,12 @@ def run(pid):
     sim.save_results(constants.results_dir['sbm_sim'], split_file=False)
 
     if pid == 30:
-        filename = os.path.join(constants.plots_dir['sbm_sim'],'x.json')
+        filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
         x_lists = {'joint': sim.embedding['joint'].tolist(),
-                   'seq': sim.embedding['seq'].tolist()}
-        with open(filename,'w') as x_file:
-            json.dump(x_lists,x_file)
+                   'seq': sim.embedding['seq'].tolist(),
+                   'qr': sim.embedding['qr'].tolist()}
+        with open(filename, 'w') as x_file:
+            json.dump(x_lists, x_file)
 
 
 if __name__ == '__main__':
