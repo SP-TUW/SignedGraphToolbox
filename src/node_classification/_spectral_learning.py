@@ -202,7 +202,11 @@ class SpectralLearning(NodeLearner):
 
         else:
             if eig_sel == 'LM':
-                obj_matrix = a
+                if self.allow_negative_eig:
+                    obj_matrix = a
+                else:
+                    eig_lower_bound = min(-1, np.floor(min(abs(a).sum(1)-a.diagonal()[:,None])))
+                    obj_matrix = -eig_lower_bound * eye(a.shape[0]) + a
             else:
                 eig_upper_bound = max(abs(a).sum(1))
                 obj_matrix = eig_upper_bound * eye(a.shape[0]) - a

@@ -150,7 +150,7 @@ def run(pid, sim_id=1):
     labels = select_labels(graph, label_amount=percentage_labeled, is_percentage=True, sorting_level=1)
 
     np.random.seed(i_rand_rep)
-    sclc = SpectralLearning(num_classes=graph.num_classes, objective='BNC', multiclass_method='joint', random_init=not use_det, save_intermediate=True, eps=0, t_max=t_max, verbosity=0)
+    sclc = SpectralLearning(num_classes=graph.num_classes, objective='BNC', multiclass_method='joint', random_init=not use_det, save_intermediate=True, eps=0, t_max=t_max, verbosity=0, allow_negative_eig=False)
     l_est = sclc.estimate_labels(graph, labels=labels)
     x = sclc.embedding
     (objective_values, objective_matrix) = sclc.intermediate_results[1:]
