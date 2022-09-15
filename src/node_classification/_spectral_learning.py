@@ -1,14 +1,13 @@
-from ._node_learner import NodeLearner
-
-
-from scipy.sparse import csc_matrix, eye, issparse, spdiags
-from scipy.sparse.linalg import spsolve, eigsh
-from scipy.linalg import qr
 import numpy as np
 from numpy import sqrt
-from src.tools.projections import unitarization
-from src.metric_learning import SeededKMeans
+from scipy.linalg import qr
+from scipy.sparse import csc_matrix, eye, issparse, spdiags
+from scipy.sparse.linalg import spsolve, eigsh
 from sklearn.cluster import KMeans
+
+from src.metric_learning import SeededKMeans
+from src.tools.projections import unitarization
+from ._node_learner import NodeLearner
 
 
 def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
