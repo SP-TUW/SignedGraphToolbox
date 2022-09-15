@@ -94,32 +94,31 @@ def get_graph_config_lists():
 
 
 def get_methods():
+    eps = 1e-6
     methods = [{'name': 'joint_rand',
                 'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint',
-                                           random_init=True, eps=1e-5, t_max=1e5, allow_negative_eig=False,
-                                           verbosity=1)},
+                                           random_init=True, eps=eps, t_max=1e5, verbosity=1)},
                {'name': 'joint',
-                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint', eps=1e-5,
-                                           t_max=1e5, allow_negative_eig=False, verbosity=1)},
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint', eps=eps,
+                                           t_max=1e5, verbosity=1)},
                {'name': 'qr',
-                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='qr', eps=1e-5,
-                                           t_max=1e5, allow_negative_eig=False, verbosity=1)},
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='qr', eps=eps,
+                                           t_max=1e5, verbosity=1)},
                {'name': 'seq',
-                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='sequential', eps=1e-5,
-                                           t_max=1e5, allow_negative_eig=False, verbosity=1)},
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='sequential', eps=eps,
+                                           t_max=1e5, verbosity=1)},
                {'name': 'joint_rand_indef',
                 'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint',
-                                           random_init=True, eps=1e-5, t_max=1e5, allow_negative_eig=True,
-                                           verbosity=1)},
+                                           random_init=True, eps=eps, t_max=1e5, verbosity=1)},
                {'name': 'joint_indef',
-                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint', eps=1e-5,
-                                           t_max=1e5, allow_negative_eig=True, verbosity=1)},
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint', eps=eps,
+                                           t_max=1e5, verbosity=1)},
                {'name': 'qr_indef',
-                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='qr', eps=1e-5,
-                                           t_max=1e5, allow_negative_eig=True, verbosity=1)},
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='qr', eps=eps,
+                                           t_max=1e5, verbosity=1)},
                {'name': 'seq_indef',
                 'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='sequential',
-                                           eps=1e-5, t_max=1e5, allow_negative_eig=True, verbosity=1)}
+                                           eps=eps, t_max=1e5, verbosity=1)}
                ]
     return methods
 
