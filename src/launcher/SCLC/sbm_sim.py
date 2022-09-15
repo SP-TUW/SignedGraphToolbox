@@ -94,10 +94,13 @@ def get_graph_config_lists():
 
 
 def get_methods():
-    eps = 1e-6
+    eps = 1e-5
     methods = [{'name': 'joint_rand',
                 'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint',
                                            random_init=True, eps=eps, t_max=1e5, verbosity=1)},
+               {'name': 'joint_rand_fine',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint',
+                                           random_init=True, eps=eps/10, t_max=1e5, verbosity=1)},
                {'name': 'joint',
                 'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint', eps=eps,
                                            t_max=1e5, verbosity=1)},
@@ -110,6 +113,9 @@ def get_methods():
                {'name': 'joint_rand_indef',
                 'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint',
                                            random_init=True, eps=eps, t_max=1e5, verbosity=1)},
+               {'name': 'joint_rand_indef_fine',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint',
+                                           random_init=True, eps=eps/10, t_max=1e5, verbosity=1)},
                {'name': 'joint_indef',
                 'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint', eps=eps,
                                            t_max=1e5, verbosity=1)},
