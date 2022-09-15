@@ -1,9 +1,11 @@
-from src.launcher.SCLC import constants
-from src.launcher import SBMSimulation
-from src.node_classification import SpectralLearning
-import numpy as np
 import json
 import os
+
+import numpy as np
+
+from src.launcher import SBMSimulation
+from src.launcher.SCLC import constants
+from src.node_classification import SpectralLearning
 
 
 def make_result_dirs():
