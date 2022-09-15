@@ -1,8 +1,10 @@
-from ._graph import Graph
+import warnings
+
 import numpy as np
 from numpy import random
 from scipy import sparse as sps
-import warnings
+
+from ._graph import Graph
 
 
 class StochasticBlockModel(Graph):

@@ -1,3 +1,9 @@
+import itertools
+from enum import Enum
+
+import numpy as np
+import scipy.sparse as sps
+
 from src.graphs import StochasticBlockModel as SBM
 # from src.graphs.staticModels.UciGama import UciGama
 # from src.graphs.staticModels.MultiCirculant import MultiCirculant
@@ -11,11 +17,6 @@ from src.graphs import StochasticBlockModel as SBM
 # from src.graphs.Graph import Graph
 from src.tools.simulation_tools import str_to_enum
 
-from enum import Enum
-
-import numpy as np
-import scipy.sparse as sps
-import itertools
 
 def make_graph(model, num_largest_classes=None, **kwargs):
     # models = Enum('models', 'SBM TM UCI_GAMA MULTI_CIRC SNAP WIKI_EDITOR WIKI_ELEC WIKI_RFA KNN TVMinimization DYN_SBM')
