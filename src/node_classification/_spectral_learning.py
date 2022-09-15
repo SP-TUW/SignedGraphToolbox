@@ -34,14 +34,15 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
 
         normalization = np.array(1 / dd).T
         eig_sel = 'SM'
-    elif objective == "BNC":
+    elif objective == "BNC" or objective == "BNC_INDEF":
         inv_sqrt_sig_deg = 1 / sqrt(abs(weight_matrix).sum(axis=1)).T
         inv_sqrt_sig_deg_matrix = spdiags(data=inv_sqrt_sig_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         neg_weight_matrix = -weight_matrix.minimum(0)
         neg_deg = neg_weight_matrix.sum(axis=1).T
         neg_deg_matrix = spdiags(data=neg_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = inv_sqrt_sig_deg_matrix.dot((neg_deg_matrix + weight_matrix)).dot(inv_sqrt_sig_deg_matrix)
-        a = a+eye(graph.num_nodes)
+        if objective != "BNC_INDEF":
+            a = a+eye(graph.num_nodes)
         normalization = np.ones((graph.num_nodes, 1))
         eig_sel = 'LM'
         force_unsigned = False
@@ -162,12 +163,11 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
 
 class SpectralLearning(NodeLearner):
 
-    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, allow_negative_eig=False, eps=1e-5, t_max=1e5):
+    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
         self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
         self.random_init=random_init
-        self.allow_negative_eig=allow_negative_eig
         self.verbosity = verbosity
         self.eps=eps
         self.t_max = t_max
@@ -202,11 +202,7 @@ class SpectralLearning(NodeLearner):
 
         else:
             if eig_sel == 'LM':
-                if self.allow_negative_eig:
-                    obj_matrix = a
-                else:
-                    eig_lower_bound = min(-1, np.floor(min(abs(a).sum(1)-a.diagonal()[:,None])))
-                    obj_matrix = -eig_lower_bound * eye(a.shape[0]) + a
+                obj_matrix = a
             else:
                 eig_upper_bound = max(abs(a).sum(1))
                 obj_matrix = eig_upper_bound * eye(a.shape[0]) - a
