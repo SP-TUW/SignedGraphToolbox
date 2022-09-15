@@ -1,8 +1,9 @@
-from ._metric_learner import MetricLearner
+import warnings
 
 import numpy as np
 from scipy.spatial.distance import cdist
-import warnings
+
+from ._metric_learner import MetricLearner
 
 
 class SeededKMeans(MetricLearner):

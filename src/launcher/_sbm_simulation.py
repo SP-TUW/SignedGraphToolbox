@@ -1,11 +1,3 @@
-import json
-import os
-import numpy as np
-import time
-import warnings
-
-from sklearn.metrics import adjusted_rand_score, f1_score
-
 from ._classification_simulation import ClassificationSimulation
 
 

@@ -1,10 +1,12 @@
-from src.graphs import graph_factory
-from src.node_classification import SpectralLearning
-from src.tools.graph_tools import select_labels
-from src.launcher.SCLC import constants
-import numpy as np
 import json
 import os
+
+import numpy as np
+
+from src.graphs import graph_factory
+from src.launcher.SCLC import constants
+from src.node_classification import SpectralLearning
+from src.tools.graph_tools import select_labels
 
 
 def make_result_dirs():
