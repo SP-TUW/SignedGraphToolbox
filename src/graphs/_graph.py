@@ -1,6 +1,8 @@
+from abc import ABC
+
 from scipy.sparse import csr_matrix
 from scipy.sparse import diags
-from abc import ABC, abstractmethod
+
 
 class Graph(ABC):
 
