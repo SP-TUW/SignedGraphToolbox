@@ -138,7 +138,7 @@ def run(pid):
     sim.run_simulation(pid)
     sim.save_results(constants.results_dir['sbm_sim'], split_file=False)
 
-    if pid == 30:
+    if pid == 24:
         filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
         x_lists = {'joint': sim.embedding['joint'].tolist(),
                    'seq': sim.embedding['seq'].tolist(),
