@@ -1,13 +1,15 @@
 import json
 import os
-import numpy as np
 import time
 import warnings
 
+import numpy as np
 from sklearn.metrics import adjusted_rand_score, f1_score
 
 from src.graphs import graph_factory
 from src.tools.graph_tools import select_labels
+
+
 # from src.node_learning.TVMinimization import TV
 
 

@@ -1,14 +1,13 @@
-from ._node_learner import NodeLearner
-
-
-from scipy.sparse import csc_matrix, eye, issparse, spdiags
-from scipy.sparse.linalg import spsolve, eigsh
-from scipy.linalg import qr
 import numpy as np
 from numpy import sqrt
-from src.tools.projections import unitarization
-from src.metric_learning import SeededKMeans
+from scipy.linalg import qr
+from scipy.sparse import csc_matrix, eye, issparse, spdiags
+from scipy.sparse.linalg import spsolve, eigsh
 from sklearn.cluster import KMeans
+
+from src.metric_learning import SeededKMeans
+from src.tools.projections import unitarization
+from ._node_learner import NodeLearner
 
 
 def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
@@ -34,14 +33,15 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
 
         normalization = np.array(1 / dd).T
         eig_sel = 'SM'
-    elif objective == "BNC":
+    elif objective == "BNC" or objective == "BNC_INDEF":
         inv_sqrt_sig_deg = 1 / sqrt(abs(weight_matrix).sum(axis=1)).T
         inv_sqrt_sig_deg_matrix = spdiags(data=inv_sqrt_sig_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         neg_weight_matrix = -weight_matrix.minimum(0)
         neg_deg = neg_weight_matrix.sum(axis=1).T
         neg_deg_matrix = spdiags(data=neg_deg, diags=0, m=graph.num_nodes, n=graph.num_nodes)
         a = inv_sqrt_sig_deg_matrix.dot((neg_deg_matrix + weight_matrix)).dot(inv_sqrt_sig_deg_matrix)
-        a = a+eye(graph.num_nodes)
+        if objective != "BNC_INDEF":
+            a = a+eye(graph.num_nodes)
         normalization = np.ones((graph.num_nodes, 1))
         eig_sel = 'LM'
         force_unsigned = False
@@ -62,7 +62,7 @@ def _labels_to_lin_const(labels, num_nodes, num_classes):
     return B, c
 
 
-def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr, eps, t_max):
+def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr, eps, t_max, verbosity):
     '''
     This function implements our joint multiclass algorithm where the linear constraints are given by the labels
 
@@ -116,9 +116,13 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
         v = u + n0
         obj_list.append(np.trace(v.T.dot(obj_matrix.dot(v))))
         t += 1
-        converged = np.linalg.norm(v - v_old) < eps * sqrt((num_nodes - num_labels) * num_classes)
+        diff = np.linalg.norm(v - v_old)
+        converged = diff < eps * sqrt((num_nodes - num_labels) * num_classes)
         if not converged and t >= t_max:
             break
+
+    if verbosity>0:
+        print('finished with obj={o} after t={t} with diff={d}'.format(o=obj_list[-1],t=t,d=diff))
 
     if return_intermediate:
         return v, obj_list, obj_matrix.copy()
@@ -126,7 +130,7 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
         return v
 
 
-def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, eps, t_max):
+def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, eps, t_max, verbosity):
     num_classes = c.shape[1]
     num_nodes = obj_matrix.shape[0]
 
@@ -142,7 +146,7 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
             c_ = c[:, k][:, None]
 
         r_val = _joint_multiclass(obj_matrix, B_, c_, random_init=random_init, return_intermediate=return_intermediate,
-                                 eps=eps, t_max=t_max, use_qr=False)
+                                 eps=eps, t_max=t_max, use_qr=False, verbosity=verbosity)
 
         if return_intermediate:
             v[:, k] = r_val[0]
@@ -206,13 +210,13 @@ class SpectralLearning(NodeLearner):
 
             if self.multiclass_method == 'joint':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=False,
-                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
             if self.multiclass_method == 'qr':
                 x = _joint_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init, use_qr=True,
-                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                     return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
             elif self.multiclass_method == 'sequential':
                 x = _sequential_multiclass(obj_matrix, B=B, c=c, random_init=self.random_init,
-                                          return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max)
+                                          return_intermediate=self.save_intermediate, eps=self.eps, t_max=self.t_max, verbosity=self.verbosity)
 
             if self.save_intermediate:
                 self.intermediate_results = x

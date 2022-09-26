@@ -1,9 +1,11 @@
-from src.launcher.SCLC import constants
-from src.launcher import SBMSimulation
-from src.node_classification import SpectralLearning
-import numpy as np
 import json
 import os
+
+import numpy as np
+
+from src.launcher import SBMSimulation
+from src.launcher.SCLC import constants
+from src.node_classification import SpectralLearning
 
 
 def make_result_dirs():
@@ -16,7 +18,7 @@ def make_result_dirs():
 def combine_results():
     print('combining results')
     from src.tools.combine_results import combine_results as cr
-    cr(constants.results_dir['sbm_sim'],has_lists=False)
+    cr(constants.results_dir['sbm_sim'], has_lists=False)
 
 
 def plot():
@@ -52,7 +54,7 @@ def plot():
         name_df.columns = global_cols + cols
 
         pd.options.mode.chained_assignment = None
-        name_df.loc[:,'name'] = name
+        name_df.loc[:, 'name'] = name
         pd.options.mode.chained_assignment = 'warn'
 
         name_dfs.append(name_df)
@@ -74,28 +76,56 @@ def plot():
         x_array = np.array(val)
         for n in range(x_array.shape[1]):
             x_array_style['{k}{n}'.format(k=key, n=n)] = x_array[:, n]
-    x_df=pd.DataFrame(x_array_style)
+    x_df = pd.DataFrame(x_array_style)
     x_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], 'x.csv'))
 
 
 def get_graph_config_lists():
     num_classes_list = [3, 5, 10]
-    num_nodes_list = [300*nc for nc in num_classes_list]
-    class_distribution_list = [[1]*nc for nc in num_classes_list]
+    num_nodes_list = [300 * nc for nc in num_classes_list]
+    class_distribution_list = [[1] * nc for nc in num_classes_list]
     eps_list = np.linspace(0, 0.5, 11)
     percentage_labeled_list = [1, 5, 10, 15]
     config_lists = {'eps_list': eps_list,
                     'percentage_labeled_list': percentage_labeled_list,
                     'sbm_config_list': [{'num_classes': cnd[0], 'num_nodes': cnd[1], 'class_distribution': cnd[2]}
-                                          for cnd in zip(num_classes_list,num_nodes_list,class_distribution_list)]}
+                                        for cnd in zip(num_classes_list, num_nodes_list, class_distribution_list)]}
     return config_lists
 
 
 def get_methods():
-    methods = [{'name': 'joint', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',eps=1e-10)},
-               {'name': 'qr', 'method': SpectralLearning(num_classes=None, multiclass_method='qr',eps=1e-10)},
-               {'name': 'seq', 'method': SpectralLearning(num_classes=None,multiclass_method='sequential',eps=1e-10)},
-               {'name': 'joint_rand', 'method': SpectralLearning(num_classes=None,multiclass_method='joint',random_init=True,eps=1e-10)}]
+    eps = 1e-5
+    methods = [{'name': 'joint_rand',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint',
+                                           random_init=True, eps=eps, t_max=1e5, verbosity=1)},
+               {'name': 'joint_rand_fine',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint',
+                                           random_init=True, eps=eps/10, t_max=1e5, verbosity=1)},
+               {'name': 'joint',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='joint', eps=eps,
+                                           t_max=1e5, verbosity=1)},
+               {'name': 'qr',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='qr', eps=eps,
+                                           t_max=1e5, verbosity=1)},
+               {'name': 'seq',
+                'method': SpectralLearning(num_classes=None, objective='BNC', multiclass_method='sequential', eps=eps,
+                                           t_max=1e5, verbosity=1)},
+               {'name': 'joint_rand_indef',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint',
+                                           random_init=True, eps=eps, t_max=1e5, verbosity=1)},
+               {'name': 'joint_rand_indef_fine',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint',
+                                           random_init=True, eps=eps/10, t_max=1e5, verbosity=1)},
+               {'name': 'joint_indef',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='joint', eps=eps,
+                                           t_max=1e5, verbosity=1)},
+               {'name': 'qr_indef',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='qr', eps=eps,
+                                           t_max=1e5, verbosity=1)},
+               {'name': 'seq_indef',
+                'method': SpectralLearning(num_classes=None, objective='BNC_INDEF', multiclass_method='sequential',
+                                           eps=eps, t_max=1e5, verbosity=1)}
+               ]
     return methods
 
 
@@ -108,12 +138,13 @@ def run(pid):
     sim.run_simulation(pid)
     sim.save_results(constants.results_dir['sbm_sim'], split_file=False)
 
-    if pid == 30:
-        filename = os.path.join(constants.plots_dir['sbm_sim'],'x.json')
+    if pid == 24:
+        filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
         x_lists = {'joint': sim.embedding['joint'].tolist(),
-                   'seq': sim.embedding['seq'].tolist()}
-        with open(filename,'w') as x_file:
-            json.dump(x_lists,x_file)
+                   'seq': sim.embedding['seq'].tolist(),
+                   'qr': sim.embedding['qr'].tolist()}
+        with open(filename, 'w') as x_file:
+            json.dump(x_lists, x_file)
 
 
 if __name__ == '__main__':

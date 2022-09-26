@@ -1,10 +1,12 @@
-from src.graphs import graph_factory
-from src.node_classification import SpectralLearning
-from src.tools.graph_tools import select_labels
-from src.launcher.SCLC import constants
-import numpy as np
 import json
 import os
+
+import numpy as np
+
+from src.graphs import graph_factory
+from src.launcher.SCLC import constants
+from src.node_classification import SpectralLearning
+from src.tools.graph_tools import select_labels
 
 
 def make_result_dirs():
@@ -150,7 +152,7 @@ def run(pid, sim_id=1):
     labels = select_labels(graph, label_amount=percentage_labeled, is_percentage=True, sorting_level=1)
 
     np.random.seed(i_rand_rep)
-    sclc = SpectralLearning(num_classes=graph.num_classes, objective='BNC', multiclass_method='joint', random_init=not use_det, save_intermediate=True, eps=0, t_max=t_max, verbosity=0)
+    sclc = SpectralLearning(num_classes=graph.num_classes, objective='BNC_INDEF', multiclass_method='joint', random_init=not use_det, save_intermediate=True, eps=0, t_max=t_max, verbosity=0)
     l_est = sclc.estimate_labels(graph, labels=labels)
     x = sclc.embedding
     (objective_values, objective_matrix) = sclc.intermediate_results[1:]
