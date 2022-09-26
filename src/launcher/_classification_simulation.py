@@ -166,7 +166,7 @@ class ClassificationSimulation:
                 n_err_labeled = int(np.sum(is_wrong[is_label]))
                 n_err_unlabeled = n_err_total - n_err_labeled
                 acc_total = 1 - n_err_total / num_nodes
-                acc_labeled = 1 - n_err_labeled / num_labels
+                acc_labeled = 1 - n_err_labeled / max(1,num_labels)
                 acc_unlabeled = 1 - n_err_unlabeled / (num_nodes - num_labels)
                 ari = adjusted_rand_score(l_est, self.graph.class_labels)
                 f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
