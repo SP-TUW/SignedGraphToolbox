@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 from sklearn.utils.multiclass import class_distribution
 
-from src.tools.projections import simplex_projection
+from src.tools.projections import simplex_projection, label_projection
 from ._node_learner import NodeLearner
 
 
@@ -28,8 +28,9 @@ def _objective(x_in, class_distribution, edge_probability, weights, use_quadrati
     return x_out
 
 
-def _projection(x_in):
-    x_out = simplex_projection(x_in)
+def _projection(x_in, labels):
+    x_simplex = simplex_projection(x_in)
+    x_out = label_projection(x_simplex, labels)
     return x_out
 
 
@@ -101,12 +102,12 @@ class LsbmMap(NodeLearner):
         if guess is None:
             x0 = np.ones((num_nodes, self.num_classes))
             x0 = x0 + 1e-1 * np.random.randn(num_nodes, self.num_classes)
-            x0 = _projection(x0)
+            x0 = _projection(x0, labels)
         else:
             x0 = guess * np.ones((num_nodes, self.num_classes))
-            x0 = _projection(x0)
+            x0 = _projection(x0, labels)
 
-        x_new = _projection(x0)
+        x_new = _projection(x0, labels)
         t = 0
         tau0 = 0.1
         f_x_new = _objective(x_new, self.class_distribution, self.edge_probability, weights, use_quadratic=self.use_quadratic)
@@ -114,7 +115,7 @@ class LsbmMap(NodeLearner):
         while not converged:
             x = x_new.copy()
             g_x = _gradient(x, self.class_distribution, self.edge_probability, weights, use_quadratic=self.use_quadratic)
-            direction = _projection(x - g_x) - x
+            direction = _projection(x - g_x, labels) - x
             if np.any(np.isnan(direction)):
                 raise ValueError('Algorithm ended up in non-differentiable situation. Check input and initial value!')
             slope = np.sum(g_x*direction)

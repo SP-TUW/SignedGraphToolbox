@@ -2,6 +2,14 @@ import numpy as np
 import warnings
 
 
+def label_projection(x_in, labels):
+    x_out = x_in.copy()
+    if labels is not None:
+        x_out[labels['i'], :] = -1
+        x_out[labels['i'], labels['k']] = 1
+    return x_out
+
+
 def simplex_projection(x, a=1, axis=1):
     '''
     Implementation of the algorithm for projection onto a simplex from :cite:p:`Duc08Simplex`
