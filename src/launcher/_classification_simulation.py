@@ -84,14 +84,14 @@ class ClassificationSimulation:
             else:
                 warnings.warn('graph config already added in the list')
 
-    def __get_config(self, sim_id):
+    def get_graph_config(self, sim_id):
         graph_config = self.graph_config_list[sim_id % len(self.graph_config_list)].copy()
         percentage_labeled = graph_config.pop('percentage_labeled')
         is_percentage = graph_config.pop('is_percentage')
         return graph_config, percentage_labeled, is_percentage
 
     def __get_graph(self, sim_id):
-        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
         graph = graph_factory.make_graph(**graph_config)
         if 'str' in graph_config.keys():
             print(graph_config['str'])
@@ -101,7 +101,7 @@ class ClassificationSimulation:
 
     def run_simulation(self, sim_id):
         np.random.seed(sim_id)
-        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
         self.graph, self.labels = self.__get_graph(sim_id)
         print('running simulations for {n}'.format(n=graph_config['name']))
 
