@@ -85,7 +85,7 @@ def get_graph_config_lists():
     num_nodes_list = [300 * nc for nc in num_classes_list]
     class_distribution_list = [[1] * nc for nc in num_classes_list]
     eps_list = np.linspace(0, 0.5, 11)
-    percentage_labeled_list = [1, 5, 10, 15]
+    percentage_labeled_list = [0, 1, 5, 10, 15]
     config_lists = {'eps_list': eps_list,
                     'percentage_labeled_list': percentage_labeled_list,
                     'sbm_config_list': [{'num_classes': cnd[0], 'num_nodes': cnd[1], 'class_distribution': cnd[2]}
