@@ -1,0 +1,212 @@
+import json
+import os
+import time
+import warnings
+
+import numpy as np
+from sklearn.metrics import adjusted_rand_score, f1_score
+
+from src.graphs import graph_factory
+from src.tools.graph_tools import select_labels
+
+
+# from src.node_learning.TVMinimization import TV
+
+
+class ClassificationSimulation:
+
+    def __init__(self, graph_config_list=None, methods_list=None):
+        self.graph_config_list = graph_config_list
+
+        self.methods_list = []
+        if methods_list is not None:
+            self.add_method(methods_list)
+
+        self.embedding = {}
+        self.l_est = {}
+        self.t_run = {}
+        self.sim_id = -1
+        self.graph = None
+        self.labels = None
+        self.current_graph_config = None
+        self.current_percentage_labeled = None
+        self.current_is_percentage = None
+
+    #
+    # def add_method(self, method_config):
+    #     if type(method_config) is list:
+    #         for mc in method_config:
+    #             self.add_method(mc)
+    #     else:
+    #         name = method_config['name']
+    #         if name not in self.method_config_list:
+    #             self.method_config_list[name] = (method_config['method'], method_config['initialization'])
+    #         else:
+    #             warnings.warn('method already added in the list. overwriting old config')
+    #             self.method_config_list[name] = method_config
+
+
+    def add_method(self, method):
+        '''
+
+        :param method: a dict with necessary fields 'name' and 'config' and optional field 'initialization'. If
+        'initialization' is present then the result of this method will be used as initial guess for the current
+        method :return:
+        '''
+        if type(method) is list:
+            for method in method:
+                self.add_method(method)
+        else:
+            # gather names of all already added methods
+            methods_names = [method['name'] for method in self.methods_list]
+            # assert that current method has a name
+            assert 'name' in method.keys()
+            # add if name not already in list
+            if method['name'] in methods_names:
+                warnings.warn('method already added in the list. Ovewriting old config')
+            if 'initialization' in method.keys() and method['initialization'] not in methods_names:
+                raise ValueError(method['initialization'] + ' not yet added to the list of methods. Please add dependent methods after their dependency')
+            self.methods_list.append(method)
+
+    def add_graphs(self, graph_config):
+        if type(graph_config) is list:
+            for graph in graph_config:
+                self.add_graphs(graph)
+        else:
+            # gather names of all already added graph configs
+            graph_names = [graph['name'] for graph in self.graph_config_list]
+            assert 'name' in graph_config.keys()
+            assert 'percentage_labeled' in graph_config.keys()
+            assert 'is_percentage' in graph_config.keys()
+            # add if name not already in list
+            if graph_config['name'] not in graph_names:
+                self.graph_config_list.append(graph_config)
+            else:
+                warnings.warn('graph config already added in the list')
+
+    def __get_config(self, sim_id):
+        graph_config = self.graph_config_list[sim_id % len(self.graph_config_list)].copy()
+        percentage_labeled = graph_config.pop('percentage_labeled')
+        is_percentage = graph_config.pop('is_percentage')
+        return graph_config, percentage_labeled, is_percentage
+
+    def __get_graph(self, sim_id):
+        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        graph = graph_factory.make_graph(**graph_config)
+        if 'str' in graph_config.keys():
+            print(graph_config['str'])
+
+        labels = select_labels(graph, percentage_labeled, is_percentage=is_percentage)
+        return graph, labels
+
+    def run_simulation(self, sim_id):
+        np.random.seed(sim_id)
+        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        self.graph, self.labels = self.__get_graph(sim_id)
+        print('running simulations for {n}'.format(n=graph_config['name']))
+
+
+
+        for method in self.methods_list:
+            name = method.pop('name')
+            print('method: {name}'.format(name=name))
+            # if 'num_classes' not in method.keys() and 'num_classes' in method.keys():
+            #     method['num_classes'] = method.pop('num_classes')
+            # elif 'num_classes' not in method.keys():
+            #     method['num_classes'] = self.graph.K0
+
+            # l_guess = self.l_est[]
+            t_start = time.time()
+            self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
+            self.embedding[name] = method['method'].embedding
+            t_stop = time.time()
+            self.t_run[name] = t_stop - t_start
+            n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
+            print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
+        self.current_graph_config = graph_config.copy()
+        self.current_percentage_labeled = percentage_labeled
+        self.current_is_percentage = is_percentage
+        self.sim_id = sim_id
+
+
+
+
+    def save_results(self, results_dir, split_file=False):
+        if self.sim_id >= 0:
+            # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
+            # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
+            num_nodes = self.graph.num_nodes
+            num_classes = self.graph.num_classes
+            num_labels = len(self.labels['i'])
+
+            # embedding_gt = -np.ones((num_nodes,num_classes))
+            # embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
+            # tv_gt = TV(self.graph.W0,embedding_gt,1)
+
+            results = {}
+            results__ = {'pid': self.sim_id,
+                         'graph_name': self.current_graph_config['name'],
+                         'graph_config': self.current_graph_config,
+                         'percentage_labeled': self.current_percentage_labeled,
+                         'num_nodes': num_nodes,
+                         # 'tv_gt': tv_gt
+                         }
+
+            if 'result_fields' in self.current_graph_config.keys():
+                results__.update(self.current_graph_config['result_fields'])
+
+            if not split_file:
+                results = results__
+
+            for name, l_est in self.l_est.items():
+                is_wrong = np.array(self.graph.class_labels) != np.array(l_est)
+                is_label = np.zeros(num_nodes, dtype=bool)
+                is_label[self.labels['i']] = True
+                n_err_total = int(np.sum(is_wrong))
+                n_err_labeled = int(np.sum(is_wrong[is_label]))
+                n_err_unlabeled = n_err_total - n_err_labeled
+                acc_total = 1 - n_err_total / num_nodes
+                acc_labeled = 1 - n_err_labeled / num_labels
+                acc_unlabeled = 1 - n_err_unlabeled / (num_nodes - num_labels)
+                ari = adjusted_rand_score(l_est, self.graph.class_labels)
+                f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
+                f1_macro = f1_score(self.graph.class_labels, l_est, average='macro')
+
+                # embedding = -np.ones((num_nodes,num_classes))
+                # embedding[np.arange(num_nodes), l_est] = 1
+                # tv = TV(self.graph.weights,embedding,1)
+
+                results_ = {'n_err_total': n_err_total,
+                            'n_err_labeled': n_err_labeled,
+                            'n_err_unlabeled': n_err_unlabeled,
+                            'acc_total': acc_total,
+                            'acc_labeled': acc_labeled,
+                            'acc_unlabeled': acc_unlabeled,
+                            'ari': ari,
+                            'f1_micro': f1_micro,
+                            'f1_macro': f1_macro,
+                            # 'tv': tv,
+                            't_run': self.t_run[name]}
+
+                if not split_file:
+                    keys = ['{k}_{n}'.format(k=key, n=name) for key in results_.keys()]
+                    results_ = dict(zip(keys,list(results_.values())))
+                    results.update(results_)
+                else:
+                    results[name] = results_
+                    results[name]['method_name'] = name
+                    results[name].update(results__)
+
+            if not split_file:
+                results_file_name = os.path.join(results_dir, '{id}.json'.format(id=self.sim_id))
+                with open(results_file_name, 'w') as results_file:
+                    json.dump(results, results_file)
+            else:
+                for name in self.l_est.keys():
+                    result = results[name]
+                    results_file_name = os.path.join(results_dir, '{id}_{n}.json'.format(id=self.sim_id, n=name))
+                    with open(results_file_name, 'w') as results_file:
+                        json.dump(result, results_file)
+
+        else:
+            raise RuntimeError('need to run the simulation before saving results')
