@@ -1,6 +1,6 @@
 import os
 
-results_dir = {'global': os.path.join('results', 'DSLW2022')}
+results_dir = {'global': os.path.join('results', 'SCLC')}
 plots_dir = {'global': os.path.join(results_dir['global'], 'plots')}
 
 results_dir['sbm_sim'] = os.path.join(results_dir['global'], 'sbm_sim')
