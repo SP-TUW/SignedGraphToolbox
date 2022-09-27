@@ -103,7 +103,8 @@ class LsbmMap(NodeLearner):
             x0 = x0 + 1e-1 * np.random.randn(num_nodes, self.num_classes)
             x0 = _projection(x0, labels)
         else:
-            x0 = guess * np.ones((num_nodes, self.num_classes))
+            x0 = 0.45 * np.ones((num_nodes, self.num_classes))
+            x0[range(num_nodes),guess] = 0.55
             x0 = _projection(x0, labels)
 
         x_new = _projection(x0, labels)
@@ -129,7 +130,7 @@ class LsbmMap(NodeLearner):
                 else:
                     tau = tau/2
             if self.verbosity > 0 and t % 10 == 0:
-                print('{t:4d}, {n:e}'.format(t=t, n=np.linalg.norm(direction)))
+                print('{t:4d}, {n:e}, {o:e}'.format(t=t, n=np.linalg.norm(direction), o=f_x_new))
             t = t + 1
             converged = np.linalg.norm(direction) < np.sqrt(num_nodes * self.num_classes) * self.eps and t>1
             if not converged and t > self.t_max:
