@@ -115,7 +115,10 @@ class ClassificationSimulation:
             # elif 'num_classes' not in method.keys():
             #     method['num_classes'] = self.graph.K0
 
-            # l_guess = self.l_est[]
+            if 'l_guess' in method:
+                l_guess = self.l_est[method['l_guess']]
+            else:
+                l_guess = None
             t_start = time.time()
             l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
             t_stop = time.time()
@@ -124,7 +127,6 @@ class ClassificationSimulation:
             else:
                 self.l_est[name] = l_est
             self.embedding[name] = method['method'].embedding
-            t_stop = time.time()
             self.t_run[name] = t_stop - t_start
             n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
             print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
