@@ -117,7 +117,12 @@ class ClassificationSimulation:
 
             # l_guess = self.l_est[]
             t_start = time.time()
-            self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
+            l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
+            t_stop = time.time()
+            if 'is_unsupervised' in method and method['is_unsupervised']:
+                self.l_est[name] = find_min_err_label_permutation(l_est, self.graph.class_labels, self.graph.num_classes, self.graph.num_classes)
+            else:
+                self.l_est[name] = l_est
             self.embedding[name] = method['method'].embedding
             t_stop = time.time()
             self.t_run[name] = t_stop - t_start
