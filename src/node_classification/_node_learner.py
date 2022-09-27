@@ -10,6 +10,7 @@ class NodeLearner:
         self.save_intermediate = save_intermediate
         self.intermediate_results = None
         self.l_est = None
+        self.embedding = None
 
     @abstractmethod
     def estimate_labels(self, data, labels=None, guess=None):
