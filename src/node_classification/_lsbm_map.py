@@ -77,13 +77,8 @@ def _calc_edge_probabilities(pi, pe, li, le, num_classes=2):
 
 class LsbmMap(NodeLearner):
     def __init__(self, pi, pe, li, le, num_classes=2, class_distribution=None, verbosity=0, save_intermediate=False, eps=1e-5, t_max=1e5):
-        self.num_classes = num_classes
-        self.verbosity = verbosity
         self.eps = eps
         self.t_max = t_max
-        self.save_intermediate = save_intermediate
-        self.intermediate_results = None
-        self.embedding = None
         self.use_quadratic = False
 
         if class_distribution is None:
