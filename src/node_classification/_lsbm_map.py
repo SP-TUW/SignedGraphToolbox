@@ -1,7 +1,6 @@
 import warnings
 
 import numpy as np
-from sklearn.utils.multiclass import class_distribution
 
 from src.tools.projections import simplex_projection, label_projection
 from ._node_learner import NodeLearner
