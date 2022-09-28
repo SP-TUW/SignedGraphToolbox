@@ -1,5 +1,8 @@
 *
 
+!/condor/
+!/condor/LSBM_MAP/
+!/condor/SCLC/
 !/docs/
 !/src/
 !/src/graps/
@@ -10,6 +13,9 @@
 !/src/node_classification/
 !/src/tools/
 
+!/condor/*
+!/condor/LSBM_MAP/*
+!/condor/SCLC/*
 !/src/*.py
 !/src/graps/*.py
 !/src/launcher/*.py
