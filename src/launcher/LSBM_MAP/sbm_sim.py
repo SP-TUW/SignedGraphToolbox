@@ -87,7 +87,7 @@ def get_graph_config_lists(sim_id):
         num_classes_list = [2, 2, 2]
         num_nodes_list = [1000, 1000, 1000]
         class_distribution_list = [[1, 1], [1, 1], [1, 1]]
-        percentage_labeled_list = [0, 0, 0]
+        percentage_labeled_list = [0]
         scale_pi = [3/8, 6/8, 12/8]
         scale_pe = [1/8, 4/8, 8/8]
         eps_list = np.linspace(0, 0.5, 11)
