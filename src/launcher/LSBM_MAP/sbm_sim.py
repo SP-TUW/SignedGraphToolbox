@@ -175,9 +175,10 @@ if __name__ == '__main__':
         elif args[1] == '-c':
             combine_results()
         elif args[1] == '-n':
-            config_lists = get_graph_config_lists()
-            sim = SBMSimulation(**config_lists)
-            print('{n} configs in this simulation'.format(n=len(sim.graph_config_list)))
+            for i in range(1):
+                config_lists = get_graph_config_lists(sim_id=i)
+                sim = SBMSimulation(**config_lists)
+                print('{n} configs in simulation {i}'.format(n=len(sim.graph_config_list),i=i))
         elif args[1] == '-p':
             plot()
         else:
