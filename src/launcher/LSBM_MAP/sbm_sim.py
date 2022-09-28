@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.launcher.SCLC import constants
+from src.launcher.LSBM_MAP import constants
 from src.node_classification import LsbmMap, LsbmMlLelarge
 
 
