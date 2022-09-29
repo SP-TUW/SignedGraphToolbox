@@ -13,5 +13,5 @@ class NodeLearner:
         self.embedding = None
 
     @abstractmethod
-    def estimate_labels(self, data, labels=None, guess=None):
+    def estimate_labels(self, graph, labels=None, guess=None):
         pass
