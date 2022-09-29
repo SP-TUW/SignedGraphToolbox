@@ -11,73 +11,85 @@ from src.node_classification import LsbmMap, LsbmMlLelarge
 def make_result_dirs():
     print('making result and plot directories')
     from pathlib import Path
-    Path(constants.results_dir['sbm_sim']).mkdir(parents=True, exist_ok=True)
+    for dir in constants.results_dir['sbm_sim']:
+        Path(dir).mkdir(parents=True, exist_ok=True)
     Path(constants.plots_dir['sbm_sim']).mkdir(parents=True, exist_ok=True)
 
 
 def combine_results():
     print('combining results')
     from src.tools.combine_results import combine_results as cr
-    cr(constants.results_dir['sbm_sim'], has_lists=False)
+    for dir in constants.results_dir['sbm_sim']:
+        cr(dir, has_lists=False)
 
 
 def plot():
     print('plotting')
-    import numpy as np
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
     import itertools
 
-    results_file_name = os.path.join(constants.results_dir['sbm_sim'], 'comb.json')
-    with open(results_file_name) as results_file:
-        results = json.load(results_file)
+    groups = [['eps', 'scale_pi'],
+              ['eps', 'num_classes'],
+              ['eps', 'num_classes']]
 
-    del results['graph_config']
-    results_df = pd.DataFrame(results)
+    for sim_id in range(3):
+        results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
+        with open(results_file_name) as results_file:
+            results = json.load(results_file)
 
-    mean_results = results_df.groupby(['eps', 'percentage_labeled', 'num_classes']).mean().reset_index(level=[1, 2])
-    num_classes_list = results_df['num_classes'].unique()
-    for pl, nc in itertools.product(results_df['percentage_labeled'].unique(), results_df['num_classes'].unique()):
-        subdf = mean_results[mean_results['percentage_labeled'] == pl]
-        for nc in num_classes_list:
-            subdf[subdf['num_classes'] == nc].to_csv(
-                os.path.join(constants.plots_dir['sbm_sim'], 'sbm_mean_{n}_{pl}.csv'.format(n=nc, pl=pl)))
+        del results['graph_config']
+        results_df = pd.DataFrame(results)
 
-    names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
-    global_cols = ['eps', 'percentage_labeled']
-    name_dfs = []
-    for name in names:
-        name_cols = [col for col in results_df.columns if col.endswith(name)]
-        cols = [col[:-len(name) - 1] for col in name_cols]
-        name_df = results_df[global_cols + name_cols]
-        name_df.columns = global_cols + cols
+        mean_results = results_df.groupby(groups[sim_id]).mean().reset_index(level=list(range(1, len(groups[sim_id]))))
+        unique_lists = []
+        for grouping in groups[sim_id][1:]:
+            unique_lists.append(results_df[grouping].unique())
+        for ind in itertools.product(*unique_lists):
+            mask = np.ones(mean_results.shape[0],dtype=bool)
+            csv_file_name = 'sbm_mean_sim_{sid}'.format(sid=sim_id)
+            for key, val in zip(groups[sim_id][1:],ind):
+                mask = np.bitwise_and(mask, mean_results[key] == val)
+                csv_file_name += '_{k}_{v}'.format(k=key,v=val)
+            csv_file_name += '.csv'
+            subdf = mean_results[mask]
+            subdf.to_csv(os.path.join(constants.plots_dir['sbm_sim'], csv_file_name))
 
-        pd.options.mode.chained_assignment = None
-        name_df.loc[:, 'name'] = name
-        pd.options.mode.chained_assignment = 'warn'
+        names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
+        global_cols = ['eps', 'scale_pi']
+        name_dfs = []
+        for name in names:
+            name_cols = [col for col in results_df.columns if col.endswith(name)]
+            cols = [col[:-len(name) - 1] for col in name_cols]
+            name_df = results_df[global_cols + name_cols]
+            name_df.columns = global_cols + cols
 
-        name_dfs.append(name_df)
-        pass
-    results_df = pd.concat(name_dfs, ignore_index=True)
-    results_mean = results_df.groupby(['name', 'eps', 'percentage_labeled']).mean().reset_index()
+            pd.options.mode.chained_assignment = None
+            name_df.loc[:, 'name'] = name
+            pd.options.mode.chained_assignment = 'warn'
 
-    sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='percentage_labeled', style='name')
-    plt.show()
-    sns.lineplot(data=results_mean, x='eps', y='t_run', hue='percentage_labeled', style='name')
-    plt.show()
+            name_dfs.append(name_df)
+            pass
+        results_df = pd.concat(name_dfs, ignore_index=True)
+        results_mean = results_df.groupby(['name', 'eps', 'scale_pi']).mean().reset_index()
 
-    x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
-    with open(x_filename) as x_file:
-        x = json.load(x_file)
+        sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='scale_pi', style='name')
+        plt.show()
+        sns.lineplot(data=results_mean, x='eps', y='t_run', hue='scale_pi', style='name')
+        plt.show()
 
-    x_array_style = {}
-    for key, val in x.items():
-        x_array = np.array(val)
-        for n in range(x_array.shape[1]):
-            x_array_style['{k}{n}'.format(k=key, n=n)] = x_array[:, n]
-    x_df = pd.DataFrame(x_array_style)
-    x_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], 'x.csv'))
+    # x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
+    # with open(x_filename) as x_file:
+    #     x = json.load(x_file)
+    #
+    # x_array_style = {}
+    # for key, val in x.items():
+    #     x_array = np.array(val)
+    #     for n in range(x_array.shape[1]):
+    #         x_array_style['{k}{n}'.format(k=key, n=n)] = x_array[:, n]
+    # x_df = pd.DataFrame(x_array_style)
+    # x_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], 'x.csv'))
 
 
 def get_graph_config_lists(sim_id):
@@ -154,10 +166,10 @@ def run(pid, sim_id):
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
-    sim.save_results(constants.results_dir['sbm_sim'], split_file=False)
+    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False)
 
     if pid < len(config_lists):
-        filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
+        filename = os.path.join(constants.plots_dir['sbm_sim'][sim_id], 'x_s{sid}_p{pid}.json'.format(sid=sim_id,pid=pid))
         x_lists = {k: v.tolist() for k,v in sim.embedding.items()}
         with open(filename, 'w') as x_file:
             json.dump(x_lists, x_file)
