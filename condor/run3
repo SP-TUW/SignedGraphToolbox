@@ -3,7 +3,7 @@
 # Usage: ./condor_matlab paramfile numjobs
 project=$1
 simulation=$2
-mkdir -p condor/$project/condor_log/$simulation_$(sim_id)
+mkdir -p condor/$project/condor_log/$simulation_$sim_id
 sed -r -e {s/OFFSET/$3/} -e {s/NRJOBS/$4/} -e {s/PARAM/$5/} condor/$project/$simulation.condor.submitfile > condor/$project/condor.submitfile
 condor_submit condor/$project/condor.submitfile
 rm condor/$project/condor.submitfile
