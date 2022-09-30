@@ -10,6 +10,6 @@ simid=$5
 echo making dir condor/${project}/condor_log/${simulation}_${simid}
 mkdir -p condor/${project}/condor_log/${simulation}_${simid}
 
-sed -r -e {s/OFFSET/${offset}/} -e {s/NRJOBS/${nrjobs}/} -e {s/PARAM/$5{simid}/} condor/$project/$simulation.condor.submitfile > condor/$project/condor.submitfile
+sed -r -e {s/OFFSET/${offset}/} -e {s/NRJOBS/${nrjobs}/} -e {s/PARAM/${simid}/} condor/$project/$simulation.condor.submitfile > condor/$project/condor.submitfile
 condor_submit condor/$project/condor.submitfile
 rm condor/$project/condor.submitfile
