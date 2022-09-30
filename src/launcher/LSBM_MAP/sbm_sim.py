@@ -200,7 +200,7 @@ def run(pid, sim_id):
     sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False)
 
     if pid < len(config_lists):
-        filename = os.path.join(constants.plots_dir['sbm_sim'][sim_id],
+        filename = os.path.join(constants.plots_dir['sbm_sim'],
                                 'x_s{sid}_p{pid}.json'.format(sid=sim_id, pid=pid))
         x_lists = {k: v.tolist() for k, v in sim.embedding.items()}
         with open(filename, 'w') as x_file:
