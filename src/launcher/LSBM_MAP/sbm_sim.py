@@ -170,9 +170,9 @@ def get_methods(graph_config, sim_id):
              'method': Sponge(num_classes=num_classes)},
             {'name': 'sbm_sp_yun', 'is_unsupervised': True,
              'method': SbmSpYun(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, class_distribution=class_distribution)},
-            {'name': 'sbm_sp_yun_sponge', 'is_unsupervised': True, 'l_guess': 'sbm_sp_yun',
+            {'name': 'sbm_sp_yun_sponge', 'is_unsupervised': True, 'l_guess': 'sponge',
              'method': SbmSpYun(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, class_distribution=class_distribution)},
-            {'name': 'lsbm_map', 'is_unsupervised': True, 'l_guess': 'sbm_sp_yun',
+            {'name': 'lsbm_map', 'is_unsupervised': True, 'l_guess': 'sponge',
              'method': LsbmMap(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, verbosity=1,
                                class_distribution=class_distribution, eps=eps, t_max=1e5)},
         ]
