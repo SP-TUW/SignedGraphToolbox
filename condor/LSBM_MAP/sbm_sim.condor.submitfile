@@ -19,8 +19,8 @@ Requirements    =       (Machine != "condor01.nt.tuwien.ac.at")
 initialdir  	= 	/Network/Servers/xserve.nt.tuwien.ac.at/Volumes/server/Users/tdittrich/GSPSimulator/SignedGraphToolboxPrivate/
 Rank            =       Kflops
 executable      =       condor/pythonWrapper.sh
-log             =       condor/$(project)/condor_log/sbm_sim/sim.log
-output          =       condor/$(project)/condor_log/sbm_sim/sim.out.$(Process).log
-error           =       condor/$(project)/condor_log/sbm_sim/sim.err.$(Process).log
+log             =       condor/$(project)/condor_log/sbm_sim_$(sim_id)/sim.log
+output          =       condor/$(project)/condor_log/sbm_sim_$(sim_id)/sim.out.$(Process).log
+error           =       condor/$(project)/condor_log/sbm_sim_$(sim_id)/sim.err.$(Process).log
 Arguments       =       src.launcher.LSBM_MAP.sbm_sim $(pid_offset) $(Process) $(sim_id)
 Queue $(nr_jobs)
