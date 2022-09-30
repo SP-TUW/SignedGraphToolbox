@@ -5,7 +5,7 @@ import numpy as np
 
 from src.launcher import SBMSimulation
 from src.launcher.LSBM_MAP import constants
-from src.node_classification import LsbmMap, LsbmMlLelarge, SbmMlHajek
+from src.node_classification import LsbmMap, LsbmMlLelarge, SbmMlHajek, SbmSpYun, Sponge
 
 
 def make_result_dirs():
@@ -103,12 +103,18 @@ def get_graph_config_lists(sim_id):
         scale_pi = [3 / 8, 6 / 8, 12 / 8]
         scale_pe = [1 / 8, 4 / 8, 8 / 8]
         eps_list = np.linspace(0, 0.5, 11)
-    else:
+    elif sim_id == 1:
         num_classes_list = [2, 5, 8]
         num_nodes_list = [120]*3
         class_distribution_list = [[1] * nc for nc in num_classes_list]
         eps_list = np.linspace(0, 0.5, 11)
-        percentage_labeled_list = [0, 1, 5, 10, 15]
+        percentage_labeled_list = [0]
+    else:
+        num_classes_list = [2, 5, 10]
+        num_nodes_list = [1000]*3
+        class_distribution_list = [[1] * nc for nc in num_classes_list]
+        eps_list = np.linspace(0, 0.5, 11)
+        percentage_labeled_list = [0]
 
     if scale_pi is None:
         scale_pi = [1] * len(num_classes_list)
@@ -156,7 +162,16 @@ def get_methods(graph_config, sim_id):
              'method': LsbmMap(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, verbosity=1,
                                class_distribution=class_distribution, eps=eps, t_max=1e5)},
         ]
-
+    elif sim_id == 2:
+        methods = [
+            {'name': 'sponge', 'is_unsupervised': True,
+             'method': Sponge(num_classes=num_classes)},
+            {'name': 'sbm_sp_yun', 'is_unsupervised': True,
+             'method': SbmSpYun(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, class_distribution=class_distribution)},
+            {'name': 'lsbm_map', 'is_unsupervised': True, 'l_guess': 'sbm_sp_yun',
+             'method': LsbmMap(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes, verbosity=1,
+                               class_distribution=class_distribution, eps=eps, t_max=1e5)},
+        ]
     else:
         methods = [
             {'name': 'lsbm_map', 'method': LsbmMap(pi=pi, pe=pe, li=li, le=le, num_classes=num_classes,
