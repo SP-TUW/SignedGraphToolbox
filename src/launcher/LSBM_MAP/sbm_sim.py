@@ -57,7 +57,7 @@ def plot():
             subdf.to_csv(os.path.join(constants.plots_dir['sbm_sim'], csv_file_name))
 
         names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
-        global_cols = ['eps', 'scale_pi']
+        global_cols = groups[sim_id]
         name_dfs = []
         for name in names:
             name_cols = [col for col in results_df.columns if col.endswith(name)]
@@ -72,11 +72,11 @@ def plot():
             name_dfs.append(name_df)
             pass
         results_df = pd.concat(name_dfs, ignore_index=True)
-        results_mean = results_df.groupby(['name', 'eps', 'scale_pi']).mean().reset_index()
+        results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
 
-        sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='scale_pi', style='name')
+        sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
         plt.show()
-        sns.lineplot(data=results_mean, x='eps', y='t_run', hue='scale_pi', style='name')
+        sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
         plt.show()
 
     # x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
