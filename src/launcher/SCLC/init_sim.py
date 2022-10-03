@@ -45,13 +45,20 @@ def plot():
         max_ = np.max(np.array(pl_df), axis=0)
         diff = max_[-1]-min_[-1]
         pl_df.reindex(index=pl_df.index[::-1])
-        for i, (y_min, y_max) in enumerate(zip([max_[-1]-0.02, min_[-1]-3*diff],[max_[-1]+0.005,max_[-1]+diff/2])):
+        limits = [[max_[-1]-0.02, min_[-1]-3*diff],[max_[-1]+0.005,max_[-1]+diff/2]]
+        if num_classes == 3:
+            limits = [[3.64],[3.79]]
+        elif num_classes == 5:
+            limits = [[5.63],[5.73]]
+        elif num_classes == 10:
+            limits = [[10.23],[10.33]]
+        for i, (y_min, y_max) in enumerate(zip(*limits)):
             for i_rep in reversed(pl_df.index):
                 rep = pl_df.loc[i_rep]
                 if i_rep == 0:
                     plt.semilogx(rep,'k')
                 else:
-                    plt.semilogx(rep,'lightgrey')
+                    plt.semilogx(rep,'darkgrey')
             x_max = 20000
             plt.ylim([y_min, y_max])
             plt.xlim([10, x_max])
