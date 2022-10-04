@@ -95,26 +95,20 @@ def plot():
 def get_graph_config_lists(sim_id):
     scale_pi = None
     scale_pe = None
+    eps_list = np.linspace(0, 0.5, 11)
+    percentage_labeled_list = [0]
     if sim_id == 0:
         num_classes_list = [2, 2, 2]
-        num_nodes_list = [1000, 1000, 1000]
-        class_distribution_list = [[1, 1], [1, 1], [1, 1]]
-        percentage_labeled_list = [0]
+        num_nodes_list = [1000]*3
         scale_pi = [3 / 8, 6 / 8, 12 / 8]
         scale_pe = [1 / 8, 4 / 8, 8 / 8]
-        eps_list = np.linspace(0, 0.5, 11)
     elif sim_id == 1:
         num_classes_list = [2, 5, 8]
         num_nodes_list = [120]*3
-        class_distribution_list = [[1] * nc for nc in num_classes_list]
-        eps_list = np.linspace(0, 0.5, 11)
-        percentage_labeled_list = [0]
     else:
         num_classes_list = [2, 5, 10]
         num_nodes_list = [1000]*3
-        class_distribution_list = [[1] * nc for nc in num_classes_list]
-        eps_list = np.linspace(0, 0.5, 11)
-        percentage_labeled_list = [0]
+    class_distribution_list = [[1] * nc for nc in num_classes_list]
 
     if scale_pi is None:
         scale_pi = [1] * len(num_classes_list)
