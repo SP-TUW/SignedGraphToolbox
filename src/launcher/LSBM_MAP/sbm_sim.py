@@ -199,7 +199,7 @@ def run(pid, sim_id):
     sim.run_simulation(pid)
     sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False)
 
-    if pid < len(config_lists):
+    if pid < len(sim.graph_config_list):
         filename = os.path.join(constants.plots_dir['sbm_sim'],
                                 'x_s{sid}_p{pid}.json'.format(sid=sim_id, pid=pid))
         x_lists = {k: v.tolist() for k, v in sim.embedding.items()}
