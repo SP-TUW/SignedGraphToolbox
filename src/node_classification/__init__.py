@@ -7,4 +7,9 @@ Usage:
     - use instance.estimate_labels(...) to estimate the labels for all nodes of the graph
 '''
 
+from src.node_classification._lsbm_map import LsbmMap
+from src.node_classification._lsbm_ml_lelarge import LsbmMlLelarge
+from src.node_classification._sbm_ml_hajek import SbmMlHajek
+from src.node_classification._sbm_sp_yun import SbmSpYun
 from src.node_classification._spectral_learning import SpectralLearning
+from src.node_classification._sponge import Sponge

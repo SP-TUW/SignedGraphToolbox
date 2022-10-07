@@ -8,6 +8,7 @@ from sklearn.metrics import adjusted_rand_score, f1_score
 
 from src.graphs import graph_factory
 from src.tools.graph_tools import select_labels
+from src.tools.simulation_tools import find_min_err_label_permutation
 
 
 # from src.node_learning.TVMinimization import TV
@@ -84,14 +85,14 @@ class ClassificationSimulation:
             else:
                 warnings.warn('graph config already added in the list')
 
-    def __get_config(self, sim_id):
+    def get_graph_config(self, sim_id):
         graph_config = self.graph_config_list[sim_id % len(self.graph_config_list)].copy()
         percentage_labeled = graph_config.pop('percentage_labeled')
         is_percentage = graph_config.pop('is_percentage')
         return graph_config, percentage_labeled, is_percentage
 
     def __get_graph(self, sim_id):
-        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
         graph = graph_factory.make_graph(**graph_config)
         if 'str' in graph_config.keys():
             print(graph_config['str'])
@@ -101,7 +102,7 @@ class ClassificationSimulation:
 
     def run_simulation(self, sim_id):
         np.random.seed(sim_id)
-        graph_config, percentage_labeled, is_percentage = self.__get_config(sim_id)
+        graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
         self.graph, self.labels = self.__get_graph(sim_id)
         print('running simulations for {n}'.format(n=graph_config['name']))
 
@@ -115,11 +116,18 @@ class ClassificationSimulation:
             # elif 'num_classes' not in method.keys():
             #     method['num_classes'] = self.graph.K0
 
-            # l_guess = self.l_est[]
+            if 'l_guess' in method:
+                l_guess = self.l_est[method['l_guess']]
+            else:
+                l_guess = None
             t_start = time.time()
-            self.l_est[name] = method['method'].estimate_labels(self.graph, labels=self.labels)
-            self.embedding[name] = method['method'].embedding
+            l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
             t_stop = time.time()
+            if 'is_unsupervised' in method and method['is_unsupervised']:
+                self.l_est[name] = find_min_err_label_permutation(l_est, self.graph.class_labels, self.graph.num_classes, self.graph.num_classes)
+            else:
+                self.l_est[name] = l_est
+            self.embedding[name] = method['method'].embedding
             self.t_run[name] = t_stop - t_start
             n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
             print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
@@ -166,7 +174,7 @@ class ClassificationSimulation:
                 n_err_labeled = int(np.sum(is_wrong[is_label]))
                 n_err_unlabeled = n_err_total - n_err_labeled
                 acc_total = 1 - n_err_total / num_nodes
-                acc_labeled = 1 - n_err_labeled / num_labels
+                acc_labeled = 1 - n_err_labeled / max(1,num_labels)
                 acc_unlabeled = 1 - n_err_unlabeled / (num_nodes - num_labels)
                 ari = adjusted_rand_score(l_est, self.graph.class_labels)
                 f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')

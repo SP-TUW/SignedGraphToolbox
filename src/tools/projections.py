@@ -2,6 +2,40 @@ import numpy as np
 import warnings
 
 
+def label_projection(x_in, labels):
+    x_out = x_in.copy()
+    if labels is not None:
+        x_out[labels['i'], :] = -1
+        x_out[labels['i'], labels['k']] = 1
+    return x_out
+
+
+def simplex_projection(x, a=1, axis=1):
+    '''
+    Implementation of the algorithm for projection onto a simplex from :cite:p:`Duc08Simplex`
+
+    :param x: ndarray input which should be projected.
+    :param a: scalar value for the sum constraint
+    :param axis: scalar axis over which the projection should operate.
+    :return: projection of x onto the simplex with the constraint numpy.sum(x,axis=axis)==a
+    '''
+    if a > 0:
+        K = x.shape[axis]
+        u = -np.sort(-x, axis=axis)  # sort descending
+        cs = np.cumsum(u, axis=axis)
+        shape_without_axis = np.array(x.shape)
+        shape_without_axis[axis] = 1
+        j = np.arange(K) + 1
+        j = np.broadcast_to(j, x.shape)
+        j = np.moveaxis(j, -1, axis)
+        u_ = u - 1 / j * (cs - a)
+        r = np.count_nonzero(u_ > 0, axis=axis, keepdims=True)
+        # cumsum up to the r-th element
+        cs_r = np.take_along_axis(cs, r - 1, axis=axis)
+        l = (a - cs_r) / r
+        return np.maximum(x + l, 0)
+    else:
+        raise ValueError('Projection is only possible for positive sum constraints')
 
 
 def unitarization(x):

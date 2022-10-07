@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 def str_to_enum(str_val, enum):
     if str_val not in enum.__members__:
@@ -7,6 +8,21 @@ def str_to_enum(str_val, enum):
                                                                                     members='\n\t'.join(list_of_names))
         raise ValueError(message)
     return enum[str_val]
+
+def find_min_err_label_permutation(l, l0, K, K0):
+    e = 0
+    C = np.zeros((K, K0))
+    E = np.zeros((K, K0))
+    for k0 in range(K0):
+        for k in range(K):
+            C[k, k0] = np.sum(l0[l == k] == k0)
+            E[k, k0] = np.sum(l0[l == k] != k0)
+
+    l_in, l_out = linear_sum_assignment(E)
+    l_min = l_out[l]
+    return l_min
+
+
 
 def calcNErr(l, l0, K, K0):
     e = 0
