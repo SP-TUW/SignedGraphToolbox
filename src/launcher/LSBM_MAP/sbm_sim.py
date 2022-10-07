@@ -79,17 +79,22 @@ def plot():
         sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
         plt.show()
 
-    # x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')
-    # with open(x_filename) as x_file:
-    #     x = json.load(x_file)
-    #
-    # x_array_style = {}
-    # for key, val in x.items():
-    #     x_array = np.array(val)
-    #     for n in range(x_array.shape[1]):
-    #         x_array_style['{k}{n}'.format(k=key, n=n)] = x_array[:, n]
-    # x_df = pd.DataFrame(x_array_style)
-    # x_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], 'x.csv'))
+    plots_folder = constants.plots_dir['sbm_sim']
+    for root, subdirs, files in os.walk(plots_folder):
+        for x_json_name in files:
+            if x_json_name.startswith("x") and x_json_name.endswith(".json"):
+                x_csv_name = x_json_name[:-4]+'csv'
+                with open(os.path.join(plots_folder,x_json_name)) as x_file:
+                    x = json.load(x_file)
+
+                x_array_style = {}
+                for key, val in x.items():
+                    x_array = np.array(val)
+                    x_array = np.sort(x_array,axis=0)
+                    for n in range(x_array.shape[1]):
+                        x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n]
+                x_df = pd.DataFrame(x_array_style)
+                x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
 def get_graph_config_lists(sim_id):
