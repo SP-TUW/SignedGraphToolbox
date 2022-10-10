@@ -17,6 +17,7 @@
 !/condor/*
 !/condor/LSBM_MAP/*
 !/condor/SCLC/*
+!/condor/TV_CONVEX/*
 !/src/*.py
 !/src/graps/*.py
 !/src/launcher/*.py
