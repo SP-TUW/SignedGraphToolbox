@@ -18,6 +18,7 @@ class Graph(ABC):
         self.num_classes = num_classes
         self.class_labels = class_labels
         self.weights = csr_matrix(weights)
+        self.weights.eliminate_zeros()
         if weights_neg is not None:
             self.w_pos = csr_matrix(weights).maximum(0)
             self.w_neg = csr_matrix(weights_neg).maximum(0)
