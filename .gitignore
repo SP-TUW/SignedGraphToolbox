@@ -9,6 +9,7 @@
 !/src/launcher/
 !/src/launcher/LSBM_MAP/
 !/src/launcher/SCLC/
+!/src/launcher/TV_CONVEX/
 !/src/metric_learning/
 !/src/node_classification/
 !/src/tools/
@@ -21,6 +22,7 @@
 !/src/launcher/*.py
 !/src/launcher/LSBM_MAP/*.py
 !/src/launcher/SCLC/*.py
+!/src/launcher/TV_CONVEX/*.py
 !/src/metric_learning/*.py
 !/src/node_classification/*.py
 !/src/tools/*.py
