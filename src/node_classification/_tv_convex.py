@@ -1,13 +1,13 @@
-from src.node_classification._node_learner import NodeLearner
+import warnings
 
 import numpy as np
-from src.tools.projections import simplex_projection, label_projection
-from src.graphs import Graph
 from numpy import sqrt
 from numpy.linalg import norm
-from numpy.random import randn
 from scipy import sparse as sps
-import warnings
+
+from src.graphs import Graph
+from src.node_classification._node_learner import NodeLearner
+from src.tools.projections import simplex_projection, label_projection
 
 
 def _roundSolution(X):
