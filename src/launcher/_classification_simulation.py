@@ -145,9 +145,9 @@ class ClassificationSimulation:
             num_classes = self.graph.num_classes
             num_labels = len(self.labels['i'])
 
-            embedding_gt = -np.ones((num_nodes,num_classes))
-            embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
-            cut_gt = calc_signed_cut(self.graph.weights,embedding_gt)
+            # embedding_gt = -np.ones((num_nodes,num_classes))
+            # embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
+            cut_gt = calc_signed_cut(self.graph.weights,self.graph.class_labels)
 
             results = {}
             results__ = {'pid': self.sim_id,
@@ -178,9 +178,9 @@ class ClassificationSimulation:
                 f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
                 f1_macro = f1_score(self.graph.class_labels, l_est, average='macro')
 
-                embedding = -np.ones((num_nodes,num_classes))
-                embedding[np.arange(num_nodes), l_est] = 1
-                cut = calc_signed_cut(self.graph.weights,embedding)
+                # embedding = -np.ones((num_nodes,num_classes))
+                # embedding[np.arange(num_nodes), l_est] = 1
+                cut = calc_signed_cut(self.graph.weights,l_est)
 
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
