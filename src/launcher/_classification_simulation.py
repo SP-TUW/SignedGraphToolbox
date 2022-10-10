@@ -9,6 +9,7 @@ from sklearn.metrics import adjusted_rand_score, f1_score
 from src.graphs import graph_factory
 from src.tools.graph_tools import select_labels
 from src.tools.simulation_tools import find_min_err_label_permutation
+from src.tools.graph_tools import calc_signed_cut
 
 
 # from src.node_learning.TVMinimization import TV
@@ -147,9 +148,9 @@ class ClassificationSimulation:
             num_classes = self.graph.num_classes
             num_labels = len(self.labels['i'])
 
-            # embedding_gt = -np.ones((num_nodes,num_classes))
-            # embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
-            # tv_gt = TV(self.graph.W0,embedding_gt,1)
+            embedding_gt = -np.ones((num_nodes,num_classes))
+            embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
+            cut_gt = calc_signed_cut(self.graph.weights,embedding_gt)
 
             results = {}
             results__ = {'pid': self.sim_id,
@@ -157,7 +158,7 @@ class ClassificationSimulation:
                          'graph_config': self.current_graph_config,
                          'percentage_labeled': self.current_percentage_labeled,
                          'num_nodes': num_nodes,
-                         # 'tv_gt': tv_gt
+                         'cut_gt': cut_gt
                          }
 
             if 'result_fields' in self.current_graph_config.keys():
@@ -180,9 +181,9 @@ class ClassificationSimulation:
                 f1_micro = f1_score(self.graph.class_labels, l_est, average='micro')
                 f1_macro = f1_score(self.graph.class_labels, l_est, average='macro')
 
-                # embedding = -np.ones((num_nodes,num_classes))
-                # embedding[np.arange(num_nodes), l_est] = 1
-                # tv = TV(self.graph.weights,embedding,1)
+                embedding = -np.ones((num_nodes,num_classes))
+                embedding[np.arange(num_nodes), l_est] = 1
+                cut = calc_signed_cut(self.graph.weights,embedding)
 
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
@@ -193,7 +194,7 @@ class ClassificationSimulation:
                             'ari': ari,
                             'f1_micro': f1_micro,
                             'f1_macro': f1_macro,
-                            # 'tv': tv,
+                            'cut': cut,
                             't_run': self.t_run[name]}
 
                 if not split_file:
