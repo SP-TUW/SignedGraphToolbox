@@ -4,8 +4,8 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.launcher.LSBM_MAP import constants
 from src.node_classification import SpectralLearning, TvConvex
+from . import constants
 
 
 def make_result_dirs():
