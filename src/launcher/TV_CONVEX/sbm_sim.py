@@ -98,8 +98,6 @@ def plot():
 
 
 def get_graph_config_lists(sim_id):
-    scale_pi = None
-    scale_pe = None
     eps_list = np.linspace(0, 0.5, 11)
     percentage_labeled_list = [10]
     if sim_id == 0:
