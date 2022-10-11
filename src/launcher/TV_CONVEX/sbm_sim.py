@@ -5,7 +5,7 @@ import numpy as np
 
 from src.launcher import SBMSimulation
 from src.node_classification import SpectralLearning, TvConvex
-from . import constants
+from src.launcher.TV_CONVEX import constants
 
 
 def make_result_dirs():
@@ -133,8 +133,13 @@ def get_methods(graph_config, sim_id):
     if sim_id == 0:
         methods = [
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-            {'name': 'tv', 'method': TvConvex(num_classes=num_classes, verbosity=1)},
-            {'name': 'tv_reg', 'method': TvConvex(num_classes=num_classes, verbosity=1, do_regularize=True)},
+            {'name': 'tv', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic=None, eps_rel=1e-2, eps_abs=1e-2)},
+            {'name': 'tv_resampling', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.05)},
+            {'name': 'tv_regularization90', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.9, return_min_tv=True)},
+            {'name': 'tv_regularization50', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.5, return_min_tv=True)},
+            {'name': 'tv_regularization10', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.1, return_min_tv=True)},
+            {'name': 'tv_regularization05', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.05, return_min_tv=True)},
+            {'name': 'tv_regularization00', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.0, return_min_tv=True)},
         ]
     else:
         raise ValueError('unknown sim_id')
