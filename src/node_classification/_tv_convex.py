@@ -95,6 +95,85 @@ def _get_regularizer(labels, is_sim_neighbor, reg_weights):
     return regularizer
 
 
+def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0, y0, y1, save_intermediate, verbosity,
+                               penalty_parameter, **kwargs):
+    num_nodes = graph.num_nodes
+
+    labels_i = np.array(labels['i'])
+    labels_k = np.array(labels['k'])
+
+    resampled_labels = {'i': labels['i'].copy(),
+                        'k': labels['k'].copy()}
+
+    is_label = np.zeros(num_nodes, dtype=bool)
+    label_encoding = np.zeros((num_nodes, num_classes))
+
+    is_label[labels['i']] = True
+    label_encoding[is_label, :] = -1
+    label_encoding[is_label, labels['k']] = 1
+
+    X = x0
+    Yt = y0
+    Ytp1 = y1
+
+    num_resampled = np.sum(labels_k[:,None]==np.arange(num_classes)[None,:],axis=0)
+
+    converged = False
+    while not converged:
+        l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results = _run_augmented_admm(graph=graph,
+                                                                                            num_classes=num_classes,
+                                                                                            labels=resampled_labels,
+                                                                                            verbosity=verbosity,
+                                                                                            return_state=True, x0=X,
+                                                                                            y0=Yt, y1=Ytp1,
+                                                                                            penalty_parameter=penalty_parameter,
+                                                                                            save_intermediate=save_intermediate,
+                                                                                            **kwargs)
+        is_degenerate = np.all(X <= resampling_x_min, axis=1)
+        num_degenerate = np.sum(is_degenerate)
+        if num_degenerate>0:
+            if verbosity>=1:
+                print('{n} degenerate entries left'.format(n=num_degenerate))
+            l_est_rand_resolve = l_est.copy()
+            l_est_rand_resolve[is_degenerate] = np.random.randint(0,num_classes,num_degenerate)
+            x_switch = -np.ones((num_nodes,num_classes))
+            x_switch[range(num_nodes),l_est_rand_resolve] = 1
+
+            class_size = np.sum(l_est_rand_resolve[:,None]==np.arange(num_classes)[None,:],axis=0)
+            num_resampled = np.maximum(np.minimum(class_size, 2*num_resampled),1)
+            rankings = np.zeros((num_nodes,num_classes),dtype=int)
+
+            resampled_labels['i'] = []
+            resampled_labels['k'] = []
+
+            for k in range(num_classes):
+                switching_cost = np.zeros(num_nodes)
+                class_k = np.flatnonzero(l_est_rand_resolve==k)
+                for i in class_k:
+                    switching_cost[i] = float('inf')
+                    if not is_label[i]:
+                        for l in range(num_classes):
+                            if l != k:
+                                # test switching node i from k to l
+                                x_switch[i,:] = -1
+                                x_switch[i,l] = 1
+                                tv = TV(graph.weights,x_switch,p=1)
+                                if tv < switching_cost[i]:
+                                    switching_cost[i] = tv
+                        # reset node i to k
+                        x_switch[i,:] = -1
+                        x_switch[i,k] = 1
+                rankings[:,k] = np.argsort(switching_cost)[::-1]
+                resampled_labels['i'] += rankings[:num_resampled[k],k].tolist()
+                resampled_labels['k'] += [k] * num_resampled[k]
+        else:
+            converged = True
+
+
+
+    return l_est, X, intermediate_results
+
+
 def _run_regularization(graph, num_classes, labels, verbosity, regularization_x_min, regularization_parameter,
                         regularization_max, x0, y0, y1, penalty_parameter, return_min_tv, save_intermediate, **kwargs):
     # enforce that label-neighbor-nodes with positive edges end up in the same cluster
@@ -320,19 +399,26 @@ def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, pen
 
 class TvConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None, eps_abs=1e-3, eps_rel=1e-3, t_max=10000,
-                 penalty_parameter=0.1, penalty_scaling=2, penalty_threshold=10, do_regularize=False,
-                 regularization_x_min=0.9, regularization_parameter=2, regularization_max=1024, return_min_tv=False):
+                 penalty_parameter=0.1, penalty_scaling=2, penalty_threshold=10, degenerate_heuristic=None,
+                 regularization_x_min=0.9, regularization_parameter=2, regularization_max=1024, return_min_tv=False,
+                 resampling_x_min=0.1):
         self.eps_abs = eps_abs
         self.eps_rel = eps_rel
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.penalty_scaling = penalty_scaling
         self.penalty_threshold = penalty_threshold
-        self.do_regularize = do_regularize
+        if degenerate_heuristic is not None and degenerate_heuristic not in ['regularize', 'rangapuram_resampling']:
+            raise ValueError(
+                'unknown heuristic ''{h}'' for degenerate solutions\nEither use None or ''regularize'' or ''rangapuram_resampling'''.format(
+                    h=self.degenerate_heuristic))
+        else:
+            self.degenerate_heuristic = degenerate_heuristic
         self.regularization_x_min = regularization_x_min
         self.regularization_parameter = regularization_parameter
         self.regularization_max = regularization_max
         self.return_min_tv = return_min_tv
+        self.resampling_x_min = resampling_x_min
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -362,7 +448,7 @@ class TvConvex(NodeLearner):
             y0 = None
             y1 = None
 
-        if self.do_regularize:
+        if self.degenerate_heuristic == 'regularize':
             l_est, X, intermediate_results = _run_regularization(graph=graph, num_classes=self.num_classes,
                                                                  labels=labels,
                                                                  regularization_x_min=self.regularization_x_min,
@@ -375,8 +461,18 @@ class TvConvex(NodeLearner):
                                                                  penalty_threshold=self.penalty_threshold,
                                                                  verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                  save_intermediate=self.save_intermediate)
-
-        else:
+        elif self.degenerate_heuristic == 'rangapuram_resampling':
+            l_est, X, intermediate_results = _run_rangapuram_resampling(graph=graph, num_classes=self.num_classes,
+                                                                        labels=labels,
+                                                                        resampling_x_min=self.resampling_x_min,
+                                                                        eps_abs=self.eps_abs, eps_rel=self.eps_rel,
+                                                                        t_max=self.t_max,
+                                                                        penalty_parameter=self.penalty_parameter,
+                                                                        penalty_scaling=self.penalty_scaling,
+                                                                        penalty_threshold=self.penalty_threshold,
+                                                                        verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
+                                                                        save_intermediate=self.save_intermediate)
+        elif self.degenerate_heuristic is None:
             l_est, X, intermediate_results = _run_augmented_admm(graph=graph, num_classes=self.num_classes,
                                                                  labels=labels, eps_abs=self.eps_abs,
                                                                  eps_rel=self.eps_rel, t_max=self.t_max,
@@ -386,6 +482,13 @@ class TvConvex(NodeLearner):
                                                                  verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                  return_state=False,
                                                                  save_intermediate=self.save_intermediate)
+        else:
+            raise ValueError('unknown heuristic ''{h}'' for degenerate solutions'.format(h=self.degenerate_heuristic))
+
+        is_degenerate = np.all(X <= self.resampling_x_min, axis=1)
+        num_degenerate = np.sum(is_degenerate)
+        print('{n} degenerate entries left'.format(n=num_degenerate))
+
 
         self.embedding = X
         self.intermediate_results = intermediate_results
