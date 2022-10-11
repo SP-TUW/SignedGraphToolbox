@@ -102,7 +102,7 @@ def get_graph_config_lists(sim_id):
     percentage_labeled_list = [10, 15, 20]
     if sim_id == 0:
         num_classes_list = [2, 3, 5, 10]
-        num_nodes_list = [3000]*4
+        num_nodes_list = [900]*4
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -135,11 +135,14 @@ def get_methods(graph_config, sim_id):
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
             {'name': 'tv', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic=None, eps_rel=1e-2, eps_abs=1e-2)},
             {'name': 'tv_resampling', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.05)},
+            {'name': 'tv_regularization90fine', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.9, return_min_tv=True)},
+            {'name': 'tv_regularization50fine', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.5, return_min_tv=True)},
+            {'name': 'tv_regularization10fine', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.1, return_min_tv=True)},
+            {'name': 'tv_regularization05fine', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.05, return_min_tv=True)},
             {'name': 'tv_regularization90', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.9, return_min_tv=True)},
             {'name': 'tv_regularization50', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.5, return_min_tv=True)},
             {'name': 'tv_regularization10', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.1, return_min_tv=True)},
             {'name': 'tv_regularization05', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.05, return_min_tv=True)},
-            {'name': 'tv_regularization00', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.0, return_min_tv=True)},
         ]
     else:
         raise ValueError('unknown sim_id')
