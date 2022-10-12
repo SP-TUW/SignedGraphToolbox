@@ -133,5 +133,6 @@ class LsbmMap(NodeLearner):
                 break
 
         self.embedding = x_new
+        self.normalized_embedding = x_new
         l_est = np.argmax(x, 1)
         return l_est

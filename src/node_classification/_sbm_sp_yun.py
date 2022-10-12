@@ -163,4 +163,5 @@ class SbmSpYun(NodeLearner):
 
         l_est = np.argmax(c_assoc, 1)
         self.embedding = c_assoc
+        self.normalized_embedding = c_assoc
         return l_est

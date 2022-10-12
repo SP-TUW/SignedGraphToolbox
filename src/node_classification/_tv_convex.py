@@ -506,6 +506,7 @@ class TvConvex(NodeLearner):
 
 
         self.embedding = X
+        self.normalized_embedding = (X + 1) / 2
         self.intermediate_results = intermediate_results
 
         return l_est

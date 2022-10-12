@@ -30,4 +30,5 @@ class Sponge(NodeLearner):
             l_pred = c.spectral_cluster_bnc(self.num_classes, **self.sponge_kwargs)
 
         self.embedding = np.zeros((graph.num_nodes,self.num_classes))
+        self.normalized_embedding = np.zeros((graph.num_nodes,self.num_classes))
         return l_pred

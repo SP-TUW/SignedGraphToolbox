@@ -22,6 +22,7 @@ class ClassificationSimulation:
             self.add_method(methods_list)
 
         self.embedding = {}
+        self.normalized_embedding = {}
         self.l_est = {}
         self.t_run = {}
         self.sim_id = -1

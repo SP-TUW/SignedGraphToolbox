@@ -159,4 +159,5 @@ class TvBresson(NodeLearner):
                                                            eps_outer=self.eps_outer, eps_inner=self.eps_inner,
                                                            save_intermediate=self.save_intermediate)
         self.embedding = x
+        self.normalized_embedding = x
         return l_est

@@ -49,4 +49,5 @@ class SbmMlHajek(NodeLearner):
         kmeans = KMeans(n_clusters=self.num_classes)
         l_est = kmeans.fit_predict(x[:, -self.num_classes:], **self.kmeans_args)
         self.embedding = x[:, -self.num_classes:]
+        self.normalized_embedding = x[:, -self.num_classes:] + 1/2
         return l_est

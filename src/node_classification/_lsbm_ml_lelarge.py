@@ -61,5 +61,6 @@ class LsbmMlLelarge(NodeLearner):
         v, x = sc.sparse.linalg.eigsh(d_matrix, k=1, which='LM')
 
         self.embedding = x
+        self.normalized_embedding = x + 1/2
         l_est = np.squeeze(x >= 0).astype('int')
         return l_est

@@ -226,6 +226,7 @@ class SpectralLearning(NodeLearner):
             l_est = self.kmeans.estimate_labels(data=x, labels=labels)
 
         self.embedding = x
+        self.normalized_embedding = x + 1/2
         self.l_est = l_est.astype(int)
 
         return self.l_est
