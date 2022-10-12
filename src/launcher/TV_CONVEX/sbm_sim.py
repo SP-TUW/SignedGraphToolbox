@@ -163,7 +163,7 @@ def run(pid, sim_id):
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
-    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False)
+    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=True)
 
     if pid < len(sim.graph_config_list):
         filename = os.path.join(constants.plots_dir['sbm_sim'],

@@ -139,7 +139,7 @@ class ClassificationSimulation:
 
 
 
-    def save_results(self, results_dir, split_file=False):
+    def save_results(self, results_dir, split_file=False, save_degenerate_stats=False):
         if self.sim_id >= 0:
             # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
             # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
@@ -196,8 +196,9 @@ class ClassificationSimulation:
                             'cut': cut,
                             't_run': self.t_run[name]}
 
-                for i in range(20):
-                    results_['num_degenerate{i}'.format(i=int(5*i))] = int(np.sum(np.max(self.normalized_embedding[name], axis=1) <= i/20))
+                if save_degenerate_stats:
+                    for i in range(20):
+                        results_['num_degenerate{i}'.format(i=int(5*i))] = int(np.sum(np.max(self.normalized_embedding[name], axis=1) <= i/20))
 
                 if not split_file:
                     keys = ['{k}_{n}'.format(k=key, n=name) for key in results_.keys()]
