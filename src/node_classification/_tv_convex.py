@@ -8,6 +8,7 @@ from scipy import sparse as sps
 from src.graphs import Graph
 from src.node_classification._node_learner import NodeLearner
 from src.tools.projections import simplex_projection, label_projection
+from src.tools.graph_tools import calc_signed_cut
 
 
 def _roundSolution(X):
@@ -146,23 +147,37 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
             resampled_labels['i'] = []
             resampled_labels['k'] = []
 
+            sc = calc_signed_cut(graph.weights, l_est_rand_resolve)
+
             for k in range(num_classes):
                 switching_cost = np.zeros(num_nodes)
                 class_k = np.flatnonzero(l_est_rand_resolve==k)
                 for i in class_k:
                     switching_cost[i] = float('inf')
                     if not is_label[i]:
+                        w_pos_neighbors = graph.w_pos.getrow(i)
+                        w_neg_neighbors = graph.w_neg.getrow(i)
+                        pos_neighbors = w_pos_neighbors.indices
+                        neg_neighbors = w_neg_neighbors.indices
+                        pos_cut = 2 * w_pos_neighbors.data[None, :].dot(l_est_rand_resolve[pos_neighbors][:, None] != k)
+                        neg_cut = 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == k)
                         for l in range(num_classes):
                             if l != k:
                                 # test switching node i from k to l
-                                x_switch[i,:] = -1
-                                x_switch[i,l] = 1
-                                tv = TV(graph.weights,x_switch,p=1)
-                                if tv < switching_cost[i]:
-                                    switching_cost[i] = tv
+                                pos_cut_switch = 2 * w_pos_neighbors.data[None, :].dot(l_est_rand_resolve[pos_neighbors][:, None] != l)
+                                neg_cut_switch = 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == l)
+                                sc_switch = sc-pos_cut-neg_cut+pos_cut_switch+neg_cut_switch
+                                # x_switch[i,:] = -1
+                                # x_switch[i,l] = 1
+                                # tv = TV(graph.weights,x_switch,p=1)
+                                # l_switch = l_est_rand_resolve.copy()
+                                # l_switch[i] = l
+                                # sc_test = calc_signed_cut(graph.weights, l_switch)
+                                if sc_switch < switching_cost[i]:
+                                    switching_cost[i] = sc_switch
                         # reset node i to k
-                        x_switch[i,:] = -1
-                        x_switch[i,k] = 1
+                        # x_switch[i,:] = -1
+                        # x_switch[i,k] = 1
                 rankings[:,k] = np.argsort(switching_cost)[::-1]
                 resampled_labels['i'] += rankings[:num_resampled[k],k].tolist()
                 resampled_labels['k'] += [k] * num_resampled[k]
