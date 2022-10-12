@@ -127,6 +127,7 @@ class ClassificationSimulation:
             else:
                 self.l_est[name] = l_est
             self.embedding[name] = method['method'].embedding
+            self.normalized_embedding[name] = method['method'].normalized_embedding
             self.t_run[name] = t_stop - t_start
             n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
             print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
@@ -194,6 +195,9 @@ class ClassificationSimulation:
                             'f1_macro': f1_macro,
                             'cut': cut,
                             't_run': self.t_run[name]}
+
+                for i in range(20):
+                    results_['num_degenerate{i}'.format(i=int(5*i))] = int(np.sum(np.max(self.normalized_embedding[name], axis=1) <= i/20))
 
                 if not split_file:
                     keys = ['{k}_{n}'.format(k=key, n=name) for key in results_.keys()]
