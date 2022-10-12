@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.node_classification import SpectralLearning, TvConvex
+from src.node_classification import SpectralLearning, TvConvex, TvBresson
 from src.launcher.TV_CONVEX import constants
 
 
@@ -133,6 +133,7 @@ def get_methods(graph_config, sim_id):
     if sim_id == 0:
         methods = [
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+            {'name': 'tv_bresson', 'method': TvBresson(num_classes=num_classes, verbosity=1)},
             {'name': 'tv', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic=None, eps_rel=1e-2, eps_abs=1e-2)},
             {'name': 'tv_resampling', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.05)},
             {'name': 'tv_regularization90fine', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.9, return_min_tv=True)},
