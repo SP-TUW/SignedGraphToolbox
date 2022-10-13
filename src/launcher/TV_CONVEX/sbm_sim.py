@@ -30,17 +30,21 @@ def plot():
     import matplotlib.pyplot as plt
     import itertools
 
-    groups = [['eps', 'scale_pi'],
+    groups = [['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes'],
               ['eps', 'num_classes']]
 
-    for sim_id in range(3):
+    for sim_id in range(1):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
         with open(results_file_name) as results_file:
             results = json.load(results_file)
 
         del results['graph_config']
         results_df = pd.DataFrame(results)
+
+        pid_list = results_df['pid']
+        print('missing PIDs:')
+        print(np.setdiff1d(np.arange(13200), pid_list))
 
         mean_results = results_df.groupby(groups[sim_id]).mean().reset_index(level=list(range(1, len(groups[sim_id]))))
         unique_lists = []
@@ -74,10 +78,26 @@ def plot():
         results_df = pd.concat(name_dfs, ignore_index=True)
         results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
 
-        sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
-        plt.show()
-        sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
-        plt.show()
+        if len(groups[sim_id])>2:
+            for i, df in results_mean.groupby(groups[sim_id][2:]):
+                df_plot = df[df['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
+                # df_plot = df[~df['name'].str.endswith('fine') & df['name'].str.startswith('tv_regula')]
+                # df_plot = df[~df['name'].str.endswith('fine')]
+                # df_plot = df
+                plt.figure(figsize=(20, 15))
+                sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name').set(title='n_err: {val}'.format(val=i))
+                plt.show()
+                plt.figure(figsize=(20, 15))
+                sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}'.format(val=i))
+                plt.show()
+                plt.figure(figsize=(20, 15))
+                sns.lineplot(data=df_plot, x='eps', y='num_degenerate60', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}'.format(val=i))
+                plt.show()
+        else:
+            sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+            plt.show()
+            sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
+            plt.show()
 
     plots_folder = constants.plots_dir['sbm_sim']
     for root, subdirs, files in os.walk(plots_folder):
