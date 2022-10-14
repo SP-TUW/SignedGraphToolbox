@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.node_classification import SpectralLearning, TvConvex, TvBresson
+from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson
 from src.launcher.TV_CONVEX import constants
 
 
@@ -154,6 +154,9 @@ def get_methods(graph_config, sim_id):
         v = 0
         methods = [
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+            {'name': 'diffuse_sym', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
+            {'name': 'diffuse_am', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
+            {'name': 'diffuse_lap', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
             {'name': 'tv_bresson', 'method': TvBresson(num_classes=num_classes, verbosity=v)},
             {'name': 'tv2', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-2, eps_abs=1e-2)},
             {'name': 'tv3', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-3, eps_abs=1e-3)},
