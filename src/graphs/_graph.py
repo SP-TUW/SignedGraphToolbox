@@ -45,7 +45,12 @@ class Graph(ABC):
     def get_signed_am_laplacian(self):
 
         lap_pos = diags(self.d_pos) - self.w_pos
+        inv_sqrt_pos_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_pos)])
+        lap_pos = diags(inv_sqrt_pos_deg).dot(lap_pos).dot(diags(inv_sqrt_pos_deg))
+
         lap_neg = diags(self.d_neg) + self.w_neg
+        inv_sqrt_neg_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_neg)])
+        lap_neg = diags(inv_sqrt_neg_deg).dot(lap_neg).dot(diags(inv_sqrt_neg_deg))
 
         lap = 1/2 * (lap_pos + lap_neg)
 
