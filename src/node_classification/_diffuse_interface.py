@@ -109,7 +109,7 @@ class DiffuseInterface(NodeLearner):
             L = graph.get_signed_am_laplacian()
             print('GL using the arithmetic mean Laplacian')
         elif self.which == 'lap':
-            L = graph.get_signed_laplacian
+            L = graph.get_signed_laplacian()
             print('GL using the signed Laplacian')
         else:
             raise ValueError('unknown objective ''{s}'''.format(s=self.which))
