@@ -56,9 +56,15 @@ def plot():
             for key, val in zip(groups[sim_id][1:], ind):
                 mask = np.bitwise_and(mask, mean_results[key] == val)
                 csv_file_name += '_{k}_{v}'.format(k=key, v=val)
-            csv_file_name += '.csv'
+            # csv_file_name += '.csv'
+            reduced_csv_file_name = csv_file_name + '.csv'
             subdf = mean_results[mask]
-            subdf.to_csv(os.path.join(constants.plots_dir['sbm_sim'], csv_file_name))
+            subdf_reduced = subdf.filter(regex='^(?!num_degenerate)(?!pid)(?!ari)(?!f1)(?!n_err_labeled)(?!n_err_total)(?!acc)\w+')
+            subdf_reduced.to_csv(os.path.join(constants.plots_dir['sbm_sim'], reduced_csv_file_name))
+
+            reduced_csv_file_name = 'num_degenerate_' + csv_file_name + '.csv'
+            subdf_degenerate = subdf.filter(regex='^(?!pid)(?!ari)(?!f1)(?!n_err)(?!acc)(?!t_run)(?!cut)\w+')
+            subdf_degenerate.to_csv(os.path.join(constants.plots_dir['sbm_sim'], reduced_csv_file_name))
 
         names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
         global_cols = groups[sim_id]
@@ -80,18 +86,21 @@ def plot():
 
         if len(groups[sim_id])>2:
             for i, df in results_mean.groupby(groups[sim_id][2:]):
-                df_plot = df[df['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
+                # df_plot = df[df['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
                 # df_plot = df[~df['name'].str.endswith('fine') & df['name'].str.startswith('tv_regula')]
-                # df_plot = df[~df['name'].str.endswith('fine')]
-                # df_plot = df
+                # df_plot = df[df['name'].str.startswith('tv2_re')]
+                df_plot = df
                 plt.figure(figsize=(20, 15))
                 sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name').set(title='n_err: {val}'.format(val=i))
+                plt.legend(handlelength=5)
                 plt.show()
                 plt.figure(figsize=(20, 15))
                 sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}'.format(val=i))
+                plt.legend(handlelength=5)
                 plt.show()
                 plt.figure(figsize=(20, 15))
-                sns.lineplot(data=df_plot, x='eps', y='num_degenerate60', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}'.format(val=i))
+                sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}'.format(val=i))
+                plt.legend(handlelength=5)
                 plt.show()
         else:
             sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
