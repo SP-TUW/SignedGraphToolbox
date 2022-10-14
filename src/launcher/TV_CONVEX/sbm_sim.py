@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson
+from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson, LsbmMap
 from src.launcher.TV_CONVEX import constants
 
 
