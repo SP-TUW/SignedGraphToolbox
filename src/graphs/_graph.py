@@ -2,6 +2,7 @@ from abc import ABC
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import diags
+import numpy as np
 
 
 class Graph(ABC):
@@ -25,9 +26,28 @@ class Graph(ABC):
         else:
             self.w_pos = csr_matrix(weights).maximum(0)
             self.w_neg = csr_matrix(-weights).maximum(0)
+        self.d_pos = np.squeeze(np.asarray(self.w_pos.sum(1)))
+        self.d_neg = np.squeeze(np.asarray(self.w_neg.sum(1)))
+        self.degree = self.d_pos + self.d_neg
 
     def get_signed_laplacian(self):
-        degree = self.w_pos.sum(1) + self.w_neg.sum(1)
-        lap = diags(degree) - self.w_pos + self.w_neg
+        lap = diags(self.degree) - self.w_pos + self.w_neg
+        return lap
+
+    def get_signed_sym_laplacian(self):
+
+        lap = diags(self.degree) - self.w_pos + self.w_neg
+        inv_sqrt_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.degree)])
+        lap = diags(inv_sqrt_deg).dot(lap).dot(diags(inv_sqrt_deg))
+
+        return lap
+
+    def get_signed_am_laplacian(self):
+
+        lap_pos = diags(self.d_pos) - self.w_pos
+        lap_neg = diags(self.d_neg) + self.w_neg
+
+        lap = 1/2 * (lap_pos + lap_neg)
+
         return lap
 
