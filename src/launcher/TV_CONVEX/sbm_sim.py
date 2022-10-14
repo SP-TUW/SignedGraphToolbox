@@ -157,29 +157,17 @@ def get_methods(graph_config, sim_id):
             {'name': 'diffuse_sym', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
             {'name': 'diffuse_am', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
             {'name': 'diffuse_lap', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
+            {'name': 'mapr', 'l_guess': 'snc', 'method': LsbmMap(num_classes=num_classes, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},
             {'name': 'tv_bresson', 'method': TvBresson(num_classes=num_classes, verbosity=v)},
-            {'name': 'tv1', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-1, eps_abs=1e-1)},
-            {'name': 'tv2', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-2, eps_abs=1e-2)},
-            {'name': 'tv3', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-3, eps_abs=1e-3)},
-            {'name': 'tv4', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-4, eps_abs=1e-4)},
-            # {'name': 'tv5', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=1e-5, eps_abs=1e-5)},
-                # {'name': 'tv2_resampling90', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.90)},
-                # {'name': 'tv2_resampling50', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.50)},
-                # {'name': 'tv2_resampling10', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.10)},
-                # {'name': 'tv2_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-2, eps_abs=1e-2, resampling_x_min=0.05)},
-                # {'name': 'tv3_regularization90', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.9, return_min_tv=True)},
-                # {'name': 'tv3_regularization50', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.5, return_min_tv=True)},
-                # {'name': 'tv3_regularization10', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.1, return_min_tv=True)},
-                # {'name': 'tv3_regularization05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-3, eps_abs=1e-3, regularization_x_min=0.05, return_min_tv=True)},
-                # {'name': 'tv2_regularization90', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.9, return_min_tv=True)},
-                # {'name': 'tv2_regularization50', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.5, return_min_tv=True)},
-                # {'name': 'tv2_regularization10', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.1, return_min_tv=True)},
-                # {'name': 'tv2_regularization05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-2, eps_abs=1e-2, regularization_x_min=0.05, return_min_tv=True)},
         ]
-        for e in [2,3]:
+        for e in range(0, 45, 5):
+            methods.append({'name': 'tv{e:0>2d}'.format(e=e),
+                            'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10**(-e/10), eps_abs=10**(-e/10))})
+
+        for e in range(0, 35, 5):
             for x in [5, 10, 20, 50, 90]:
-                methods.append({'name': 'tv{e}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=1e-1**e, eps_abs=1e-1**e, regularization_x_min=x/100, return_min_tv=True)})
-                methods.append({'name': 'tv{e}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=1e-1**e, eps_abs=1e-1**e, resampling_x_min=x/100)})
+                methods.append({'name': 'tv{e}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
+                methods.append({'name': 'tv{e}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
     else:
         raise ValueError('unknown sim_id')
 

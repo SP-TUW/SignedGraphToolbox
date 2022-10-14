@@ -29,7 +29,7 @@ def _objective(x_in, class_distribution, edge_probability, weights, use_quadrati
 
 def _projection(x_in, labels):
     x_simplex = simplex_projection(x_in)
-    x_out = label_projection(x_simplex, labels)
+    x_out = label_projection(x_simplex, labels, values=[0, 1])
     return x_out
 
 

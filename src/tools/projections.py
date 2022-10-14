@@ -2,11 +2,11 @@ import numpy as np
 import warnings
 
 
-def label_projection(x_in, labels):
+def label_projection(x_in, labels, values=[-1,1]):
     x_out = x_in.copy()
     if labels is not None:
-        x_out[labels['i'], :] = -1
-        x_out[labels['i'], labels['k']] = 1
+        x_out[labels['i'], :] = values[0]
+        x_out[labels['i'], labels['k']] = values[1]
     return x_out
 
 
