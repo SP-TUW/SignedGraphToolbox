@@ -166,7 +166,7 @@ def get_methods(graph_config, sim_id):
             {'name': 'diffuse_sym', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
             {'name': 'diffuse_am', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
             {'name': 'diffuse_lap', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
-            {'name': 'mapr', 'l_guess': 'snc', 'method': LsbmMap(num_classes=num_classes, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},
+            {'name': 'mapr', 'l_guess': 'snc', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},
             {'name': 'tv_bresson', 'method': TvBresson(num_classes=num_classes, verbosity=v)},
         ]
         for e in range(0, 45, 5):
@@ -175,8 +175,8 @@ def get_methods(graph_config, sim_id):
 
         for e in range(0, 35, 5):
             for x in [5, 10, 20, 50, 90]:
-                methods.append({'name': 'tv{e}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
-                methods.append({'name': 'tv{e}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
+                methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
+                methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
     else:
         raise ValueError('unknown sim_id')
 
