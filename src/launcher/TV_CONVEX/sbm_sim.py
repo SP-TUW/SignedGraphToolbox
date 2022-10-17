@@ -34,7 +34,7 @@ def plot():
               ['eps', 'num_classes'],
               ['eps', 'num_classes']]
 
-    for sim_id in range(1):
+    for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
         with open(results_file_name) as results_file:
             results = json.load(results_file)
