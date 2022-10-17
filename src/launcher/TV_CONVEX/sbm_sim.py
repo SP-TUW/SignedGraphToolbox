@@ -132,6 +132,9 @@ def get_graph_config_lists(sim_id):
     if sim_id == 0:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900]*4
+    elif sim_id == 1:
+        num_classes_list = [2, 3, 5, 10]
+        num_nodes_list = [3000]*4
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -159,7 +162,7 @@ def get_methods(graph_config, sim_id):
     class_distribution = graph_config['class_distribution']
     eps = 1e-5
 
-    if sim_id == 0:
+    if sim_id == 0 or sim_id == 1:
         v = 0
         methods = [
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
