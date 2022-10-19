@@ -135,6 +135,10 @@ def get_graph_config_lists(sim_id):
     elif sim_id == 1:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [3000]*4
+    elif sim_id == 2:
+        num_classes_list = [2, 3, 5, 10]
+        num_nodes_list = [900]*4
+        eps_list = np.linspace(0.3, 0.4, 3)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -180,6 +184,13 @@ def get_methods(graph_config, sim_id):
             for x in [5, 10, 20, 50, 90]:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
                 methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
+    elif sim_id == 2:
+        v = 0
+        methods = []
+        for e in range(10, 35, 5):
+            for x in np.linspace(5,95,19,dtype=int):
+                methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
+                methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
     else:
         raise ValueError('unknown sim_id')
 
@@ -220,7 +231,7 @@ if __name__ == '__main__':
         elif args[1] == '-c':
             combine_results()
         elif args[1] == '-n':
-            for i in range(1):
+            for i in range(len(constants.results_dir['sbm_sim'])):
                 config_lists = get_graph_config_lists(sim_id=i)
                 sim = SBMSimulation(**config_lists)
                 print('{n} configs in simulation {i}'.format(n=len(sim.graph_config_list), i=i))
