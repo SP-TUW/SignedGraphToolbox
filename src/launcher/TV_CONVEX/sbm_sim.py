@@ -42,6 +42,17 @@ def plot():
 
 
         del results['graph_config']
+        del_keys = []
+        for k, v in results.items():
+            len_wrong = len(v) not in [1320, 13200]
+            name_mask = 'tv0_' in k or 'tv00_' in k or 'tv5_' in k or 'tv05_' in k
+            if len_wrong:
+                if name_mask:
+                    del_keys.append(k)
+                else:
+                    print(k, len(v), 'something wrong here')
+        for k in del_keys:
+            del results[k]
         results_df = pd.DataFrame(results)
 
         method_names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
