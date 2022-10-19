@@ -29,19 +29,22 @@ def plot():
     import seaborn as sns
     import matplotlib.pyplot as plt
     import itertools
+    import re
 
     groups = [['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes'],
-              ['eps', 'num_classes']]
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled']]
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
         with open(results_file_name) as results_file:
             results = json.load(results_file)
 
+
         del results['graph_config']
         results_df = pd.DataFrame(results)
 
+        method_names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
         pid_list = results_df['pid']
         print('missing PIDs:')
         print(np.setdiff1d(np.arange(13200), pid_list))
@@ -62,14 +65,33 @@ def plot():
             subdf_reduced = subdf.filter(regex='^(?!num_degenerate)(?!pid)(?!ari)(?!f1)(?!n_err_labeled)(?!n_err_total)(?!acc)\w+')
             subdf_reduced.to_csv(os.path.join(constants.plots_dir['sbm_sim'], reduced_csv_file_name))
 
+            tv_strategies = [n for n in method_names if re.match('tv[0-9]{1,2}_\w?',n) is not None]
+            other_strategies = [n for n in method_names if n not in tv_strategies]
+            x_min_list = np.unique([float(s[-2:])/100 for s in tv_strategies])
+            strategy_list = np.unique([s[:-2] for s in tv_strategies])
+            eps_list = np.unique(subdf.reset_index()['eps'])
+            # initialize with large negative value to indicate if something went wrong
+            n_err = -1000*np.ones((len(x_min_list),len(strategy_list)*len(eps_list)))
+            columns = list(itertools.product(strategy_list,eps_list))
+            column_names = ['{s}_e{e:0>2d}'.format(s=s,e=int(100*e)) for s, e in columns]
+            # x_min_dict = {n: -1000*np.ones((len(x_min_list))) for n in column_names}
+            x_min_dict = {**{n: -1000*np.ones((len(x_min_list))) for n in column_names},
+                          **{n + '_e{e:0>2d}'.format(e=int(100 * e)): subdf['n_err_unlabeled_'+n][e]*np.ones((len(x_min_list))) for (n, e) in itertools.product(other_strategies, eps_list)},
+                          'x_min': x_min_list}
+            for i_x, x_min in enumerate(x_min_list):
+                for i, (col_name, (strat, eps)) in enumerate(zip(column_names,columns)):
+                    x_min_dict[col_name][i_x] = subdf['n_err_unlabeled_'+strat +'{d:0>2d}'.format(d=int(100*x_min))][eps]
+            x_min_df = pd.DataFrame.from_dict(x_min_dict).set_index('x_min')
+            x_min_csv_file_name = 'x_min_' + csv_file_name + '.csv'
+            x_min_df.to_csv(os.path.join(constants.plots_dir['sbm_sim'], x_min_csv_file_name))
+
             reduced_csv_file_name = 'num_degenerate_' + csv_file_name + '.csv'
             subdf_degenerate = subdf.filter(regex='^(?!pid)(?!ari)(?!f1)(?!n_err)(?!acc)(?!t_run)(?!cut)\w+')
             subdf_degenerate.to_csv(os.path.join(constants.plots_dir['sbm_sim'], reduced_csv_file_name))
 
-        names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
         global_cols = groups[sim_id]
         name_dfs = []
-        for name in names:
+        for name in method_names:
             name_cols = [col for col in results_df.columns if col.endswith(name)]
             cols = [col[:-len(name) - 1] for col in name_cols]
             name_df = results_df[global_cols + name_cols]
@@ -110,20 +132,26 @@ def plot():
 
     plots_folder = constants.plots_dir['sbm_sim']
     for root, subdirs, files in os.walk(plots_folder):
-        for x_json_name in files:
+        for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:#sorted(files):
             if x_json_name.startswith("x") and x_json_name.endswith(".json"):
-                x_csv_name = x_json_name[:-4]+'csv'
+                print(x_json_name)
+                x_name = x_json_name[:-5]
+                x_csv_name = x_name + '.csv'
                 with open(os.path.join(plots_folder,x_json_name)) as x_file:
                     x = json.load(x_file)
 
                 x_array_style = {}
                 for key, val in x.items():
-                    x_array = np.array(val)
-                    x_array = np.sort(x_array,axis=0)
-                    for n in range(x_array.shape[1]):
-                        x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n]
-                x_df = pd.DataFrame(x_array_style)
-                x_df.to_csv(os.path.join(plots_folder,x_csv_name))
+                    # x_array = np.array(val)
+                    # x_array = np.sort(x_array,axis=0)
+                    # for n in range(x_array.shape[1]):
+                    #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n]
+                    x_df = pd.DataFrame(val)
+                    x_df['max'] = x_df.idxmax(axis=1)
+                    x_df.index = x_df.index.rename('i')
+                    x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
+                # x_df = pd.DataFrame(x_array_style)
+                # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
 def get_graph_config_lists(sim_id):
