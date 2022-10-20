@@ -136,7 +136,9 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
             if verbosity>=1:
                 print('{n} degenerate entries left'.format(n=num_degenerate))
             l_est_rand_resolve = l_est.copy()
-            l_est_rand_resolve[is_degenerate] = np.random.randint(0,num_classes,num_degenerate)
+            is_tied = np.diff(np.sort(X,axis=1)[:,-2:]).squeeze() == 0
+            num_tied = np.sum(is_tied)
+            l_est_rand_resolve[is_tied] = np.random.randint(0,num_classes, num_tied)
             x_switch = -np.ones((num_nodes,num_classes))
             x_switch[range(num_nodes),l_est_rand_resolve] = 1
 
