@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson, LsbmMap
+from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson, TvNonConvex, LsbmMap
 from src.launcher.TV_CONVEX import constants
 
 
@@ -178,6 +178,10 @@ def get_graph_config_lists(sim_id):
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900]*4
         eps_list = np.linspace(0.3, 0.4, 3)
+    elif sim_id == 3:
+        num_classes_list = [3, 5, 10]
+        num_nodes_list = [9000]*3
+        eps_list = np.linspace(0, 0.5, 11)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -230,6 +234,16 @@ def get_methods(graph_config, sim_id):
             for x in np.linspace(5,95,19,dtype=int):
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
                 methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
+    elif sim_id == 3:
+        methods = [
+            {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+            {'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)},
+            # {'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)},
+            # {'name': 'tv_nc10', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)},
+            {'name': 'tv_nc100', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=1, penalty_parameter=100)},
+            # {'name': 'tv_nc1000', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)},
+            # {'name': 'tv_nc10000', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10000)},
+        ]
     else:
         raise ValueError('unknown sim_id')
 

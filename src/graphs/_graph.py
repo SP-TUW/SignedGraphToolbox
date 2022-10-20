@@ -56,3 +56,19 @@ class Graph(ABC):
 
         return lap
 
+    def get_gradient_matrix(self, p, return_div=False):
+        num_edges = self.weights.data.size
+        num_nodes = self.weights.shape[0]
+        weights_coo = self.weights.tocoo()
+        i = np.arange(num_edges)
+        i = np.tile(i, 2)
+        j = np.r_[weights_coo.row, weights_coo.col]
+        v = np.power(np.abs(weights_coo.data), 1 / p)
+        v = np.concatenate((v, -np.sign(weights_coo.data) * v))
+        gradient_matrix = csr_matrix((v, (i, j)), shape=(num_edges, num_nodes))
+        if not return_div:
+            return gradient_matrix
+        else:
+            divergence_matrix = -gradient_matrix.T
+            return gradient_matrix, divergence_matrix
+
