@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.node_classification import DiffuseInterface, SpectralLearning, TvConvex, TvBresson, TvNonConvex, LsbmMap
+from src.node_classification import SpectralLearning, TvConvex, TvNonConvex, LsbmMap
 from src.launcher.TV_CONVEX import constants
 
 
@@ -209,55 +209,35 @@ def get_methods(graph_config, sim_id):
     class_distribution = graph_config['class_distribution']
     eps = 1e-5
 
-    if sim_id == 0:
-        v = 0
-        methods = [
-            {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-            {'name': 'diffuse_sym', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
-            {'name': 'diffuse_am', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
-            {'name': 'diffuse_lap', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=20, eps=1e-6, t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3)},
-            {'name': 'mapr', 'l_guess': 'snc', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},
-            {'name': 'tv_bresson', 'method': TvBresson(num_classes=num_classes, verbosity=v)},
-        ]
+    v = 0
+    methods = [
+        {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+    ]
+    if sim_id in [0,1]:
         for e in range(0, 45, 5):
             methods.append({'name': 'tv{e:0>2d}'.format(e=e),
                             'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10**(-e/10), eps_abs=10**(-e/10))})
 
+    if sim_id in [0, 1, 2]:
         for e in range(10, 35, 5):
-            for x in [5, 10, 20, 50, 90]:
+            for x in [1, 2, 5, 10, 20, 50, 90]:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
                 methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
-    elif sim_id == 1:
+
+    if sim_id == 3:
         v = 1
-        methods = [
-            {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-        ]
-        for e in range(0, 45, 5):
-            methods.append({'name': 'tv{e:0>2d}'.format(e=e),
-                            'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10**(-e/10), eps_abs=10**(-e/10))})
-        for e in range(10, 35, 5):
-            for x in [5, 10, 20, 50, 90]:
-                methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e, x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), regularization_x_min=x / 100, return_min_tv=True)})
-                methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e, x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), resampling_x_min=x / 100)})
-    elif sim_id == 2:
-        v = 0
-        methods = []
-        for e in range(10, 35, 5):
-            for x in np.linspace(5,95,19,dtype=int):
-                methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
-                methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
-    elif sim_id == 3:
-        methods = [
-            {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-            {'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=1, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)},
-            # {'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)},
-            # {'name': 'tv_nc10', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)},
-            {'name': 'tv_nc100', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=1, penalty_parameter=100)},
-            # {'name': 'tv_nc1000', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)},
-            # {'name': 'tv_nc10000', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10000)},
-        ]
-    else:
+        methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
+            # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
+        methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
+        methods.append({'name': 'tv_nc100', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=100)})
+        methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})
+        methods.append({'name': 'tv_nc10000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10000)})
+
+    if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
+
+    if sim_id == 0:
+        methods.append({'name': 'mapr', 'l_guess': 'snc', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
 
     return methods
 
@@ -274,7 +254,7 @@ def run(pid, sim_id):
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
-    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=True)
+    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=False)
 
     if pid < len(sim.graph_config_list):
         filename = os.path.join(constants.plots_dir['sbm_sim'],
