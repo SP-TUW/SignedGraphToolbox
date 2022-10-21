@@ -322,8 +322,10 @@ def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, pen
     d = np.array(2 * np.sum(W2 + W2.T, 1))[:, 0]
     (column_slicing_permutation, column_slicing_indptr) = _get_slicing_permutations(W)
 
-    grad = lambda x: _gradient(W, x, p=1)
-    div = lambda z: _divergence(W, z, column_slicing_permutation, column_slicing_indptr, p=1)
+    grad_matrix, div_matrix = graph.get_gradient_matrix(p=1, return_div=True)
+
+    grad = lambda x: grad_matrix.dot(x)#_gradient(W, x, p=1)
+    div = lambda z: div_matrix.dot(z)#_divergence(W, z, column_slicing_permutation, column_slicing_indptr, p=1)
     projection = lambda x: label_projection(simplex_projection(x + 1, a=2, axis=1) - 1, labels)
 
     Xtp1 = projection(x0 * np.ones((num_nodes, num_classes)))
