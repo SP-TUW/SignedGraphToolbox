@@ -391,7 +391,7 @@ def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, pen
         if save_x_list:
             intermediate_results['x_list'].append(Xtp1)
 
-        if verbosity > 1 and t % 10 == 0:
+        if verbosity > 1 and t % 1 == 0:
             print("'\rK={K}, Keff={Keff}, {t:6d}: {rtp1:.2e}>{ePri:.2e} or {stp1:.2e}>{eDual:.2e}".format(
                 K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, rtp1=rtp1, ePri=ePri, stp1=stp1,
                 eDual=eDual),
