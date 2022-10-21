@@ -173,7 +173,7 @@ def get_graph_config_lists(sim_id):
         num_nodes_list = [900]*4
     elif sim_id == 1:
         num_classes_list = [2, 3, 5, 10]
-        num_nodes_list = [3000]*4
+        num_nodes_list = [9000]*4
     elif sim_id == 2:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900]*4
@@ -209,7 +209,7 @@ def get_methods(graph_config, sim_id):
     class_distribution = graph_config['class_distribution']
     eps = 1e-5
 
-    if sim_id == 0 or sim_id == 1:
+    if sim_id == 0:
         v = 0
         methods = [
             {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
@@ -227,6 +227,18 @@ def get_methods(graph_config, sim_id):
             for x in [5, 10, 20, 50, 90]:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
                 methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
+    elif sim_id == 1:
+        v = 1
+        methods = [
+            {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+        ]
+        for e in range(0, 45, 5):
+            methods.append({'name': 'tv{e:0>2d}'.format(e=e),
+                            'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10**(-e/10), eps_abs=10**(-e/10))})
+        for e in range(10, 35, 5):
+            for x in [5, 10, 20, 50, 90]:
+                methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e, x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), regularization_x_min=x / 100, return_min_tv=True)})
+                methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e, x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), resampling_x_min=x / 100)})
     elif sim_id == 2:
         v = 0
         methods = []
