@@ -256,10 +256,10 @@ def run(pid, sim_id):
     sim.run_simulation(pid)
     sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=False)
 
-    if pid < len(sim.graph_config_list):
+    if pid in [24, 34]:#< len(sim.graph_config_list):
         filename = os.path.join(constants.plots_dir['sbm_sim'],
                                 'x_s{sid}_p{pid}.json'.format(sid=sim_id, pid=pid))
-        x_lists = {k: v.tolist() for k, v in sim.embedding.items()}
+        x_lists = {k: v.tolist() for k, v in sim.embedding.items() if k in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]}
         with open(filename, 'w') as x_file:
             json.dump(x_lists, x_file)
 
