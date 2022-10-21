@@ -28,8 +28,50 @@ def plot():
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib.colors as colors
     import itertools
     import re
+    from pathlib import Path
+    import warnings
+
+
+
+
+    plots_folder = constants.plots_dir['sbm_sim']
+    for root, subdirs, files in os.walk(plots_folder):
+        for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:#sorted(files):
+            if x_json_name.startswith("x") and x_json_name.endswith(".json"):
+                print(x_json_name)
+                x_name = x_json_name[:-5]
+                x_csv_name = x_name + '.csv'
+                with open(os.path.join(plots_folder,x_json_name)) as x_file:
+                    x = json.load(x_file)
+
+                x_array_style = {}
+                for key, val in x.items():
+                    if key not in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]:
+                        continue
+                    # x_array = np.array(val)
+                    # x_array = np.sort(x_array,axis=0)
+                    # for n in range(x_array.shape[1]):
+                    #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n
+                    x_df = pd.DataFrame(val)
+                    x_df['max'] = x_df.idxmax(axis=1)
+                    x_df.index = x_df.index.rename('i')
+                    # x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
+                    for k in range(len(val[0])):
+                        plt.figure(figsize=(3.1, 2.5))
+                        plt.scatter(x_df.index,x_df[k],c=x_df['max']==k,marker='.',s=9,cmap='PiYG',norm=colors.Normalize(vmin=-.3,vmax=1.3))
+                        # plt.show()
+                        plt.xlim(np.array([-0.05, 1.05])*x_df.shape[0])
+                        plt.ylim([-1.1, 1.1])
+                        plt.axis('off')
+                        plt.tight_layout(pad=0)
+                        plt.savefig(os.path.join(plots_folder,x_name+'_'+key+'{k:0>2d}'.format(k=k)+'.svg'))
+                        plt.close()
+                # x_df = pd.DataFrame(x_array_style)
+                # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
+
 
     groups = [['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
@@ -37,22 +79,26 @@ def plot():
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
+        if not Path(results_file_name).is_file():
+            warnings.warn(results_file_name + ' not found! Continuing next simulation.')
+            continue
+
         with open(results_file_name) as results_file:
             results = json.load(results_file)
 
 
         del results['graph_config']
-        del_keys = []
-        for k, v in results.items():
-            len_wrong = len(v) not in [1320, 13200]
-            name_mask = 'tv0_' in k or 'tv00_' in k or 'tv5_' in k or 'tv05_' in k
-            if len_wrong:
-                if name_mask:
-                    del_keys.append(k)
-                else:
-                    print(k, len(v), 'something wrong here')
-        for k in del_keys:
-            del results[k]
+        # del_keys = []
+        # for k, v in results.items():
+        #     len_wrong = len(v) not in [1320, 13200]
+        #     name_mask = 'tv0_' in k or 'tv00_' in k or 'tv5_' in k or 'tv05_' in k
+        #     if len_wrong:
+        #         if name_mask:
+        #             del_keys.append(k)
+        #         else:
+        #             print(k, len(v), 'something wrong here')
+        # for k in del_keys:
+        #     del results[k]
         results_df = pd.DataFrame(results)
 
         method_names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
@@ -117,52 +163,29 @@ def plot():
         results_df = pd.concat(name_dfs, ignore_index=True)
         results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
 
-        if len(groups[sim_id])>2:
-            for i, df in results_mean.groupby(groups[sim_id][2:]):
-                # df_plot = df[df['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
-                # df_plot = df[~df['name'].str.endswith('fine') & df['name'].str.startswith('tv_regula')]
-                # df_plot = df[df['name'].str.startswith('tv2_re')]
-                df_plot = df
-                plt.figure(figsize=(20, 15))
-                sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name').set(title='n_err: {val}'.format(val=i))
-                plt.legend(handlelength=5)
-                plt.show()
-                plt.figure(figsize=(20, 15))
-                sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}'.format(val=i))
-                plt.legend(handlelength=5)
-                plt.show()
-                plt.figure(figsize=(20, 15))
-                sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}'.format(val=i))
-                plt.legend(handlelength=5)
-                plt.show()
-        else:
-            sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
-            plt.show()
-            sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
-            plt.show()
-
-    plots_folder = constants.plots_dir['sbm_sim']
-    for root, subdirs, files in os.walk(plots_folder):
-        for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:#sorted(files):
-            if x_json_name.startswith("x") and x_json_name.endswith(".json"):
-                print(x_json_name)
-                x_name = x_json_name[:-5]
-                x_csv_name = x_name + '.csv'
-                with open(os.path.join(plots_folder,x_json_name)) as x_file:
-                    x = json.load(x_file)
-
-                x_array_style = {}
-                for key, val in x.items():
-                    # x_array = np.array(val)
-                    # x_array = np.sort(x_array,axis=0)
-                    # for n in range(x_array.shape[1]):
-                    #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n]
-                    x_df = pd.DataFrame(val)
-                    x_df['max'] = x_df.idxmax(axis=1)
-                    x_df.index = x_df.index.rename('i')
-                    x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
-                # x_df = pd.DataFrame(x_array_style)
-                # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
+        # if len(groups[sim_id])>2:
+        #     for i, df in results_mean.groupby(groups[sim_id][2:]):
+        #         # df_plot = df[df['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
+        #         # df_plot = df[~df['name'].str.endswith('fine') & df['name'].str.startswith('tv_regula')]
+        #         # df_plot = df[df['name'].str.startswith('tv2_re')]
+        #         df_plot = df
+        #         plt.figure(figsize=(20, 15))
+        #         sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name').set(title='n_err: {val}'.format(val=i))
+        #         plt.legend(handlelength=5)
+        #         plt.show()
+        #         plt.figure(figsize=(20, 15))
+        #         sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}'.format(val=i))
+        #         plt.legend(handlelength=5)
+        #         plt.show()
+        #         plt.figure(figsize=(20, 15))
+        #         sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}'.format(val=i))
+        #         plt.legend(handlelength=5)
+        #         plt.show()
+        # else:
+        #     sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+        #     plt.show()
+        #     sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
+        #     plt.show()
 
 
 def get_graph_config_lists(sim_id):
