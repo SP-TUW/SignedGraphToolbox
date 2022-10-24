@@ -75,6 +75,8 @@ def plot():
 
     groups = [['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled']]
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
@@ -103,8 +105,9 @@ def plot():
 
         method_names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
         pid_list = results_df['pid']
+        print('last PID: {p}'.format(p=max(pid_list)))
         print('missing PIDs:')
-        print(np.setdiff1d(np.arange(13200), pid_list))
+        print(np.setdiff1d(np.arange(max(pid_list)+1), pid_list))
 
         mean_results = results_df.groupby(groups[sim_id]).mean().reset_index(level=list(range(1, len(groups[sim_id]))))
         unique_lists = []
@@ -202,6 +205,10 @@ def get_graph_config_lists(sim_id):
         num_nodes_list = [900]*4
         eps_list = np.linspace(0.3, 0.4, 3)
     elif sim_id == 3:
+        num_classes_list = [2, 3, 5, 10]
+        num_nodes_list = [9000]*4
+        eps_list = np.linspace(0.3, 0.4, 3)
+    elif sim_id == 4:
         num_classes_list = [3, 5, 10]
         num_nodes_list = [9000]*3
         eps_list = np.linspace(0, 0.5, 11)
@@ -241,13 +248,17 @@ def get_methods(graph_config, sim_id):
             methods.append({'name': 'tv{e:0>2d}'.format(e=e),
                             'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10**(-e/10), eps_abs=10**(-e/10))})
 
-    if sim_id in [0, 1, 2]:
+    if sim_id in [0, 1, 2, 3]:
+        if sim_id in [2, 3]:
+            x_range = [1, 2, 5, 10, 20, 50, 90]
+        else:
+            x_range = [5, 10, 50, 90]
         for e in range(10, 35, 5):
-            for x in [1, 2, 5, 10, 20, 50, 90]:
+            for x in x_range:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10**(-e/10), eps_abs=10**(-e/10), regularization_x_min=x/100, return_min_tv=True)})
                 methods.append({'name': 'tv{e:0>2d}_resampling{x:0>2d}'.format(e=e,x=x), 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10**(-e/10), eps_abs=10**(-e/10), resampling_x_min=x/100)})
 
-    if sim_id == 3:
+    if sim_id == 4:
         v = 1
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
             # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
