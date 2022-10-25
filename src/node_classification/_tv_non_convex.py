@@ -198,18 +198,19 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
     t_check_rho = 32
     i_check = 2
 
-    x0_ = x_projection(x0.copy() / beta)
-    # x0_ = x_projection(x0.copy())
+    # x0_ = x_projection(x0.copy() / beta)
+    x0_ = x_projection(x0.copy())
     x = x0_.copy()
     l_est = np.argmax(x, axis=1)
     x_old = np.zeros(x.shape)
-    fx = objective(x)
+    # fx = objective(x)
     num_nodes = x0.shape[0]
     num_edges = gradient_matrix.shape[0]
     # z = np.sqrt(eps) * np.random.randn(num_edges, num_classes)
-    y = 0 * grad(x)  # np.zeros(z.shape)#y_update(beta, grad(x), p)
+    y = 0 * grad(x)  # np.zeros(z.shape)#
+    y = y_update(beta, grad(x), p)
     # y = y_update(beta, 0*grad(x), p)  # np.zeros(z.shape)#y_update(beta, grad(x), p)
-    z = np.zeros(y.shape)
+    z = beta * (grad(x) - y)#np.zeros(y.shape)
     lag = lagrangian(x, y, z)
 
     dx = []
@@ -226,8 +227,8 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
         z_old = z.copy()
         l_est_old = l_est.copy()
 
-        fx_old = fx
-        lag_old = lag
+        # fx_old = fx
+        # lag_old = lag
 
         t += 1
 
@@ -259,8 +260,8 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
             t_check_rho = t_check_rho * i_check
         cont = (norm_r > ePri or norm_s > eDual)
 
-        fx = objective(x)
-        lag = lagrangian(x, y, z)
+        # fx = objective(x)
+        # lag = lagrangian(x, y, z)
 
         dx_ = np.linalg.norm(x - x_old)
         dy_ = np.linalg.norm(y - y_old)
@@ -278,8 +279,8 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
                                                                                    t_since=t_since_last), end='')
         converged = not cont and (
                 dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
-            z.size))  # or t_since_last >= t_max_no_change
-        if t >= t_max and not converged:
+            z.size)) or t_since_last >= t_max_no_change
+        if t-t_since_last >= t_max and not converged:
             break
     if verbosity > 0:
         print('\r')
@@ -289,7 +290,7 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=100, p=1, a=1, b=100, c=20000,
-                 t_max=10000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-5,
+                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-6,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=1 / 2, backtracking_param=1 / 2):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
