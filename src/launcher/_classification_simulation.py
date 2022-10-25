@@ -105,6 +105,7 @@ class ClassificationSimulation:
         self.graph, self.labels = self.__get_graph(sim_id)
         print('running simulations for {n}'.format(n=graph_config['name']))
 
+        print('cut gt={c}'.format(c=calc_signed_cut(self.graph.weights, self.graph.class_labels)))
 
 
         for method in self.methods_list:
@@ -131,6 +132,7 @@ class ClassificationSimulation:
             self.t_run[name] = t_stop - t_start
             n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
             print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
+            print('cut {name}={c}'.format(name=name, c=calc_signed_cut(self.graph.weights, self.l_est[name])))
         self.current_graph_config = graph_config.copy()
         self.current_percentage_labeled = percentage_labeled
         self.current_is_percentage = is_percentage
