@@ -36,10 +36,10 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
     xi[:, r0:] = np.minimum(1, np.sqrt((z_cumnorm[:,r0:]-z_cumsum[:,r0:]**2/r[:,r0:])/(alpha - 1 / r[:,r0:])))
     nu = xi / r - mean_zr
     cond[:, :-1] = np.bitwise_and(z_sort[:, :-1] >= -nu[:, :-1], -nu[:, :-1] >= z_sort[:, 1:])
-    r__ = np.argmax(cond, axis=axis, keepdims=True)
-    xi_r = np.take_along_axis(xi, r__, axis=axis)
-    nu_r = np.take_along_axis(nu, r__, axis=axis)
-    is_randomized = np.sum(cond[:,:-1],axis=1) > 1
+    r__ = np.argmax(cond, axis=axis)
+    xi_r = np.take_along_axis(xi, r__[:, None], axis=axis)
+    nu_r = np.take_along_axis(nu, r__[:, None], axis=axis)
+    is_randomized = np.sum(cond[:, :-1], axis=1) > 1
     x_ = np.maximum(0,(z+nu_r)/xi_r)
 
     if np.any(is_randomized):
