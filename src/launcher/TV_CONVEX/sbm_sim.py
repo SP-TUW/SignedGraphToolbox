@@ -270,9 +270,9 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
         # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         for b in [1, 10, 100]:
-            methods.append({'name': 'tv_nc1sponge', 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
-            methods.append({'name': 'tv_nc1snc', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
-            methods.append({'name': 'tv_nc1rand', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
+            methods.append({'name': 'tv_nc{b:0>3d}sponge'.format(b=b), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
+            methods.append({'name': 'tv_nc{b:0>3d}snc'.format(b=b), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
+            methods.append({'name': 'tv_nc{b:0>3d}rand'.format(b=b), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
             # methods.append({'name': 'tv_nc1tvRes', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         # methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
         # methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})
