@@ -23,13 +23,13 @@ def get_hard_constants(weights, beta, p, labels, num_classes):
     label_indicator = np.zeros(weights.shape[0],dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
-    A = 4 * lap_2overP[np.bitwise_not(label_indicator), :]
+    A = 8 * lap_2overP[np.bitwise_not(label_indicator), :]
     A = A[:, np.bitwise_not(label_indicator)]
     B_offset = 2*lap_2overP[np.bitwise_not(label_indicator),:].sum(1).dot(np.ones((1,num_classes)))
     if labels is not None:
         v_L = np.zeros((len(labels['i']),num_classes))
         v_L[:,labels['k']] = 1
-        B_offset -= 4*lap_2overP[np.bitwise_not(label_indicator),:][:, label_indicator].dot(v_L)
+        B_offset -= 8*lap_2overP[np.bitwise_not(label_indicator),:][:, label_indicator].dot(v_L)
     Q_chol = np.linalg.cholesky(lap_2overP.A).T
     constants = {'Q': lap_2overP,
                  'A': A,
@@ -67,7 +67,7 @@ def x_update_hard(x_in, d, constants, labels, t_max, eps, backtracking_stepsize,
     v_in = (x_in[is_unlabeled, :] + 1) / 2
 
     A = constants['A']
-    B = 2 * d[is_unlabeled, :] + constants['B_offset']
+    B = d[is_unlabeled, :] + constants['B_offset']
     v_tp1 = v_in.copy()
 
     v_tp1 = simplex_projection(v_tp1)
