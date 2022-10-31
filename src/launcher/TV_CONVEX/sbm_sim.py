@@ -39,7 +39,7 @@ def plot():
 
     plots_folder = constants.plots_dir['sbm_sim']
     for root, subdirs, files in os.walk(plots_folder):
-        filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(4)] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
+        filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(len(constants.results_dir['sbm_sim']))] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
         for x_json_name in sorted(files):
         # for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:
         # for x_json_name in filename_list:
@@ -269,10 +269,10 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
         # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
-        for b in [1, 10, 100]:
-            methods.append({'name': 'tv_nc{b:0>3d}sponge'.format(b=b), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
-            methods.append({'name': 'tv_nc{b:0>3d}snc'.format(b=b), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
-            methods.append({'name': 'tv_nc{b:0>3d}rand'.format(b=b), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
+        for b in [1, 2, 5, 10, 20, 50, 100]:
+            # methods.append({'name': 'tv_nc{b:0>3d}sponge'.format(b=b), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
+            methods.append({'name': 'tv_nc{b:0>4d}snc'.format(b=b), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=1/2)})
+            # methods.append({'name': 'tv_nc{b:0>3d}rand'.format(b=b), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
             # methods.append({'name': 'tv_nc1tvRes', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         # methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
         # methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})

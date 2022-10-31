@@ -6,7 +6,7 @@ import numpy as np
 import scipy.sparse as sps
 
 
-def get_lap_2overP(weights, p):
+def get_lap_2p(weights, p):
     weights_abs = abs(weights)
     signs = weights.sign()
     weights_2p = weights_abs.power(2 / p)
@@ -14,36 +14,36 @@ def get_lap_2overP(weights, p):
     in_deg_lp_lap = sps.diags(in_deg_lp) - signs.multiply(weights_2p)
     out_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=0)))
     out_deg_lp_lap = sps.diags(out_deg_lp) - signs.multiply(weights_2p).T
-    lap_2overP = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
-    return lap_2overP
+    lap_2p = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
+    return lap_2p
 
 
-def get_hard_constants(weights, beta, p, labels, num_classes):
-    lap_2overP = get_lap_2overP(weights, p)
-    label_indicator = np.zeros(weights.shape[0],dtype=bool)
+def get_constants(graph, beta, p, labels, num_classes):
+    lap_2p_ = get_lap_2p(graph.weights, p)
+    gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
+    lap_2p = gradient_matrix.T.dot(gradient_matrix)/2
+    label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
-    A = 8 * lap_2overP[np.bitwise_not(label_indicator), :]
+    A = 4 * lap_2p[np.bitwise_not(label_indicator), :]
     A = A[:, np.bitwise_not(label_indicator)]
-    B_offset = 2*lap_2overP[np.bitwise_not(label_indicator),:].sum(1).dot(np.ones((1,num_classes)))
+    B_offset = 2 * lap_2p[np.bitwise_not(label_indicator), :].sum(1).dot(np.ones((1, num_classes)))
     if labels is not None:
-        v_L = np.zeros((len(labels['i']),num_classes))
-        v_L[:,labels['k']] = 1
-        B_offset -= 8*lap_2overP[np.bitwise_not(label_indicator),:][:, label_indicator].dot(v_L)
-    Q_chol = np.linalg.cholesky(lap_2overP.A).T
-    constants = {'Q': lap_2overP,
+        v_L = np.zeros((len(labels['i']), num_classes))
+        v_L[:, labels['k']] = 1
+        B_offset -= 4 * lap_2p[np.bitwise_not(label_indicator), :][:, label_indicator].dot(v_L)
+    constants = {'Q': lap_2p,
                  'A': A,
                  'B_offset': B_offset.A,
-                 'Q_chol': Q_chol,
                  'beta': beta}
     return constants
 
 
-def calc_d_hard(y, z, beta, div):
-    return div(z - beta * y)/beta
+def calc_d(y, z, beta, div):
+    return div(z - beta * y) / (2 * beta)
 
 
-def x_objective_hard(x, d, constants):
+def x_objective(x, d, constants):
     P = -d
     obj = 0
     for k in range(x.shape[1]):
@@ -52,13 +52,14 @@ def x_objective_hard(x, d, constants):
     return obj
 
 
-def x_grad_hard(x, d, constants):
+def x_grad(x, d, constants):
     P = -d
     grad = 2 * constants['Q'].dot(x) + P
     return grad
 
-def x_update_hard(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
-                  backtracking_param=1):
+
+def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
+             backtracking_param=1):
     x = x_in.copy()
 
     is_unlabeled = np.ones(x_in.shape[0], dtype=bool)
@@ -67,10 +68,10 @@ def x_update_hard(x_in, d, constants, labels, t_max, eps, backtracking_stepsize,
     v_in = (x_in[is_unlabeled, :] + 1) / 2
 
     A = constants['A']
-    B = d[is_unlabeled, :] + constants['B_offset']
+    B = 2 * d[is_unlabeled, :] + constants['B_offset']
     v_tp1 = v_in.copy()
 
-    v_tp1 = simplex_projection(v_tp1)
+    v_tp1 = min_norm_simplex_projection(v_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
 
     f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
 
@@ -78,7 +79,6 @@ def x_update_hard(x_in, d, constants, labels, t_max, eps, backtracking_stepsize,
 
     converged = False
     t = 0
-    tau = tau_0
     while not converged:
         v_t = v_tp1.copy()
         f_t = f_tp1
@@ -104,7 +104,7 @@ def x_update_hard(x_in, d, constants, labels, t_max, eps, backtracking_stepsize,
         dv_max = np.minimum(1, np.linalg.norm(v_tp1 - v_in)) * eps
         converged = dv <= dv_max or t > t_max
     x[is_unlabeled, :] = 2 * v_tp1 - 1
-    return x, {'f_p': f_tp1, 'f_d': -float('inf')}, None
+    return x, {'f_p': f_tp1, 'f_d': -float('inf')}
 
 
 def y_update(beta, v, p):
@@ -129,65 +129,61 @@ def y_update(beta, v, p):
     return y
 
 
-
-def objective_hard(x, p, gradient_matrix, labels):
-    y = gradient_matrix.dot(x)
-    z = np.zeros(y.shape)
-    return lagrangian_hard(x, y, z, p, 0, gradient_matrix, labels)
-
-
-def lagrangian_hard(x, y, z, p, beta, gradient_matrix, labels):
-    num_classes = x.shape[1]
-    pos_grad = np.maximum(y, 0)
-    tv = np.linalg.norm(pos_grad, ord=p) ** p
-    # use np.allclose here to avoid problems with numeric imprecision in sum_projection
-    is_in_simplex = np.all(x <= 1) and np.all(x >= -1) and np.allclose(np.sum(x, axis=1), 2 - num_classes)
-    # use equality here because label constraints are always enforced exactly
-    if labels is not None:
-        labels_correct = np.all(x[labels['i'], labels['k']] == 1)
-    else:
-        labels_correct = True
-    min_norm_sufficient = np.all(np.linalg.norm(x, axis=1) >= num_classes - 2)
-    char_func = 0 if is_in_simplex and labels_correct and min_norm_sufficient else float('inf')
-    grad_x = gradient_matrix.dot(x)
-    inner_prod = np.sum(z * (grad_x - y))
-    norm_term = beta / 2 * np.linalg.norm(grad_x - y) ** 2
-    return tv + char_func + inner_prod + norm_term
+# def objective(x, p, gradient_matrix, labels):
+#     y = gradient_matrix.dot(x)
+#     z = np.zeros(y.shape)
+#     return lagrangian(x, y, z, p, 0, gradient_matrix, labels)
 
 
-def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
-            x0, t_max, t_max_inner, t_max_no_change,
-            eps, eps_inner, backtracking_stepsize, backtracking_tau_0, backtracking_param,
-            verbosity):
+# def lagrangian(x, y, z, p, beta, gradient_matrix, labels):
+#     num_classes = x.shape[1]
+#     pos_grad = np.maximum(y, 0)
+#     tv = np.linalg.norm(pos_grad, ord=p) ** p
+#     # use np.allclose here to avoid problems with numeric imprecision in sum_projection
+#     is_in_simplex = np.all(x <= 1) and np.all(x >= -1) and np.allclose(np.sum(x, axis=1), 2 - num_classes)
+#     # use equality here because label constraints are always enforced exactly
+#     if labels is not None:
+#         labels_correct = np.all(x[labels['i'], labels['k']] == 1)
+#     else:
+#         labels_correct = True
+#     min_norm_sufficient = np.all(np.linalg.norm(x, axis=1) >= num_classes - 2)
+#     char_func = 0 if is_in_simplex and labels_correct and min_norm_sufficient else float('inf')
+#     grad_x = gradient_matrix.dot(x)
+#     inner_prod = np.sum(z * (grad_x - y))
+#     norm_term = beta / 2 * np.linalg.norm(grad_x - y) ** 2
+#     return tv + char_func + inner_prod + norm_term
+
+
+def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_inner,
+            backtracking_stepsize, backtracking_tau_0, backtracking_param, verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
 
-    def grad(x):
-        g = gradient_matrix.dot(x)
+    def grad(x_):
+        g = gradient_matrix.dot(x_)
         return g
 
-    def div(z):
-        d = divergence_matrix.dot(z)
-        return d
+    def div(z_):
+        d_ = divergence_matrix.dot(z_)
+        return d_
 
     x_update_args = {'eps': eps_inner, 't_max': t_max_inner,
                      'backtracking_stepsize': backtracking_stepsize, 'backtracking_tau_0': backtracking_tau_0,
                      'backtracking_param': backtracking_param,
-                     'constants': get_hard_constants(graph.weights, beta=beta, p=p, labels=labels,
-                                                     num_classes=num_classes)}
+                     'constants': get_constants(graph, beta=beta, p=p, labels=labels, num_classes=num_classes)}
 
-    def x_update(x_, y_, z_, dual_init):
-        d = calc_d_hard(y_, z_, beta, div)
-        return x_update_hard(x_, d, labels=labels, **x_update_args)
+    # def x_update(x_, y_, z_):
+    #     d = calc_d(y_, z_, beta, div)
+    #     return x_update(x_, d, labels=labels, **x_update_args)
 
     def x_projection(x_):
         x__ = label_projection(x_, labels=labels)
-        return min_norm_simplex_projection(x__, min_norm=num_classes-2, sum_target=2-num_classes, min_val=-1)
+        return min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
 
-    def objective(x_):
-        return objective_hard(x_, p, gradient_matrix, labels)
-
-    def lagrangian(x_, y_, z_):
-        return lagrangian_hard(x_, y_, z_, p, beta, gradient_matrix, labels)
+    # def objective(x_):
+    #     return objective(x_, p, gradient_matrix, labels)
+    #
+    # def lagrangian(x_, y_, z_):
+    #     return lagrangian(x_, y_, z_, p, beta, gradient_matrix, labels)
 
     eps_abs = 1e-4
     eps_rel = 1e-4
@@ -198,20 +194,12 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
     t_check_rho = 32
     i_check = 2
 
-    # x0_ = x_projection(x0.copy() / beta)
     x0_ = x_projection(x0.copy())
     x = x0_.copy()
     l_est = np.argmax(x, axis=1)
-    x_old = np.zeros(x.shape)
-    # fx = objective(x)
     num_nodes = x0.shape[0]
-    num_edges = gradient_matrix.shape[0]
-    # z = np.sqrt(eps) * np.random.randn(num_edges, num_classes)
-    y = 0 * grad(x)  # np.zeros(z.shape)#
-    y = y_update(beta, grad(x), p)
-    # y = y_update(beta, 0*grad(x), p)  # np.zeros(z.shape)#y_update(beta, grad(x), p)
-    z = beta * (grad(x) - y)#np.zeros(y.shape)
-    lag = lagrangian(x, y, z)
+    y = y_update(beta, beta * grad(x), p)
+    z = beta * (grad(x) - y)
 
     dx = []
     dy = []
@@ -220,19 +208,19 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
     converged = False
     t = 0
     t_since_last = 0
-    dual_init = None
     while not converged:
         x_old = x.copy()
         y_old = y.copy()
         z_old = z.copy()
         l_est_old = l_est.copy()
 
-        # fx_old = fx
-        # lag_old = lag
-
         t += 1
 
-        x, fx_pd_, dual_init = x_update(x_old, y_old, z_old, dual_init)
+        # x, fx_pd_ = x_update(x_old, y_old, z_old)
+
+        d = calc_d(y_old, z_old, beta, div)
+        x, fx_pd_ = x_update(x_old, d, labels=labels, **x_update_args)
+
         fx_pd['p'].append(fx_pd_['f_p'])
         fx_pd['d'].append(fx_pd_['f_d'])
         l_est = np.argmax(x, axis=1)
@@ -248,20 +236,17 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
         norm_r = np.linalg.norm(r)
         norm_s = np.linalg.norm(s)
 
-        # rtp1 = norm(Rtp1) / rho
-        # stp1 = norm(Stp1)
         ePri = np.sqrt(num_classes) * num_nodes * eps_abs + eps_rel * np.linalg.norm(grad(x))
         eDual = np.sqrt(num_classes * num_nodes) * eps_abs + eps_rel * np.linalg.norm(div(y))
-        if t >= t_check_rho:
-            if norm_r * eDual >= norm_s * ePri * mu:
-                beta = beta * eta
-            elif norm_r * eDual <= norm_s * ePri / mu:
-                beta = beta / eta
-            t_check_rho = t_check_rho * i_check
+        # if t >= t_check_rho:
+        #     if norm_r * eDual >= norm_s * ePri * mu:
+        #         beta = beta * eta
+        #         print('beta = {b}'.format(b=beta))
+        #     elif norm_r * eDual <= norm_s * ePri / mu:
+        #         beta = beta / eta
+        #         print('beta = {b}'.format(b=beta))
+        #     t_check_rho = t_check_rho * i_check
         cont = (norm_r > ePri or norm_s > eDual)
-
-        # fx = objective(x)
-        # lag = lagrangian(x, y, z)
 
         dx_ = np.linalg.norm(x - x_old)
         dy_ = np.linalg.norm(y - y_old)
@@ -278,9 +263,9 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
             print('\rt={t}, dx_={dx}, {n} changes for {t_since} iterations'.format(t=t, dx=dx_, n=num_changes,
                                                                                    t_since=t_since_last), end='')
         converged = not cont and (
-                dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
-            z.size)) or t_since_last >= t_max_no_change
-        if t-t_since_last >= t_max and not converged:
+            dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
+                z.size)) or t_since_last >= t_max_no_change
+        if t - t_since_last >= t_max and not converged:
             break
     if verbosity > 0:
         print('\r')
@@ -289,16 +274,13 @@ def nc_admm(graph, num_classes, p, a, b, c, beta, labels,
 
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
-                 penalty_parameter=100, p=1, a=1, b=100, c=20000,
+                 penalty_parameter=100, p=1,
                  t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-6,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=1 / 2, backtracking_param=1 / 2):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.beta = penalty_parameter
         self.p = p
-        self.a = a
-        self.b = b
-        self.c = c
         self.t_max_inner = t_max_inner
         self.t_max_no_change = t_max_no_change
         self.eps = eps
@@ -326,16 +308,14 @@ class TvNonConvex(NodeLearner):
         else:
             t_max_no_change = self.t_max_no_change
 
-        x, converged, dx, dy, dz, fx_pd = nc_admm(graph=graph, num_classes=self.num_classes, x0=x0, a=self.a,
-                                                  b=self.b, c=self.c, labels=labels, verbosity=self.verbosity,
-                                                  t_max=self.t_max, t_max_inner=self.t_max_inner,
-                                                  t_max_no_change=t_max_no_change, beta=self.beta, eps=self.eps,
-                                                  eps_inner=self.eps_inner, p=self.p,
+        x, converged, dx, dy, dz, fx_pd = nc_admm(graph=graph, num_classes=self.num_classes, x0=x0, labels=labels,
+                                                  verbosity=self.verbosity, t_max=self.t_max,
+                                                  t_max_inner=self.t_max_inner, t_max_no_change=t_max_no_change,
+                                                  beta=self.beta, eps=self.eps, eps_inner=self.eps_inner, p=self.p,
                                                   backtracking_param=self.backtracking_param,
                                                   backtracking_tau_0=self.backtracking_tau_0,
                                                   backtracking_stepsize=self.backtracking_stepsize)
 
-        # l_est = np.argmax(x, axis=1)
         kMeans = SeededKMeans(num_classes=self.num_classes, verbose=self.verbosity)
         l_est = kMeans.estimate_labels(x, labels=labels)
         exit_code = 0 if converged else -1
@@ -346,7 +326,7 @@ class TvNonConvex(NodeLearner):
                                 'fx_pd': fx_pd}
 
         self.embedding = x
-        self.normalized_embedding = (x+1)/2
+        self.normalized_embedding = (x + 1) / 2
         self.intermediate_results = intermediate_results
 
         return l_est
