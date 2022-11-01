@@ -30,7 +30,7 @@ def get_constants(graph, beta, p, labels, num_classes):
     B_offset = 2 * lap_2p[np.bitwise_not(label_indicator), :].sum(1).dot(np.ones((1, num_classes)))
     if labels is not None:
         v_L = np.zeros((len(labels['i']), num_classes))
-        v_L[:, labels['k']] = 1
+        v_L[range(len(labels['i'])), labels['k']] = 1
         B_offset -= 4 * lap_2p[np.bitwise_not(label_indicator), :][:, label_indicator].dot(v_L)
     constants = {'Q': lap_2p,
                  'A': A,
@@ -102,7 +102,10 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             tau *= backtracking_stepsize
         dv = np.linalg.norm(v_t - v_tp1)
         dv_max = np.minimum(1, np.linalg.norm(v_tp1 - v_in)) * eps
-        converged = dv <= dv_max or t > t_max
+        converged = dv <= dv_max
+        if t > t_max:
+            print('x update did not converge')
+            break
     x[is_unlabeled, :] = 2 * v_tp1 - 1
     return x, {'f_p': f_tp1, 'f_d': -float('inf')}
 
@@ -275,7 +278,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=100, p=1,
-                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-6,
+                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-8,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=1 / 2, backtracking_param=1 / 2):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
