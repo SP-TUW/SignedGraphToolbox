@@ -1,9 +1,9 @@
-from ._node_learner import NodeLearner
-from src.tools.projections import min_norm_simplex_projection, simplex_projection, label_projection
-from src.metric_learning import SeededKMeans
-
 import numpy as np
 import scipy.sparse as sps
+
+from src.metric_learning import SeededKMeans
+from src.tools.projections import min_norm_simplex_projection, label_projection
+from ._node_learner import NodeLearner
 
 
 def get_lap_2p(weights, p):
@@ -21,7 +21,7 @@ def get_lap_2p(weights, p):
 def get_constants(graph, beta, p, labels, num_classes):
     lap_2p_ = get_lap_2p(graph.weights, p)
     gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
-    lap_2p = gradient_matrix.T.dot(gradient_matrix)/2
+    lap_2p = gradient_matrix.T.dot(gradient_matrix)
     label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
@@ -43,19 +43,19 @@ def calc_d(y, z, beta, div):
     return div(z - beta * y) / (2 * beta)
 
 
-def x_objective(x, d, constants):
-    P = -d
-    obj = 0
-    for k in range(x.shape[1]):
-        xk = x[:, k]
-        obj += (constants['Q'].T.dot(xk) + P[:, k]).dot(xk)
-    return obj
-
-
-def x_grad(x, d, constants):
-    P = -d
-    grad = 2 * constants['Q'].dot(x) + P
-    return grad
+# def x_objective(x, d, constants):
+#     P = -d
+#     obj = 0
+#     for k in range(x.shape[1]):
+#         xk = x[:, k]
+#         obj += (constants['Q'].T.dot(xk)/2 + P[:, k]).dot(xk)
+#     return obj
+#
+#
+# def x_grad(x, d, constants):
+#     P = -d
+#     grad = 2 * constants['Q'].dot(x) + P
+#     return grad
 
 
 def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
