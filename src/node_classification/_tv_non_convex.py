@@ -23,7 +23,7 @@ def get_lap_2p(weights, p):
 def get_constants(graph, beta, p, labels, num_classes):
     lap_2p_ = get_lap_2p(graph.weights, p)
     gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
-    lap_2p = gradient_matrix.T.dot(gradient_matrix)
+    lap_2p = gradient_matrix.T.dot(gradient_matrix)/2
     label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
