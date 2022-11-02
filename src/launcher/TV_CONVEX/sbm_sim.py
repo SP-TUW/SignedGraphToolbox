@@ -268,10 +268,10 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
         # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
-        for b in np.logspace(-1,3,9):
-            methods.append({'name': 'tv_nc{b:0>3d}sponge'.format(b=b), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.01)})
-            methods.append({'name': 'tv_nc{b:0>4d}snc'.format(b=int(10*b)), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001)})
-            methods.append({'name': 'tv_nc{b:0>3d}rand'.format(b=int(10*b)), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001)})
+        for b in np.logspace(0,2,3):
+            methods.append({'name': 'tv_nc{b:0>4d}sponge'.format(b=int(10*b)), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
+            methods.append({'name': 'tv_nc{b:0>4d}snc'.format(b=int(10*b)), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
+            methods.append({'name': 'tv_nc{b:0>4d}rand'.format(b=int(10*b)), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
             # methods.append({'name': 'tv_nc1tvRes', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         # methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
         # methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})
