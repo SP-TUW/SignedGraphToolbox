@@ -39,7 +39,7 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
     r__ = np.argmax(cond, axis=axis)
     xi_r = np.take_along_axis(xi, r__[:, None], axis=axis)
     nu_r = np.take_along_axis(nu, r__[:, None], axis=axis)
-    is_randomized = np.sum(cond[:, :-1], axis=1) > 1
+    is_randomized = z_sort[:,0] == z_sort[:,r0]
     x_ = np.maximum(0,(z+nu_r)/xi_r)
 
     if np.any(is_randomized):
