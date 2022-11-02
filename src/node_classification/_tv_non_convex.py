@@ -20,10 +20,10 @@ def get_lap_2p(weights, p):
     return lap_2p
 
 
-def get_constants(graph, beta, p, labels, num_classes):
+def get_constants(graph, beta, p, labels, num_classes, laplacian_scaling):
     lap_2p_ = get_lap_2p(graph.weights, p)
     gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
-    lap_2p = gradient_matrix.T.dot(gradient_matrix)/2
+    lap_2p = gradient_matrix.T.dot(gradient_matrix) / 2 * laplacian_scaling
     label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
@@ -160,7 +160,7 @@ def y_update(beta, v, p):
 
 
 def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_inner,
-            backtracking_stepsize, backtracking_tau_0, backtracking_param, verbosity):
+            backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, run_pre_iteration, verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
 
     def grad(x_):
@@ -174,7 +174,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     x_update_args = {'eps': eps_inner, 't_max': t_max_inner,
                      'backtracking_stepsize': backtracking_stepsize, 'backtracking_tau_0': backtracking_tau_0,
                      'backtracking_param': backtracking_param,
-                     'constants': get_constants(graph, beta=beta, p=p, labels=labels, num_classes=num_classes)}
+                     'constants': get_constants(graph, beta=beta, p=p, labels=labels, num_classes=num_classes, laplacian_scaling=laplacian_scaling)}
 
     # def x_update(x_, y_, z_):
     #     d = calc_d(y_, z_, beta, div)
@@ -203,8 +203,13 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     x = x0_.copy()
     l_est = np.argmax(x, axis=1)
     num_nodes = x0.shape[0]
+
     y = 0*y_update(beta, beta * grad(x), p)
     z = 0*beta * (grad(x) - y)
+
+    if not run_pre_iteration:
+        y *= 0
+        z *= 0
 
     dx = []
     dy = []
@@ -282,7 +287,8 @@ class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=100, p=1,
                  t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-8,
-                 backtracking_stepsize=1 / 2, backtracking_tau_0=1 / 2, backtracking_param=1 / 2):
+                 backtracking_stepsize=1 / 2, backtracking_tau_0=0.001, backtracking_param=1 / 2,
+                 laplacian_scaling=1, run_pre_iteration=False):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.beta = penalty_parameter
@@ -294,6 +300,8 @@ class TvNonConvex(NodeLearner):
         self.backtracking_stepsize = backtracking_stepsize
         self.backtracking_tau_0 = backtracking_tau_0
         self.backtracking_param = backtracking_param
+        self.laplacian_scaling = laplacian_scaling
+        self.run_pre_iteration = run_pre_iteration
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -322,7 +330,9 @@ class TvNonConvex(NodeLearner):
                                                   beta=self.beta, eps=self.eps, eps_inner=self.eps_inner, p=self.p,
                                                   backtracking_param=self.backtracking_param,
                                                   backtracking_tau_0=self.backtracking_tau_0,
-                                                  backtracking_stepsize=self.backtracking_stepsize)
+                                                  backtracking_stepsize=self.backtracking_stepsize,
+                                                  laplacian_scaling=self.laplacian_scaling,
+                                                  run_pre_iteration=self.run_pre_iteration)
 
         kMeans = SeededKMeans(num_classes=self.num_classes, verbose=self.verbosity)
         l_est = kMeans.estimate_labels(x, labels=labels)

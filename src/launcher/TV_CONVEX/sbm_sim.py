@@ -38,44 +38,44 @@ def plot():
 
 
     plots_folder = constants.plots_dir['sbm_sim']
-    for root, subdirs, files in os.walk(plots_folder):
-        filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(len(constants.results_dir['sbm_sim']))] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
-        for x_json_name in sorted(files):
-        # for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:
-        # for x_json_name in filename_list:
-            if x_json_name.startswith("x") and x_json_name.endswith(".json") and x_json_name in filename_list:
-                print(x_json_name)
-                x_name = x_json_name[:-5]
-                x_csv_name = x_name + '.csv'
-                with open(os.path.join(plots_folder,x_json_name)) as x_file:
-                    x = json.load(x_file)
-
-                x_array_style = {}
-                for key, val in x.items():
-                    if key not in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]:
-                        continue
-                    # x_array = np.array(val)
-                    # x_array = np.sort(x_array,axis=0)
-                    # for n in range(x_array.shape[1]):
-                    #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n
-                    x_df = pd.DataFrame(val)
-                    x_df['max'] = x_df.idxmax(axis=1)
-                    x_df.index = x_df.index.rename('i')
-                    # x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
-                    num_nodes = x_df.shape[0]
-                    s = (4-np.log10(num_nodes/9))**2
-                    for k in range(len(val[0])):
-                        plt.figure(figsize=(3.1/2.54, 2.0/2.54), dpi=600)
-                        plt.scatter(x_df.index, x_df[k], c=x_df['max']==k, marker='.', s=s, cmap='PiYG', norm=colors.Normalize(vmin=-.2, vmax=1.2), linewidths=0)
-                        # plt.show()
-                        plt.xlim(np.array([-0.05, 1.05])*x_df.shape[0])
-                        plt.ylim([-1.1, 1.1])
-                        plt.axis('off')
-                        plt.tight_layout(pad=0)
-                        plt.savefig(os.path.join(plots_folder,x_name+'_'+key+'{k:0>2d}'.format(k=k)+'.png'))
-                        plt.close()
-                # x_df = pd.DataFrame(x_array_style)
-                # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
+    # for root, subdirs, files in os.walk(plots_folder):
+    #     filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(len(constants.results_dir['sbm_sim']))] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
+    #     for x_json_name in sorted(files):
+    #     # for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:
+    #     # for x_json_name in filename_list:
+    #         if x_json_name.startswith("x") and x_json_name.endswith(".json") and x_json_name in filename_list:
+    #             print(x_json_name)
+    #             x_name = x_json_name[:-5]
+    #             x_csv_name = x_name + '.csv'
+    #             with open(os.path.join(plots_folder,x_json_name)) as x_file:
+    #                 x = json.load(x_file)
+    #
+    #             x_array_style = {}
+    #             for key, val in x.items():
+    #                 if key not in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]:
+    #                     continue
+    #                 # x_array = np.array(val)
+    #                 # x_array = np.sort(x_array,axis=0)
+    #                 # for n in range(x_array.shape[1]):
+    #                 #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n
+    #                 x_df = pd.DataFrame(val)
+    #                 x_df['max'] = x_df.idxmax(axis=1)
+    #                 x_df.index = x_df.index.rename('i')
+    #                 # x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
+    #                 num_nodes = x_df.shape[0]
+    #                 s = (4-np.log10(num_nodes/9))**2
+    #                 for k in range(len(val[0])):
+    #                     plt.figure(figsize=(3.1/2.54, 2.0/2.54), dpi=600)
+    #                     plt.scatter(x_df.index, x_df[k], c=x_df['max']==k, marker='.', s=s, cmap='PiYG', norm=colors.Normalize(vmin=-.2, vmax=1.2), linewidths=0)
+    #                     # plt.show()
+    #                     plt.xlim(np.array([-0.05, 1.05])*x_df.shape[0])
+    #                     plt.ylim([-1.1, 1.1])
+    #                     plt.axis('off')
+    #                     plt.tight_layout(pad=0)
+    #                     plt.savefig(os.path.join(plots_folder,x_name+'_'+key+'{k:0>2d}'.format(k=k)+'.png'))
+    #                     plt.close()
+    #             # x_df = pd.DataFrame(x_array_style)
+    #             # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
     groups = [['eps', 'num_classes', 'percentage_labeled'],
@@ -178,8 +178,8 @@ def plot():
                     # df_plot = df[~df['name'].str.endswith('fine') & df['name'].str.startswith('tv_regula')]
                     # df_plot = df[df['name'].str.startswith('tv2_re')]
                     # df_plot = df[df['name'].str.startswith('tv_nc') | df['name'].isin(['mapr', 'snc'])]
-                    df_plot = df[df['name'].str.endswith('snc')]
-                    # df_plot = df
+                    # df_plot = df[df['name'].str.endswith('snc')]
+                    df_plot = df
                     plt.figure(figsize=(20, 15))
                     sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name').set(title='n_err: {val}'.format(val=i))
                     plt.legend(handlelength=5)
@@ -273,10 +273,12 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
         # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         for b in np.logspace(0,2,3):
-            methods.append({'name': 'tv_nc{b:0>4d}sponge'.format(b=int(10*b)), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
-            methods.append({'name': 'tv_nc{b:0>4d}snc'.format(b=int(10*b)), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
-            methods.append({'name': 'tv_nc{b:0>4d}rand'.format(b=int(10*b)), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
-            # methods.append({'name': 'tv_nc1tvRes', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
+            for l in [1, 2]:
+                for pre in [True, False]:
+                    # methods.append({'name': 'tv_nc{b:0>4d}sponge'.format(b=int(10*b)), 'l_guess': 'sponge', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, backtracking_tau_0=0.001, t_max_no_change=None, t_max=1e3)})
+                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)), 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
+                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(10*b),l=l,t=int(pre)), 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
+                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvRes'.format(b=int(10*b),l=l,t=int(pre)), 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
         # methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
         # methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})
         # methods.append({'name': 'tv_nc10000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10000)})
