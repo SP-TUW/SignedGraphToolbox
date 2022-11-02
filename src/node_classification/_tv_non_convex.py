@@ -203,8 +203,8 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     x = x0_.copy()
     l_est = np.argmax(x, axis=1)
     num_nodes = x0.shape[0]
-    y = y_update(beta, beta * grad(x), p)
-    z = beta * (grad(x) - y)
+    y = 0*y_update(beta, beta * grad(x), p)
+    z = 0*beta * (grad(x) - y)
 
     dx = []
     dy = []
