@@ -310,6 +310,8 @@ class TvNonConvex(NodeLearner):
             x0[labels['i'], labels['k']] = 1
 
         if self.t_max_no_change is None:
+            t_max_no_change = self.t_max
+        elif self.t_max_no_change == 'auto':
             t_max_no_change = np.sqrt(num_nodes * self.num_classes)
         else:
             t_max_no_change = self.t_max_no_change
