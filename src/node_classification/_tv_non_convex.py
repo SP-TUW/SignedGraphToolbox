@@ -263,12 +263,13 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
                 t_since_last = 0
             else:
                 t_since_last += 1
-            print('\rt={t}, dx_={dx}, {n} changes for {t_since} iterations'.format(t=t, dx=dx_, n=num_changes,
+            print('\rt={t}, dx_={dx:.3e}, r={r:.3e}, s={s:.3e}, {n} changes for {t_since} iterations'.format(t=t, dx=dx_, r=norm_r, s=norm_s, n=num_changes,
                                                                                    t_since=t_since_last), end='')
         converged = not cont and (
             dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
                 z.size)) or t_since_last >= t_max_no_change
-        if t - t_since_last >= t_max and not converged:
+        if t >= t_max and not converged:
+            warnings.warn('TVNC did not converge')
             break
     if verbosity > 0:
         print('\r')
