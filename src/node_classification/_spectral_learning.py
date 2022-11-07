@@ -162,7 +162,7 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
 
 class SpectralLearning(NodeLearner):
 
-    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=1e5):
+    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=int(1e5)):
         self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
@@ -184,7 +184,7 @@ class SpectralLearning(NodeLearner):
 
         a, eig_sel, normalization, force_unsigned = _get_objective_matrices_and_eig_selector(graph, self.objective,
                                                                                                self.num_classes)
-        if labels is None:
+        if labels is None or len(labels['i'])==0:
             n_eigs = self.num_classes
 
             v0 = np.random.rand(min(a.shape))
