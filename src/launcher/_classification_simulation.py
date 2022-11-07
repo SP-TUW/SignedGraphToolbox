@@ -126,7 +126,7 @@ class ClassificationSimulation:
             else:
                 l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
             t_stop = time.time()
-            if 'is_unsupervised' in method and method['is_unsupervised']:
+            if ('is_unsupervised' in method and method['is_unsupervised']) or self.labels is None or len(self.labels['i']) == 0:
                 self.l_est[name] = find_min_err_label_permutation(l_est, self.graph.class_labels, self.graph.num_classes, self.graph.num_classes)
             else:
                 self.l_est[name] = l_est
