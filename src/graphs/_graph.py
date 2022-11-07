@@ -31,11 +31,18 @@ class Graph(ABC):
         self.degree = self.d_pos + self.d_neg
 
     def get_signed_laplacian(self):
+        '''
+
+        :return: signed laplacian
+        '''
         lap = diags(self.degree) - self.w_pos + self.w_neg
         return lap
 
     def get_signed_sym_laplacian(self):
+        '''
 
+        :return: symmetric normalized signed laplacian
+        '''
         lap = diags(self.degree) - self.w_pos + self.w_neg
         inv_sqrt_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.degree)])
         lap = diags(inv_sqrt_deg).dot(lap).dot(diags(inv_sqrt_deg))
@@ -43,6 +50,10 @@ class Graph(ABC):
         return lap
 
     def get_signed_am_laplacian(self):
+        '''
+
+        :return: arithmetic mean laplacian
+        '''
 
         lap_pos = diags(self.d_pos) - self.w_pos
         inv_sqrt_pos_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_pos)])
