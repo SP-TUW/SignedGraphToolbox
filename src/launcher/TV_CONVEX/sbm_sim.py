@@ -275,7 +275,6 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
         methods.append({'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')})
         methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
-        # methods.append({'name': 'tv_nc1', 'l_guess': 'snc', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1)})
         for b in np.logspace(0,2,5)[1:]:
             for l in [1, 2]:
                 for pre in [True, False]:
@@ -285,9 +284,6 @@ def get_methods(graph_config, sim_id):
                     methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvRes'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'tv15_resampling05', 'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
                     methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
                     # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvnc'.format(b=int(10 * b), l=l, t=int(pre)),      'l_guess': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)),                             'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
-        # methods.append({'name': 'tv_nc10', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10)})
-        # methods.append({'name': 'tv_nc1000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=1000)})
-        # methods.append({'name': 'tv_nc10000', 'l_guess': 'tv15_resampling05', 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=10000)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
