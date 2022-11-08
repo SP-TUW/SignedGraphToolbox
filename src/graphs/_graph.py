@@ -30,6 +30,42 @@ class Graph(ABC):
         self.d_neg = np.squeeze(np.asarray(self.w_neg.sum(1)))
         self.degree = self.d_pos + self.d_neg
 
+    def get_pos_laplacian(self):
+        '''
+
+        :return: laplacian of positive edges
+        '''
+        lap_pos = diags(self.d_pos) - self.w_pos
+        return lap_pos
+
+    def get_pos_sym_laplacian(self):
+        '''
+
+        :return: symmetric laplacian of positive edges
+        '''
+        lap_pos = self.get_pos_laplacian()
+        inv_sqrt_pos_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_pos)])
+        lap_pos = diags(inv_sqrt_pos_deg).dot(lap_pos).dot(diags(inv_sqrt_pos_deg))
+        return lap_pos
+
+    def get_neg_laplacian(self):
+        '''
+
+        :return: laplacian of negative edges
+        '''
+        lap_neg = diags(self.d_neg) + self.w_neg
+        return lap_neg
+
+    def get_neg_sym_laplacian(self):
+        '''
+
+        :return: symmetric laplacian of negative edges
+        '''
+        lap_neg = self.get_neg_laplacian()
+        inv_sqrt_neg_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_neg)])
+        lap_neg = diags(inv_sqrt_neg_deg).dot(lap_neg).dot(diags(inv_sqrt_neg_deg))
+        return lap_neg
+
     def get_signed_laplacian(self):
         '''
 
@@ -55,17 +91,17 @@ class Graph(ABC):
         :return: arithmetic mean laplacian
         '''
 
-        lap_pos = diags(self.d_pos) - self.w_pos
-        inv_sqrt_pos_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_pos)])
-        lap_pos = diags(inv_sqrt_pos_deg).dot(lap_pos).dot(diags(inv_sqrt_pos_deg))
-
-        lap_neg = diags(self.d_neg) + self.w_neg
-        inv_sqrt_neg_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_neg)])
-        lap_neg = diags(inv_sqrt_neg_deg).dot(lap_neg).dot(diags(inv_sqrt_neg_deg))
+        lap_pos = self.get_pos_sym_laplacian()
+        lap_neg = self.get_neg_sym_laplacian()
 
         lap = 1/2 * (lap_pos + lap_neg)
 
         return lap
+
+    def get_sponge_matrices(self, tau_sim=1, tau_dis=1):
+        matrix_numerator = diags(self.d_pos) - self.w_pos + tau_dis*diags(self.d_neg)
+        matrix_denominator = diags(self.d_neg) - self.w_neg + tau_sim*diags(self.d_pos)
+        return matrix_numerator, matrix_denominator
 
     def get_gradient_matrix(self, p, return_div=False):
         num_edges = self.weights.data.size
