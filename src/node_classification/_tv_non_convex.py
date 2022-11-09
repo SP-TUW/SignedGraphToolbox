@@ -160,7 +160,8 @@ def y_update(beta, v, p):
 
 
 def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_inner,
-            backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, run_pre_iteration, verbosity):
+            backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, pre_iteration_version,
+            verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
 
     def grad(x_):
@@ -174,7 +175,8 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     x_update_args = {'eps': eps_inner, 't_max': t_max_inner,
                      'backtracking_stepsize': backtracking_stepsize, 'backtracking_tau_0': backtracking_tau_0,
                      'backtracking_param': backtracking_param,
-                     'constants': get_constants(graph, beta=beta, p=p, labels=labels, num_classes=num_classes, laplacian_scaling=laplacian_scaling)}
+                     'constants': get_constants(graph, beta=beta, p=p, labels=labels, num_classes=num_classes,
+                                                laplacian_scaling=laplacian_scaling)}
 
     # def x_update(x_, y_, z_):
     #     d = calc_d(y_, z_, beta, div)
@@ -182,7 +184,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 
     def x_projection(x_):
         x__ = label_projection(x_, labels=labels)
-        return min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
+        return min_norm_simplex_projection(x__, min_norm=0.1, sum_target=2 - num_classes, min_val=-1)
 
     # def objective(x_):
     #     return objective(x_, p, gradient_matrix, labels)
@@ -204,12 +206,15 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     l_est = np.argmax(x, axis=1)
     num_nodes = x0.shape[0]
 
-    y = y_update(beta, beta * grad(x), p)
-    z = beta * (grad(x) - y)
-
-    if not run_pre_iteration:
-        y *= 0
-        z *= 0
+    if pre_iteration_version == 0:
+        y = 0 * y_update(beta, beta * grad(x), p)
+        z = 0 * beta * (grad(x) - y)
+    elif pre_iteration_version == 1:
+        y = y_update(beta, beta * grad(x), p)
+        z = beta * (grad(x) - y)
+    elif pre_iteration_version == 2:
+        y = y_update(beta, 2 * grad(x), p)
+        z = 0 * beta * (grad(x) - y)
 
     dx = []
     dy = []
@@ -270,11 +275,17 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
                 t_since_last = 0
             else:
                 t_since_last += 1
-            print('\rt={t}, dx_={dx:.3e}, r={r:.3e}, s={s:.3e}, {n} changes for {t_since} iterations'.format(t=t, dx=dx_, r=norm_r, s=norm_s, n=num_changes,
-                                                                                   t_since=t_since_last), end='')
-        converged = not cont and (
-            dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
-                z.size)) or t_since_last >= t_max_no_change
+            print(
+                '\rt={t}, dx_={dx:.3e}, r={r:.3e}, s={s:.3e}, {n} changes for {t_since} iterations'.format(t=t, dx=dx_,
+                                                                                                           r=norm_r,
+                                                                                                           s=norm_s,
+                                                                                                           n=num_changes,
+                                                                                                           t_since=t_since_last),
+                end='')
+        # converged = not cont and (
+        #         dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
+        #     z.size)) or t_since_last >= t_max_no_change
+        converged = dx_ <= eps
         if t >= t_max and not converged:
             warnings.warn('TVNC did not converge')
             break
@@ -288,7 +299,7 @@ class TvNonConvex(NodeLearner):
                  penalty_parameter=100, p=1,
                  t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-8,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=0.001, backtracking_param=1 / 2,
-                 laplacian_scaling=1, run_pre_iteration=False):
+                 laplacian_scaling=1, pre_iteration_version=0):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.beta = penalty_parameter
@@ -301,7 +312,7 @@ class TvNonConvex(NodeLearner):
         self.backtracking_tau_0 = backtracking_tau_0
         self.backtracking_param = backtracking_param
         self.laplacian_scaling = laplacian_scaling
-        self.run_pre_iteration = run_pre_iteration
+        self.pre_iteration_version = pre_iteration_version
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -332,7 +343,7 @@ class TvNonConvex(NodeLearner):
                                                   backtracking_tau_0=self.backtracking_tau_0,
                                                   backtracking_stepsize=self.backtracking_stepsize,
                                                   laplacian_scaling=self.laplacian_scaling,
-                                                  run_pre_iteration=self.run_pre_iteration)
+                                                  pre_iteration_version=self.pre_iteration_version)
 
         kMeans = SeededKMeans(num_classes=self.num_classes, verbose=self.verbosity)
         l_est = kMeans.estimate_labels(x, labels=labels)
