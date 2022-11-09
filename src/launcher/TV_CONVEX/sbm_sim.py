@@ -223,6 +223,11 @@ def get_graph_config_lists(sim_id):
         percentage_labeled_list = [0, 10/3, 10]
         num_nodes_list = [900]*3
         eps_list = np.linspace(0, 0.5, 11)
+    elif sim_id == 5:
+        num_classes_list = [3]
+        percentage_labeled_list = [0]
+        num_nodes_list = [900]
+        eps_list = np.linspace(0, 0.5, 11)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -285,6 +290,18 @@ def get_methods(graph_config, sim_id):
                     methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvRes'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'tv15_resampling05', 'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre, t_max_no_change=200)})
                     methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre, t_max_no_change=200)})
                     # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvnc'.format(b=int(10 * b), l=l, t=int(pre)),      'l_guess': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)),                             'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
+
+
+    if sim_id == 5:
+        v = 1
+        methods = [
+            {'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)},
+            ]
+        for b in [100]:#np.logspace(1,2,2):
+            for l in [1]:
+                for pre in [0,1,2]:
+                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre, t_max=10000)})
+                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre, t_max=10000)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
