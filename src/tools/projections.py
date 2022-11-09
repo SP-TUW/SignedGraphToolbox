@@ -23,7 +23,10 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
     z = (y - d) / k
     alpha = (min_norm - 2 * k * d - d ** 2 * K) / k ** 2
 
-    r0 = np.floor(1 / alpha).astype(int)
+    if alpha > 0:
+        r0 = min(np.floor(1 / alpha).astype(int), K)
+    else:
+        r0 = K
 
     z_sort = -np.sort(-z, axis=axis)
 
@@ -33,27 +36,29 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
     z_cumsum = np.cumsum(z_sort,axis=axis)
     z_cumnorm = np.cumsum(z_sort ** 2, axis=axis)
     mean_zr = z_cumsum/r
-    xi[:, r0:] = np.minimum(1, np.sqrt((z_cumnorm[:,r0:]-z_cumsum[:,r0:]**2/r[:,r0:])/(alpha - 1 / r[:,r0:])))
+    if r0 < K:
+        xi[:, r0:] = np.minimum(1, np.sqrt((z_cumnorm[:,r0:]-z_cumsum[:,r0:]**2/r[:,r0:])/(alpha - 1 / r[:,r0:])))
     nu = xi / r - mean_zr
     cond[:, :-1] = np.bitwise_and(z_sort[:, :-1] >= -nu[:, :-1], -nu[:, :-1] >= z_sort[:, 1:])
     r__ = np.argmax(cond, axis=axis)
     xi_r = np.take_along_axis(xi, r__[:, None], axis=axis)
     nu_r = np.take_along_axis(nu, r__[:, None], axis=axis)
-    is_randomized = z_sort[:,0] == z_sort[:,r0]
     x_ = np.maximum(0,(z+nu_r)/xi_r)
 
-    if np.any(is_randomized):
-        warnings.warn('at least one element needs randomization')
-        randomized_indices = np.nonzero(is_randomized)
+    if r0 < K:
+        is_randomized = z_sort[:,0] == z_sort[:,r0]
+        if np.any(is_randomized):
+            warnings.warn('at least one element needs randomization')
+            randomized_indices = np.nonzero(is_randomized)
 
-        if axis == -1:
-            full_indices = randomized_indices[:axis] + (slice(None),)
-        else:
-            full_indices = randomized_indices[:axis] + (slice(None),) + randomized_indices[axis + 1:]
-        z_randomized = z[full_indices]
-        z_randomized += np.random.standard_normal(z_randomized.shape) / 100
-        x_randomized = min_norm_simplex_projection(z_randomized, min_norm=alpha, sum_target=1, min_val=0, axis=axis)
-        x_[full_indices] = x_randomized
+            if axis == -1:
+                full_indices = randomized_indices[:axis] + (slice(None),)
+            else:
+                full_indices = randomized_indices[:axis] + (slice(None),) + randomized_indices[axis + 1:]
+            z_randomized = z[full_indices]
+            z_randomized += np.random.standard_normal(z_randomized.shape) / 100
+            x_randomized = min_norm_simplex_projection(z_randomized, min_norm=alpha, sum_target=1, min_val=0, axis=axis)
+            x_[full_indices] = x_randomized
 
     # transform output
     x = k * np.maximum(x_, 0) + d
