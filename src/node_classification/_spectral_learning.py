@@ -133,7 +133,6 @@ def _joint_multiclass(obj_matrix, B, c, random_init, return_intermediate, use_qr
         t += 1
         diff = np.linalg.norm(v - v_old)
         converged = diff < eps * sqrt((num_nodes - num_labels) * num_classes)
-        print('\r{t}'.format(t=t),end='')
         if not converged and t >= t_max:
             break
 
