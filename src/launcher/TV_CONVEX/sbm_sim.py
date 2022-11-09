@@ -271,11 +271,12 @@ def get_methods(graph_config, sim_id):
 
     if sim_id == 4:
         v = 1
-
-        methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
-        methods.append({'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')})
-        methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
-        for b in np.logspace(0,2,3):
+        methods = [
+            {'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)},
+            {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+            {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
+            {'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)}]
+        for b in np.logspace(0,3,4):
             for l in [1, 2]:
                 for pre in [True, False]:
                     methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre, t_max_no_change=200)})
