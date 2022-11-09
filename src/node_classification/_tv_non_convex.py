@@ -184,7 +184,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 
     def x_projection(x_):
         x__ = label_projection(x_, labels=labels)
-        return min_norm_simplex_projection(x__, min_norm=0.1, sum_target=2 - num_classes, min_val=-1)
+        return min_norm_simplex_projection(x__, min_norm=0, sum_target=2 - num_classes, min_val=-1)
 
     # def objective(x_):
     #     return objective(x_, p, gradient_matrix, labels)
