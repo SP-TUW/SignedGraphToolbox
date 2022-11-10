@@ -302,10 +302,10 @@ def get_methods(graph_config, sim_id):
             ]
         for b in [100]:#np.logspace(1,2,2):
             for l in [1]:
-                for pre in [0,1,2]:
-                    for normalize in [True, False]:
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_rand'.format(b=int(b),l=l,t=int(pre),n=int(normalize)),                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_sponge'.format(b=int(b),l=l,t=int(pre),n=int(normalize)), 'l_guess': 'sponge', 'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
+                for pre in [2]:
+                    for normalize in [False]:
+                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_rand'.format(b=int(b),l=l,t=int(pre),n=int(normalize)),                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, t_max_no_change=150, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
+                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_sponge'.format(b=int(b),l=l,t=int(pre),n=int(normalize)), 'l_guess': 'sponge', 'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, t_max_no_change=150, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
