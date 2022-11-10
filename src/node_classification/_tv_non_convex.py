@@ -8,20 +8,20 @@ from src.tools.projections import min_norm_simplex_projection, label_projection
 from ._node_learner import NodeLearner
 
 
-def get_lap_2p(weights, p):
-    weights_abs = abs(weights)
-    signs = weights.sign()
-    weights_2p = weights_abs.power(2 / p)
-    in_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=1)))
-    in_deg_lp_lap = sps.diags(in_deg_lp) - signs.multiply(weights_2p)
-    out_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=0)))
-    out_deg_lp_lap = sps.diags(out_deg_lp) - signs.multiply(weights_2p).T
-    lap_2p = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
-    return lap_2p
+# def get_lap_2p(weights, p):
+#     weights_abs = abs(weights)
+#     signs = weights.sign()
+#     weights_2p = weights_abs.power(2 / p)
+#     in_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=1)))
+#     in_deg_lp_lap = sps.diags(in_deg_lp) - signs.multiply(weights_2p)
+#     out_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=0)))
+#     out_deg_lp_lap = sps.diags(out_deg_lp) - signs.multiply(weights_2p).T
+#     lap_2p = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
+#     return lap_2p
 
 
 def get_constants(graph, beta, p, labels, num_classes, laplacian_scaling):
-    lap_2p_ = get_lap_2p(graph.weights, p)
+    # lap_2p_ = get_lap_2p(graph.weights, p)
     gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
     lap_2p = gradient_matrix.T.dot(gradient_matrix) / 2 * laplacian_scaling
     label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
