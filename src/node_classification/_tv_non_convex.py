@@ -60,8 +60,8 @@ def calc_d(y, z, beta, div):
 #     return grad
 
 
-def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
-             backtracking_param=1):
+def x_update_normalized(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
+                        backtracking_param=1):
     x = x_in.copy()
 
     is_unlabeled = np.ones(x_in.shape[0], dtype=bool)
@@ -98,7 +98,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             a = -backtracking_param * tau * slope
             b = f_t - f_tp1
             backtracking_converged = a < b
-            if (t_inner > 80 or tau == 0.0) and not backtracking_converged:
+            if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
                 v_tp1 = v_t
                 break
             tau *= backtracking_stepsize
@@ -110,6 +110,53 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             break
     x[is_unlabeled, :] = 2 * v_tp1 - 1
     return x, {'f_p': f_tp1, 'f_d': -float('inf')}
+
+
+def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
+             backtracking_param=1):
+    N = x_in.shape[0]
+    K = x_in.shape[1]
+
+    Q = constants['Q']
+    x_tp1 = x_in.copy()
+
+    x_tp1 = min_norm_simplex_projection(x_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
+
+    f_tp1 = np.sum((Q.dot(x_tp1) / 2 - d) * x_tp1)
+
+    tau_0 = backtracking_tau_0
+
+    converged = False
+    t = 0
+    while not converged:
+        x_t = x_tp1.copy()
+        f_t = f_tp1
+        t += 1
+        grad = Q.dot(x_t) - d
+        slope = -np.linalg.norm(grad)
+        backtracking_converged = False
+        t_inner = 0
+        tau = tau_0
+        while not backtracking_converged:
+            t_inner += 1
+            x_ = x_t - tau * grad
+            x__ = label_projection(x_, labels=labels)
+            x_tp1 = min_norm_simplex_projection(x__, min_norm=K - 2, sum_target=2 - K, min_val=-1)
+            f_tp1 = np.sum((Q.dot(x_tp1) / 2 - d) * x_tp1)
+            a = -backtracking_param * tau * slope
+            b = f_t - f_tp1
+            backtracking_converged = a < b
+            if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
+                x_tp1 = x_t
+                break
+            tau *= backtracking_stepsize
+        dv = np.linalg.norm(x_t - x_tp1)
+        dv_max = np.minimum(1, np.linalg.norm(x_tp1 - x_in)) * eps
+        converged = dv <= dv_max
+        if t > t_max:
+            print('x update did not converge')
+            break
+    return x_tp1, {'f_p': f_tp1, 'f_d': -float('inf')}
 
 
 def y_update(beta, v, p):
@@ -160,7 +207,7 @@ def y_update(beta, v, p):
 
 
 def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_inner,
-            backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, pre_iteration_version,
+            backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, pre_iteration_version, normalize_x,
             verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
 
@@ -234,7 +281,10 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
         # x, fx_pd_ = x_update(x_old, y_old, z_old)
 
         d = calc_d(y_old, z_old, beta, div)
-        x, fx_pd_ = x_update(x_old, d, labels=labels, **x_update_args)
+        if normalize_x:
+            x, fx_pd_ = x_update_normalized(x_old, d, labels=labels, **x_update_args)
+        else:
+            x, fx_pd_ = x_update(x_old, d, labels=labels, **x_update_args)
 
         fx_pd['p'].append(fx_pd_['f_p'])
         fx_pd['d'].append(fx_pd_['f_d'])
@@ -297,9 +347,9 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=100, p=1,
-                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-8,
+                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-5,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=0.001, backtracking_param=1 / 2,
-                 laplacian_scaling=1, pre_iteration_version=0):
+                 laplacian_scaling=1, pre_iteration_version=0, normalize_x=False):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.beta = penalty_parameter
@@ -313,6 +363,7 @@ class TvNonConvex(NodeLearner):
         self.backtracking_param = backtracking_param
         self.laplacian_scaling = laplacian_scaling
         self.pre_iteration_version = pre_iteration_version
+        self.normalize_x = normalize_x
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -343,7 +394,8 @@ class TvNonConvex(NodeLearner):
                                                   backtracking_tau_0=self.backtracking_tau_0,
                                                   backtracking_stepsize=self.backtracking_stepsize,
                                                   laplacian_scaling=self.laplacian_scaling,
-                                                  pre_iteration_version=self.pre_iteration_version)
+                                                  pre_iteration_version=self.pre_iteration_version,
+                                                  normalize_x=self.normalize_x)
 
         kMeans = SeededKMeans(num_classes=self.num_classes, verbose=self.verbosity)
         l_est = kMeans.estimate_labels(x, labels=labels)
