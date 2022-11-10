@@ -121,7 +121,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
     P = -2*d
     x_tp1 = x_in.copy()
 
-    x_tp1 = min_norm_simplex_projection(x_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
+    # x_tp1 = min_norm_simplex_projection(x_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
 
     f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
 
