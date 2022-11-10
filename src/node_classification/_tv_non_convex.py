@@ -118,11 +118,12 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
     K = x_in.shape[1]
 
     Q = constants['Q']
+    P = -2*d
     x_tp1 = x_in.copy()
 
     x_tp1 = min_norm_simplex_projection(x_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
 
-    f_tp1 = np.sum((Q.dot(x_tp1) / 2 - d) * x_tp1)
+    f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
 
     tau_0 = backtracking_tau_0
 
@@ -132,7 +133,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
         x_t = x_tp1.copy()
         f_t = f_tp1
         t += 1
-        grad = Q.dot(x_t) - d
+        grad = 2*Q.dot(x_t) + P
         slope = -np.linalg.norm(grad)
         backtracking_converged = False
         t_inner = 0
@@ -142,12 +143,12 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             x_ = x_t - tau * grad
             x__ = label_projection(x_, labels=labels)
             x_tp1 = min_norm_simplex_projection(x__, min_norm=K - 2, sum_target=2 - K, min_val=-1)
-            f_tp1 = np.sum((Q.dot(x_tp1) / 2 - d) * x_tp1)
+            f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
             a = -backtracking_param * tau * slope
             b = f_t - f_tp1
             backtracking_converged = a < b
             if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
-                x_tp1 = x_t
+                # x_tp1 = x_t
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(x_t - x_tp1)
