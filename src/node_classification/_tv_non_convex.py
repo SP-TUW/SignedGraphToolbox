@@ -370,7 +370,7 @@ class TvNonConvex(NodeLearner):
     def estimate_labels(self, graph, labels=None, guess=None):
         num_nodes = graph.num_nodes
         if guess is None:
-            x0 = np.zeros((num_nodes, self.num_classes)) + np.random.standard_normal(
+            x0 = np.ones((num_nodes, self.num_classes)) + np.random.standard_normal(
                 (num_nodes, self.num_classes)) / 100
         else:
             x0 = -np.ones((num_nodes, self.num_classes))
