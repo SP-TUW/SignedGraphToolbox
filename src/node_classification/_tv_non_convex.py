@@ -152,7 +152,8 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(x_t - x_tp1)
-        dv_max = np.minimum(1, np.linalg.norm(x_tp1 - x_in)) * eps
+        # dv_max = np.minimum(1, np.linalg.norm(x_tp1 - x_in)) * eps
+        dv_max = eps
         converged = dv <= dv_max
         if t > t_max:
             print('x update did not converge')
