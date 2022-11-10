@@ -146,7 +146,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
             a = -backtracking_param * tau * slope
             b = f_t - f_tp1
-            backtracking_converged = a < b
+            backtracking_converged = a <= b
             if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
                 # x_tp1 = x_t
                 break
