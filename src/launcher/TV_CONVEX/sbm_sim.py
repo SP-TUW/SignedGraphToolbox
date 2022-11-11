@@ -230,7 +230,7 @@ def get_graph_config_lists(sim_id):
         num_classes_list = [3]
         percentage_labeled_list = [0]
         num_nodes_list = [900]
-        eps_list = np.linspace(0, 0.5, 11)
+        eps_list = np.linspace(0.0, 0.5*(1-1/100), 100)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]

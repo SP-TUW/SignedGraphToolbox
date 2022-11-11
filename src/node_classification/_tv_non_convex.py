@@ -8,22 +8,22 @@ from src.tools.projections import min_norm_simplex_projection, label_projection
 from ._node_learner import NodeLearner
 
 
-# def get_lap_2p(weights, p):
-#     weights_abs = abs(weights)
-#     signs = weights.sign()
-#     weights_2p = weights_abs.power(2 / p)
-#     in_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=1)))
-#     in_deg_lp_lap = sps.diags(in_deg_lp) - signs.multiply(weights_2p)
-#     out_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=0)))
-#     out_deg_lp_lap = sps.diags(out_deg_lp) - signs.multiply(weights_2p).T
-#     lap_2p = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
-#     return lap_2p
+def get_lap_2p(weights, p):
+    weights_abs = abs(weights)
+    signs = weights.sign()
+    weights_2p = weights_abs.power(2 / p)
+    in_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=1)))
+    in_deg_lp_lap = sps.diags(in_deg_lp) - signs.multiply(weights_2p)
+    out_deg_lp = np.squeeze(np.asarray(weights_2p.sum(axis=0)))
+    out_deg_lp_lap = sps.diags(out_deg_lp) - signs.multiply(weights_2p).T
+    lap_2p = 1 / 2 * (in_deg_lp_lap + out_deg_lp_lap)
+    return lap_2p
 
 
 def get_constants(graph, beta, p, labels, num_classes, laplacian_scaling):
-    # lap_2p_ = get_lap_2p(graph.weights, p)
-    gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
-    lap_2p = gradient_matrix.T.dot(gradient_matrix) / 2 * laplacian_scaling
+    lap_2p = get_lap_2p(graph.weights, p)
+    # gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
+    # lap_2p = gradient_matrix.T.dot(gradient_matrix) / 2 * laplacian_scaling
     label_indicator = np.zeros(graph.weights.shape[0], dtype=bool)
     if labels is not None:
         label_indicator[labels['i']] = True
@@ -73,7 +73,7 @@ def x_update_normalized(x_in, d, constants, labels, t_max, eps, backtracking_ste
     B = 2 * d[is_unlabeled, :] + constants['B_offset']
     v_tp1 = v_in.copy()
 
-    v_tp1 = min_norm_simplex_projection(v_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
+    # v_tp1 = min_norm_simplex_projection(v_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
 
     f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
 
@@ -99,7 +99,7 @@ def x_update_normalized(x_in, d, constants, labels, t_max, eps, backtracking_ste
             b = f_t - f_tp1
             backtracking_converged = a < b
             if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
-                v_tp1 = v_t
+                # v_tp1 = v_t
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(v_t - v_tp1)
@@ -154,7 +154,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
         dv = np.linalg.norm(x_t - x_tp1)
         # dv_max = np.minimum(1, np.linalg.norm(x_tp1 - x_in)) * eps
         dv_max = eps
-        converged = dv <= dv_max
+        converged = dv < dv_max
         if t > t_max:
             print('x update did not converge')
             break
