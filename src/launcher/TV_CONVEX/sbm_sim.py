@@ -173,7 +173,7 @@ def plot():
         results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
 
         if len(groups[sim_id])>2:
-            if sim_id == 5:
+            if sim_id == 4:
                 for i, df in results_df.groupby(groups[sim_id][2:]):
                     for nc in [3]:
                         df_nc = df[df['num_classes']==nc]
@@ -182,22 +182,23 @@ def plot():
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv2_re')]
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc') | df_nc['name'].isin(['mapr', 'snc'])]
                         # df_plot = df_nc[df_nc['name'].str.endswith('snc')]
-                        df_plot = df_nc
-                        # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc_beta0100_l1_pre2_n0') | df_nc['name'].str.startswith('sponge')]
+                        # df_plot = df_nc
+                        # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc_beta0100_l1_pre0') | df_nc['name'].str.startswith('sponge')]
+                        df_plot = df_nc[df_nc['name'].str.endswith('sncSponge') | df_nc['name'].str.startswith('sncSponge')]
                         plt.figure(figsize=(20, 15))
                         p1 = sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
-                        p1.set(title='n_err: {val}, nc: {nc}'.format(val=i, nc=nc))
-                        p1.set(yscale='log')
+                        p1.set(title='n_err at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # p1.set(yscale='log')
                         plt.grid()
                         plt.legend(handlelength=5)
                         plt.show()
                         plt.figure(figsize=(20, 15))
-                        sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         plt.grid()
                         plt.legend(handlelength=5)
                         plt.show()
                         # plt.figure(figsize=(20, 15))
-                        # sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='num_degenerate60: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='num_degenerate60 at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # plt.legend(handlelength=5)
                         # plt.show()
         else:
