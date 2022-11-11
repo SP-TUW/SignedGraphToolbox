@@ -307,11 +307,17 @@ def get_methods(graph_config, sim_id):
             ]
         for b in [100]:#np.logspace(1,2,2):
             for l in [1]:
-                for pre in [2]:
-                    for normalize in [False]:
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_rand'.format(b=int(b),l=l,t=int(pre),n=int(normalize)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=10000, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_sponge'.format(b=int(b),l=l,t=int(pre),n=int(normalize)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=10000, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_n{n}_spongeSym'.format(b=int(b), l=l, t=int(pre), n=int(normalize)), 'l_guess': 'spongeSym', 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=10000, backtracking_param=0, backtracking_tau_0=0.01, normalize_x=normalize)})
+                pre = 2
+                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+
+                # pre = 1
+                # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+                # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+
+                pre = 0
+                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, eps_admm=1e-5, t_max_no_change=150, eps_inner=1e-8, t_max_inner=10000, backtracking_param=1/2, backtracking_tau_0=0.01)})
+                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, eps_admm=1e-5, t_max_no_change=150, eps_inner=1e-8, t_max_inner=10000, backtracking_param=1/2, backtracking_tau_0=0.01)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
