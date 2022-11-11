@@ -41,8 +41,8 @@ def get_constants(graph, beta, p, labels, num_classes, laplacian_scaling):
     return constants
 
 
-def calc_d(y, z, beta, div):
-    return div(z - beta * y) / (2 * beta)
+# def calc_d(y, z, beta, div):
+#     return div(z - beta * y) / (2 * beta)
 
 
 # def x_objective(x, d, constants):
@@ -60,105 +60,139 @@ def calc_d(y, z, beta, div):
 #     return grad
 
 
-def x_update_normalized(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
-                        backtracking_param=1):
-    x = x_in.copy()
-
-    is_unlabeled = np.ones(x_in.shape[0], dtype=bool)
-    if labels is not None:
-        is_unlabeled[labels['i']] = False
-    v_in = (x_in[is_unlabeled, :] + 1) / 2
-
-    A = constants['A']
-    B = 2 * d[is_unlabeled, :] + constants['B_offset']
-    v_tp1 = v_in.copy()
-
-    # v_tp1 = min_norm_simplex_projection(v_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
-
-    f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
-
-    tau_0 = backtracking_tau_0
-
-    converged = False
-    t = 0
-    while not converged:
-        v_t = v_tp1.copy()
-        f_t = f_tp1
-        t += 1
-        grad = A.dot(v_t) - B
-        slope = -np.linalg.norm(grad)
-        backtracking_converged = False
-        t_inner = 0
-        tau = tau_0
-        while not backtracking_converged:
-            t_inner += 1
-            v_ = v_t - tau * grad
-            v_tp1 = min_norm_simplex_projection(v_, min_norm=1 / 2, sum_target=1, min_val=0)
-            f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
-            a = -backtracking_param * tau * slope
-            b = f_t - f_tp1
-            backtracking_converged = a < b
-            if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
-                # v_tp1 = v_t
-                break
-            tau *= backtracking_stepsize
-        dv = np.linalg.norm(v_t - v_tp1)
-        dv_max = np.minimum(1, np.linalg.norm(v_tp1 - v_in)) * eps
-        converged = dv <= dv_max
-        if t > t_max:
-            print('x update did not converge')
-            break
-    x[is_unlabeled, :] = 2 * v_tp1 - 1
-    return x, {'f_p': f_tp1, 'f_d': -float('inf')}
+# def x_update_normalized(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
+#                         backtracking_param=1):
+#     x = x_in.copy()
+#
+#     is_unlabeled = np.ones(x_in.shape[0], dtype=bool)
+#     if labels is not None:
+#         is_unlabeled[labels['i']] = False
+#     v_in = (x_in[is_unlabeled, :] + 1) / 2
+#
+#     A = constants['A']
+#     B = 2 * d[is_unlabeled, :] + constants['B_offset']
+#     v_tp1 = v_in.copy()
+#
+#     # v_tp1 = min_norm_simplex_projection(v_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
+#
+#     f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
+#
+#     tau_0 = backtracking_tau_0
+#
+#     converged = False
+#     t = 0
+#     while not converged:
+#         v_t = v_tp1.copy()
+#         f_t = f_tp1
+#         t += 1
+#         grad = A.dot(v_t) - B
+#         slope = -np.linalg.norm(grad)
+#         backtracking_converged = False
+#         t_inner = 0
+#         tau = tau_0
+#         while not backtracking_converged:
+#             t_inner += 1
+#             v_ = v_t - tau * grad
+#             v_tp1 = min_norm_simplex_projection(v_, min_norm=1 / 2, sum_target=1, min_val=0)
+#             f_tp1 = np.sum((A.dot(v_tp1) / 2 - B) * v_tp1)
+#             a = -backtracking_param * tau * slope
+#             b = f_t - f_tp1
+#             backtracking_converged = a < b
+#             if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
+#                 # v_tp1 = v_t
+#                 break
+#             tau *= backtracking_stepsize
+#         dv = np.linalg.norm(v_t - v_tp1)
+#         # dv_max = np.minimum(1, np.linalg.norm(v_tp1 - v_in)) * eps
+#         dv_max = eps
+#         converged = dv < dv_max
+#         if t > t_max:
+#             print('x update did not converge')
+#             break
+#     x[is_unlabeled, :] = 2 * v_tp1 - 1
+#     return x, {'f_p': f_tp1, 'f_d': -float('inf')}
 
 
 def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
-             backtracking_param=1):
+             backtracking_param, normalize):
     N = x_in.shape[0]
     K = x_in.shape[1]
 
-    Q = constants['Q']
-    P = -2*d
-    x_tp1 = x_in.copy()
+    # is_unlabeled = np.ones(x_in.shape[0], dtype=bool)
+    # if labels is not None:
+    #     is_unlabeled[labels['i']] = False
+    #
+    # Q_n = constants['A']/2
+    # P_n = - 2 * d[is_unlabeled, :] + constants['B_offset']
+    # x_in_n = (x_in[is_unlabeled, :] + 1) / 2
 
-    # x_tp1 = min_norm_simplex_projection(x_tp1, min_norm=1 / 2, sum_target=1, min_val=0)
+    Q_u = constants['Q']
+    P_u = -2 * d
+    x_in_u = x_in.copy()
 
-    f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
+    # x_tp1_n = min_norm_simplex_projection(x_in_n, min_norm=0, sum_target=1, min_val=0)
+    # f_tp1_n = np.sum((Q_n.dot(x_tp1_n) + P_n) * x_tp1_n)
+
+    x_tp1_u = min_norm_simplex_projection(x_in_u, min_norm=0, sum_target=2-K, min_val=-1)
+    f_tp1_u = np.sum((Q_u.dot(x_tp1_u) + P_u) * x_tp1_u)
 
     tau_0 = backtracking_tau_0
 
     converged = False
     t = 0
     while not converged:
-        x_t = x_tp1.copy()
-        f_t = f_tp1
         t += 1
-        grad = 2*Q.dot(x_t) + P
-        slope = -np.linalg.norm(grad)
+        # x_t_n = x_tp1_n.copy()
+        # f_t_n = f_tp1_n
+        # grad_n = 2*Q_n.dot(x_t_n) + P_n
+        # grad_n = grad_n-np.mean(grad_n,axis=1,keepdims=True)
+        # slope_n = -np.linalg.norm(grad_n)
+        x_t_u = x_tp1_u.copy()
+        f_t_u = f_tp1_u
+        grad_u = 2*Q_u.dot(x_t_u) + P_u
+        grad_u = grad_u-np.mean(grad_u,axis=1,keepdims=True)
+        slope_u = -np.linalg.norm(grad_u)
         backtracking_converged = False
         t_inner = 0
         tau = tau_0
         while not backtracking_converged:
             t_inner += 1
-            x_ = x_t - tau * grad
-            x__ = label_projection(x_, labels=labels)
-            x_tp1 = min_norm_simplex_projection(x__, min_norm=K - 2, sum_target=2 - K, min_val=-1)
-            f_tp1 = np.sum((Q.dot(x_tp1) + P) * x_tp1)
-            a = -backtracking_param * tau * slope
-            b = f_t - f_tp1
+
+            # x_n = x_t_n - tau * grad_n/2
+            # x__n = label_projection(x_n, labels=labels)
+            # x__nu = 2*x__n-1
+            # x_tp1_n = min_norm_simplex_projection(x__n, min_norm=1/2, sum_target=1, min_val=0)
+            # x_tp1_nu = 2*x_tp1_n-1
+            # f_tp1_n = np.sum((Q_n.dot(x_tp1_n) + P_n) * x_tp1_n)
+
+            x_u = x_t_u - tau * grad_u
+            x__u = label_projection(x_u, labels=labels)
+            x_tp1_u = min_norm_simplex_projection(x__u, min_norm=K-2, sum_target=2-K, min_val=-1)
+            f_tp1_u = np.sum((Q_u.dot(x_tp1_u) + P_u) * x_tp1_u)
+
+            a = -backtracking_param * tau * slope_u
+            b = f_t_u - f_tp1_u
             backtracking_converged = a <= b
             if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
                 # x_tp1 = x_t
                 break
             tau *= backtracking_stepsize
-        dv = np.linalg.norm(x_t - x_tp1)
+        dv = np.linalg.norm(x_t_u - x_tp1_u)
         # dv_max = np.minimum(1, np.linalg.norm(x_tp1 - x_in)) * eps
         dv_max = eps
         converged = dv < dv_max
         if t > t_max:
             print('x update did not converge')
             break
-    return x_tp1, {'f_p': f_tp1, 'f_d': -float('inf')}
+
+    # if normalize:
+    #     x_out = 2*x_tp1_n-1
+    #     f_tp1 = f_tp1_n
+    # else:
+    x_out = x_tp1_u
+    f_tp1 = f_tp1_u
+
+    return x_out, {'f_p': f_tp1, 'f_d': -float('inf')}
 
 
 def y_update(beta, v, p):
@@ -250,10 +284,9 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     t_check_rho = 32
     i_check = 2
 
-    x0_ = x_projection(x0.copy())
+    x__ = label_projection(x0.copy(), labels=labels)
+    x0_ = min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
     x = x0_.copy()
-    l_est = np.argmax(x, axis=1)
-    num_nodes = x0.shape[0]
 
     if pre_iteration_version == 0:
         y = 0 * y_update(beta, beta * grad(x), p)
@@ -262,8 +295,14 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
         y = y_update(beta, beta * grad(x), p)
         z = beta * (grad(x) - y)
     elif pre_iteration_version == 2:
+        x__ = label_projection(x0.copy(), labels=labels)
+        x0_ = min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
+        x = x0_.copy()
         y = y_update(beta, 2 * grad(x), p)
         z = 0 * beta * (grad(x) - y)
+
+    l_est = np.argmax(x, axis=1)
+    num_nodes = x0.shape[0]
 
     dx = []
     dy = []
@@ -282,11 +321,8 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 
         # x, fx_pd_ = x_update(x_old, y_old, z_old)
 
-        d = calc_d(y_old, z_old, beta, div)
-        if normalize_x:
-            x, fx_pd_ = x_update_normalized(x_old, d, labels=labels, **x_update_args)
-        else:
-            x, fx_pd_ = x_update(x_old, d, labels=labels, **x_update_args)
+        d = div(z - beta * y) / (2 * beta) #calc_d(y_old, z_old, beta, div)
+        x, fx_pd_ = x_update(x_old, d, labels=labels, normalize=normalize_x, **x_update_args)
 
         fx_pd['p'].append(fx_pd_['f_p'])
         fx_pd['d'].append(fx_pd_['f_d'])
