@@ -174,7 +174,7 @@ def plot():
 
         if len(groups[sim_id])>2:
             if sim_id == 5:
-                for i, df in results_mean.groupby(groups[sim_id][2:]):
+                for i, df in results_df.groupby(groups[sim_id][2:]):
                     for nc in [3]:
                         df_nc = df[df['num_classes']==nc]
                         # df_plot = df_nc[df_nc['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
@@ -182,15 +182,18 @@ def plot():
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv2_re')]
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc') | df_nc['name'].isin(['mapr', 'snc'])]
                         # df_plot = df_nc[df_nc['name'].str.endswith('snc')]
-                        # df_plot = df_nc
-                        df_plot = df_nc[df_nc['name'].str.startswith('tv_nc_beta0100_l1_pre2') | df_nc['name'].str.startswith('sponge')]
+                        df_plot = df_nc
+                        # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc_beta0100_l1_pre2_n0') | df_nc['name'].str.startswith('sponge')]
                         plt.figure(figsize=(20, 15))
                         p1 = sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
-                        p1.set(title='n_err: {val}, nc: {nc}'.format(val=i, nc=nc), yscale='log')
+                        p1.set(title='n_err: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        p1.set(yscale='log')
+                        plt.grid()
                         plt.legend(handlelength=5)
                         plt.show()
                         plt.figure(figsize=(20, 15))
                         sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        plt.grid()
                         plt.legend(handlelength=5)
                         plt.show()
                         # plt.figure(figsize=(20, 15))
