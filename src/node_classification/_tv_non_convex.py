@@ -173,8 +173,9 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             a = -backtracking_param * tau * slope_u
             b = f_t_u - f_tp1_u
             backtracking_converged = a <= b
-            if (t_inner > 20 or tau == 0.0) and not backtracking_converged:
-                # x_tp1 = x_t
+            if tau == 0.0 and not backtracking_converged:
+                x_tp1_u = x_t_u
+                warnings.warn('no improvement found in backtracking')
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(x_t_u - x_tp1_u)
