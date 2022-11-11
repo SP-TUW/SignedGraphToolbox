@@ -286,7 +286,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     i_check = 2
 
     x__ = label_projection(x0.copy(), labels=labels)
-    x0_ = min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
+    x0_ = min_norm_simplex_projection(x__, min_norm=0, sum_target=2 - num_classes, min_val=-1)
     x = x0_.copy()
 
     if pre_iteration_version == 0:
@@ -296,9 +296,6 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
         y = y_update(beta, beta * grad(x), p)
         z = beta * (grad(x) - y)
     elif pre_iteration_version == 2:
-        x__ = label_projection(x0.copy(), labels=labels)
-        x0_ = min_norm_simplex_projection(x__, min_norm=num_classes - 2, sum_target=2 - num_classes, min_val=-1)
-        x = x0_.copy()
         y = y_update(beta, 2 * grad(x), p)
         z = 0 * beta * (grad(x) - y)
 
