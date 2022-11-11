@@ -133,7 +133,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
     # x_tp1_n = min_norm_simplex_projection(x_in_n, min_norm=0, sum_target=1, min_val=0)
     # f_tp1_n = np.sum((Q_n.dot(x_tp1_n) + P_n) * x_tp1_n)
 
-    x_tp1_u = min_norm_simplex_projection(x_in_u, min_norm=0, sum_target=2-K, min_val=-1)
+    x_tp1_u = min_norm_simplex_projection(x_in_u, min_norm=K-2, sum_target=2-K, min_val=-1)
     f_tp1_u = np.sum((Q_u.dot(x_tp1_u) + P_u) * x_tp1_u)
 
     tau_0 = backtracking_tau_0
