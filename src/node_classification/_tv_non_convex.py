@@ -243,7 +243,7 @@ def y_update(beta, v, p):
 #     return tv + char_func + inner_prod + norm_term
 
 
-def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_inner,
+def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_admm, eps_inner,
             backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling, pre_iteration_version, normalize_x,
             verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
@@ -276,8 +276,8 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
     # def lagrangian(x_, y_, z_):
     #     return lagrangian(x_, y_, z_, p, beta, gradient_matrix, labels)
 
-    eps_abs = 1e-4
-    eps_rel = 1e-4
+    eps_abs = eps_admm
+    eps_rel = eps_admm
 
     mu = 10
     eta = 2
@@ -386,8 +386,8 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=100, p=1,
-                 t_max=1000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_inner=1e-5,
-                 backtracking_stepsize=1 / 2, backtracking_tau_0=0.001, backtracking_param=1 / 2,
+                 t_max=10000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_admm=1e-4, eps_inner=1e-5,
+                 backtracking_stepsize=1 / 2, backtracking_tau_0=0.01, backtracking_param=1 / 2,
                  laplacian_scaling=1, pre_iteration_version=0, normalize_x=False):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
@@ -396,6 +396,7 @@ class TvNonConvex(NodeLearner):
         self.t_max_inner = t_max_inner
         self.t_max_no_change = t_max_no_change
         self.eps = eps
+        self.eps_admm = eps_admm
         self.eps_inner = eps_inner
         self.backtracking_stepsize = backtracking_stepsize
         self.backtracking_tau_0 = backtracking_tau_0
@@ -428,7 +429,7 @@ class TvNonConvex(NodeLearner):
         x, converged, dx, dy, dz, fx_pd = nc_admm(graph=graph, num_classes=self.num_classes, x0=x0, labels=labels,
                                                   verbosity=self.verbosity, t_max=self.t_max,
                                                   t_max_inner=self.t_max_inner, t_max_no_change=t_max_no_change,
-                                                  beta=self.beta, eps=self.eps, eps_inner=self.eps_inner, p=self.p,
+                                                  beta=self.beta, eps=self.eps, eps_admm=self.eps_admm, eps_inner=self.eps_inner, p=self.p,
                                                   backtracking_param=self.backtracking_param,
                                                   backtracking_tau_0=self.backtracking_tau_0,
                                                   backtracking_stepsize=self.backtracking_stepsize,
