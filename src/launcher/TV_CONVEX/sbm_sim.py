@@ -264,7 +264,8 @@ def get_methods(graph_config, sim_id):
 
     v = 0
     methods = [
-        {'name': 'snc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+        {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+        {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
     ]
     if sim_id in [0,1]:
         for e in range(0, 45, 5):
@@ -283,21 +284,17 @@ def get_methods(graph_config, sim_id):
 
     if sim_id == 4:
         v = 1
-        methods = [
-            {'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)},
-            {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-            {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
-            {'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)},
-            {'name': 'tv_nc_beta0100_l1_pre2_rand_asilomar',                           'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=100, pre_iteration_version=2, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)},
-            {'name': 'tv_nc_beta0100_l1_pre2_sponge_asilomar', 'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=100, pre_iteration_version=2, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)}]
-        for b in np.logspace(0,3,4):
-            for l in [1]:
-                for pre in [0, 1, 2]:
-                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
-                    for l_guess in ['sncBNC', 'sncSponge', 'tv15_resampling05']:
-                        methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_{g}'.format(b=int(b),l=l,t=int(pre), g=l_guess),      'l_guess': l_guess,            'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
-                    methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
-                    # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_tvnc'.format(b=int(10 * b), l=l, t=int(pre)),      'l_guess': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)),                             'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
+        # methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
+        methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-15 / 10), eps_abs=10 ** (-15 / 10), resampling_x_min=5 / 100)})
+        methods.append({'name': 'tv_nc_beta+2_pre2_rand_asilomar',                           'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=100, pre_iteration_version=2, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+        methods.append({'name': 'tv_nc_beta+2_pre2_sponge_asilomar', 'l_guess': 'sncSponge',    'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=100, pre_iteration_version=2, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+        for b in np.logspace(0,5,6):
+            for pre in [0, 1, 2]:
+                # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_sponge'.format(b=int(b),t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
+                for l_guess in ['sncSponge']:
+                    methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_{g}'.format(b=int(np.log10(b)),t=int(pre), g=l_guess),      'l_guess': l_guess,            'is_unsupervised': False, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
+                methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_rand'.format(b=int(np.log10(b)),t=int(pre)),                                        'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max_no_change=200)})
+                # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_tvnc'.format(b=int(10 * b), t=int(pre)),      'l_guess': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)),                             'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, run_pre_iteration=pre)})
 
 
     if sim_id == 5:
@@ -309,8 +306,8 @@ def get_methods(graph_config, sim_id):
         for b in [100]:#np.logspace(1,2,2):
             for l in [1]:
                 pre = 2
-                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
-                methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+                methods.append({'name': 'tv_nc_beta{b:0>5d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
+                methods.append({'name': 'tv_nc_beta{b:0>5d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=1000, eps=1e-3/np.sqrt(900*3), t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
 
                 # pre = 1
                 # methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, t_max_no_change=150, eps_inner=1e-3, t_max_inner=1000, backtracking_param=0, backtracking_tau_0=0.01)})
