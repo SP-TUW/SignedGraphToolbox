@@ -124,7 +124,7 @@ def plot():
             csv_file_name = 'sbm_mean_sim_{sid}'.format(sid=sim_id)
             for key, val in zip(groups[sim_id][1:], ind):
                 mask = np.bitwise_and(mask, mean_results[key] == val)
-                csv_file_name += '_{k}_{v}'.format(k=key, v=val)
+                csv_file_name += '_{k}_{v}'.format(k=key, v=np.round(val,2))
             # csv_file_name += '.csv'
             reduced_csv_file_name = csv_file_name + '.csv'
             subdf = mean_results[mask]
