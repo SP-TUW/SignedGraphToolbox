@@ -175,7 +175,7 @@ def x_update(x_in, d, constants, labels, t_max, eps, backtracking_stepsize, back
             backtracking_converged = a <= b
             if tau == 0.0 and not backtracking_converged:
                 x_tp1_u = x_t_u
-                warnings.warn('no improvement found in backtracking')
+                # warnings.warn('no improvement found in backtracking')
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(x_t_u - x_tp1_u)
@@ -382,7 +382,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
-                 penalty_parameter=100, p=1,
+                 penalty_parameter=1000, p=1,
                  t_max=10000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_admm=1e-4, eps_inner=1e-5,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=0.01, backtracking_param=1 / 2,
                  laplacian_scaling=1, pre_iteration_version=0, normalize_x=False):
