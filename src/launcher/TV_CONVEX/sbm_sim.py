@@ -227,7 +227,7 @@ def get_graph_config_lists(sim_id):
         eps_list = np.linspace(0.3, 0.4, 3)
     elif sim_id == 4:
         num_classes_list = [3, 5, 10]
-        percentage_labeled_list = [0, 10/3, 10]
+        percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
         eps_list = np.linspace(0, 0.5, 11)
     elif sim_id == 5:
