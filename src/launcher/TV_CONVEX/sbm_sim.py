@@ -210,7 +210,7 @@ def plot():
 
 def get_graph_config_lists(sim_id):
     eps_list = np.linspace(0, 0.5, 11)
-    percentage_labeled_list = [10, 15, 20]
+    percentage_labeled_list = [10/3, 10, 20]
     if sim_id == 0:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900]*4
