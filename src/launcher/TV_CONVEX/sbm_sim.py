@@ -235,6 +235,11 @@ def get_graph_config_lists(sim_id):
         percentage_labeled_list = [0]
         num_nodes_list = [900]
         eps_list = np.linspace(0.0, 0.5*(1-1/100), 100)
+    elif sim_id == 6:
+        num_classes_list = [3, 5, 10]
+        percentage_labeled_list = [0, 10/3, 10, 20]
+        num_nodes_list = [900]
+        eps_list = np.linspace(0.0, 0.5*(1-1/100), 100)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -316,6 +321,25 @@ def get_methods(graph_config, sim_id):
                 pre = 0
                 methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_rand'.format(b=int(b),l=l,t=int(pre)),                                 'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, eps_admm=1e-5, t_max_no_change=150, eps_inner=1e-8, t_max_inner=10000, backtracking_param=1/2, backtracking_tau_0=0.01)})
                 methods.append({'name': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_sponge'.format(b=int(b),l=l,t=int(pre)),       'l_guess': 'sponge',    'is_unsupervised': True, 'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, laplacian_scaling=l, pre_iteration_version=pre, t_max=10000, eps=1e-3, eps_admm=1e-5, t_max_no_change=150, eps_inner=1e-8, t_max_inner=10000, backtracking_param=1/2, backtracking_tau_0=0.01)})
+
+    if sim_id == 6:
+        # high repetition nonconvex TV
+        v = 1
+        # methods.append({'name': 'sponge', 'is_unsupervised': True, 'method': Sponge(num_classes=num_classes)})
+        methods.append({'name': 'tv15_resampling05', 'method': TvConvex(num_classes=num_classes, verbosity=v,
+                                                                        degenerate_heuristic='rangapuram_resampling',
+                                                                        eps_rel=10 ** (-15 / 10),
+                                                                        eps_abs=10 ** (-15 / 10),
+                                                                        resampling_x_min=5 / 100)})
+        for b in np.logspace(3, 5, 3):
+            for pre in [1]:
+                # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_sponge'.format(b=int(b),t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=200)})
+                for l_guess in ['sncSponge']:
+                    methods.append(
+                        {'name': 'tv_nc_beta{b:0>+1d}_pre{t}_{g}'.format(b=int(np.log10(b)), t=int(pre), g=l_guess),
+                         'l_guess': l_guess, 'is_unsupervised': False,
+                         'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b,
+                                               pre_iteration_version=pre, t_max_no_change=200)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
