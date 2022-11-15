@@ -332,7 +332,7 @@ def get_methods(graph_config, sim_id):
                                                                         eps_abs=10 ** (-15 / 10),
                                                                         resampling_x_min=5 / 100)})
         for b in np.logspace(3, 5, 3):
-            for pre in [1]:
+            for pre in [0]:
                 # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_sponge'.format(b=int(b),t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=200)})
                 for l_guess in ['sncSponge']:
                     methods.append(
