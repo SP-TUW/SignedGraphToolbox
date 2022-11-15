@@ -239,7 +239,7 @@ def get_graph_config_lists(sim_id):
         num_classes_list = [3, 5, 10]
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
-        eps_list = np.linspace(0.15, 0.35, 13)
+        eps_list = np.linspace(0.15, 0.35, 9)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -344,7 +344,7 @@ def get_methods(graph_config, sim_id):
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
 
-    if sim_id in [0,4]:
+    if sim_id in [0,4,6]:
         methods.append({'name': 'mapr', 'l_guess': 'sncSponge', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
 
     return methods
