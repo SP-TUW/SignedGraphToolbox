@@ -25,6 +25,8 @@ class ClassificationSimulation:
         self.normalized_embedding = {}
         self.l_est = {}
         self.t_run = {}
+        self.n_err = {}
+        self.cut = {}
         self.sim_id = -1
         self.graph = None
         self.labels = None
@@ -116,8 +118,10 @@ class ClassificationSimulation:
             # elif 'num_classes' not in method.keys():
             #     method['num_classes'] = self.graph.K0
 
-            if 'l_guess' in method:
+            if 'l_guess' in method and method['l_guess'] not in ['min_err','min_cut']:
                 l_guess = self.l_est[method['l_guess']]
+            elif 'l_guess' in method and method['l_guess'] == 'min_err':
+                guess = min(self.n_err,key=self.n_err.get)
             else:
                 l_guess = None
             t_start = time.time()
@@ -133,9 +137,10 @@ class ClassificationSimulation:
             self.embedding[name] = method['method'].embedding
             self.normalized_embedding[name] = method['method'].normalized_embedding
             self.t_run[name] = t_stop - t_start
-            n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
-            print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
-            print('cut {name}={c}'.format(name=name, c=calc_signed_cut(self.graph.weights, self.l_est[name])))
+            self.n_err[name] = np.sum(self.l_est[name] != self.graph.class_labels)
+            self.cut[name] = calc_signed_cut(self.graph.weights, self.l_est[name])
+            print('n_err_{name}={n}'.format(name=name, n=self.n_err[name]))
+            print('cut {name}={c}'.format(name=name, c=self.cut[name]))
         self.current_graph_config = graph_config.copy()
         self.current_percentage_labeled = percentage_labeled
         self.current_is_percentage = is_percentage
