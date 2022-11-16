@@ -120,8 +120,16 @@ class ClassificationSimulation:
 
             if 'l_guess' in method and method['l_guess'] not in ['min_err','min_cut']:
                 l_guess = self.l_est[method['l_guess']]
-            elif 'l_guess' in method and method['l_guess'] == 'min_err':
-                guess = min(self.n_err,key=self.n_err.get)
+            elif 'l_guess' in method and method['l_guess'] in ['min_err','min_cut']:
+                if method['l_guess'] == 'min_err':
+                    min_dict = self.n_err.copy()
+                else:
+                    min_dict = self.cut.copy()
+                del_keys = [k for k in min_dict.keys() if k.startswith('mapr')]
+                for k in del_keys:
+                    min_dict.pop(k)
+                guess = min(min_dict, key=min_dict.get)
+                l_guess = self.l_est[guess]
             else:
                 l_guess = None
             t_start = time.time()
@@ -149,7 +157,7 @@ class ClassificationSimulation:
 
 
 
-    def save_results(self, results_dir, split_file=False, save_degenerate_stats=False):
+    def save_results(self, results_dir, split_file=False, save_degenerate_stats=False, reduce_data=False):
         if self.sim_id >= 0:
             # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
             # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
@@ -197,14 +205,16 @@ class ClassificationSimulation:
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
                             'n_err_unlabeled': n_err_unlabeled,
-                            'acc_total': acc_total,
-                            'acc_labeled': acc_labeled,
-                            'acc_unlabeled': acc_unlabeled,
-                            'ari': ari,
-                            'f1_micro': f1_micro,
-                            'f1_macro': f1_macro,
                             'cut': cut,
                             't_run': self.t_run[name]}
+
+                if not reduce_data:
+                    results_['acc_total'] = acc_total
+                    results_['acc_labeled'] = acc_labeled
+                    results_['acc_unlabeled'] = acc_unlabeled
+                    results_['ari'] = ari
+                    results_['f1_micro'] = f1_micro
+                    results_['f1_macro'] = f1_macro
 
                 if save_degenerate_stats:
                     for i in range(8,20):
