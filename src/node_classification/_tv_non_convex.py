@@ -383,7 +383,7 @@ def nc_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_n
 class TvNonConvex(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None,
                  penalty_parameter=1000, p=1,
-                 t_max=10000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_admm=1e-4, eps_inner=1e-5,
+                 t_max=2000, t_max_inner=10000, t_max_no_change=None, eps=1e-3, eps_admm=1e-4, eps_inner=1e-5,
                  backtracking_stepsize=1 / 2, backtracking_tau_0=0.01, backtracking_param=1 / 2,
                  laplacian_scaling=1, pre_iteration_version=0, normalize_x=False):
         self.t_max = t_max
