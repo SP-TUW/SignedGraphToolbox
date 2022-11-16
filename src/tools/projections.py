@@ -30,6 +30,10 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
 
     z_sort = -np.sort(-z, axis=axis)
 
+    is_randomized = np.zeros(N,dtype=bool)
+    if r0 < K:
+        is_randomized = z_sort[:,0] == z_sort[:,r0]
+
     xi = np.ones((N,K))
     cond = np.ones((N,K), dtype=bool)
     r = np.arange(1,K+1)[None,:]
@@ -44,13 +48,13 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
     cond[:, :-1] = np.bitwise_and(z_sort[:, :-1] >= -nu[:, :-1], -nu[:, :-1] >= z_sort[:, 1:])
     r__ = np.argmax(cond, axis=axis)
     xi_r = np.take_along_axis(xi, r__[:, None], axis=axis)
+    xi_r[is_randomized] = 1
     nu_r = np.take_along_axis(nu, r__[:, None], axis=axis)
     x_ = np.maximum(0,(z+nu_r)/xi_r)
 
     if r0 < K:
-        is_randomized = z_sort[:,0] == z_sort[:,r0]
         if np.any(is_randomized):
-            warnings.warn('at least one element needs randomization')
+            # warnings.warn('at least one element needs randomization')
             randomized_indices = np.nonzero(is_randomized)
 
             if axis == -1:
