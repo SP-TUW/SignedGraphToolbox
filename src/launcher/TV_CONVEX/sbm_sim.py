@@ -354,10 +354,9 @@ def get_methods(graph_config, sim_id):
         v = 1
         for b in np.logspace(0, 5, 11):
             for pre in [0]:
-                # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_sponge'.format(b=int(b),t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=200)})
                 for l_guess in ['sncSponge']:
                     methods.append(
-                        {'name': 'tv_nc_beta{b:0>+1d}_pre{t}_{g}'.format(b=int(np.log10(b)), t=int(pre), g=l_guess),
+                        {'name': 'tv_nc_beta{b:0>+1.f}_pre{t}_{g}'.format(b=np.log10(b), t=int(pre), g=l_guess),
                          'l_guess': l_guess, 'is_unsupervised': False,
                          'method': TvNonConvex(num_classes=num_classes, verbosity=v, penalty_parameter=b,
                                                pre_iteration_version=pre, t_max_no_change=200)})
