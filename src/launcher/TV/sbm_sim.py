@@ -65,6 +65,12 @@ def get_graph_config_lists(sim_id, return_name=False):
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
         eps_list = np.linspace(0.15, 0.35, 5)
+    elif sim_id == 8:
+        name = 'balancedness sweep with several values for beta'
+        num_classes_list = [3, 5, 10]
+        percentage_labeled_list = [0, 10/3, 10, 20]
+        num_nodes_list = [900]*3
+        eps_list = np.linspace(0, 0.5, 11)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
@@ -183,6 +189,17 @@ def get_methods(graph_config, sim_id):
                          'l_guess': l_guess, 'is_unsupervised': False,
                          'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
                                                   pre_iteration_version=pre, t_max_no_change=None)})
+
+
+    if sim_id == 8:
+        # high repetition nonconvex TV
+        v = 1
+        for b in np.logspace(0, 5, 6):
+            for l_guess in ['sncSponge']:
+                methods.append(
+                    {'name': 'tv_nc_beta{b:0>+1.1f}_{g}'.format(b=np.log10(b), g=l_guess),
+                     'l_guess': l_guess, 'is_unsupervised': False,
+                     'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, penalty_strat_threshold=float('inf'), y0=0, min_norm=num_classes-2)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
