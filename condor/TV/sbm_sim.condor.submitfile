@@ -20,5 +20,5 @@ executable      =       condor/pythonWrapper.sh
 log             =       condor/TV/condor_log/sbm_sim_$(sim_id)/sim.log
 output          =       condor/TV/condor_log/sbm_sim_$(sim_id)/sim.out.$(Process).log
 error           =       condor/TV/condor_log/sbm_sim_$(sim_id)/sim.err.$(Process).log
-Arguments       =       src.launcher.TV_CONVEX.sbm_sim $(pid_offset) $(Process) $(sim_id)
+Arguments       =       src.launcher.TV.sbm_sim $(pid_offset) $(Process) $(sim_id)
 Queue $(nr_jobs)
