@@ -15,5 +15,5 @@ from src.node_classification._sbm_sp_yun import SbmSpYun
 from src.node_classification._spectral_learning import SpectralLearning
 from src.node_classification._sponge import Sponge
 from src.node_classification._tv_bresson import TvBresson
-from src.node_classification._tv_convex import TvConvex
-from src.node_classification._tv_non_convex import TvNonConvex
+from src.node_classification._tv_augmented_admm import TvAugmentedADMM
+from src.node_classification._tv_standard_admm import TvStandardADMM
