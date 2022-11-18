@@ -66,7 +66,7 @@ def get_graph_config_lists(sim_id, return_name=False):
         num_nodes_list = [900]*3
         eps_list = np.linspace(0.15, 0.35, 5)
     elif sim_id == 8:
-        name = 'balancedness sweep with several values for beta'
+        name = 'balancedness sweep for nonconvex augmented admm'
         num_classes_list = [3, 5, 10]
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
@@ -194,17 +194,26 @@ def get_methods(graph_config, sim_id):
     if sim_id == 8:
         # high repetition nonconvex TV
         v = 1
+        methods.append({'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                               degenerate_heuristic='rangapuram_resampling',
+                                                                               eps_rel=10 ** (-15 / 10),
+                                                                               eps_abs=10 ** (-15 / 10),
+                                                                               resampling_x_min=5 / 100)})
         for b in np.logspace(0, 5, 6):
             for l_guess in ['sncSponge']:
                 methods.append(
                     {'name': 'tv_nc_beta{b:0>+1.1f}_{g}'.format(b=np.log10(b), g=l_guess),
                      'l_guess': l_guess, 'is_unsupervised': False,
-                     'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, penalty_strat_threshold=float('inf'), y0=0, min_norm=num_classes-2)})
+                     'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, penalty_strat_threshold=float('inf'), y0=0, y1=0, min_norm=num_classes-2)})
+            methods.append(
+                    {'name': 'tv_nc_beta{b:0>+1.1f}_rand'.format(b=np.log10(b)),
+                     'is_unsupervised': False,
+                     'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, penalty_strat_threshold=float('inf'), y0=0, y1=0, min_norm=num_classes-2)})
 
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
 
-    if sim_id in [0,4,6]:
+    if sim_id in [0,4,6,8]:
         methods.append({'name': 'maprSNC', 'l_guess': 'sncSponge', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
         methods.append({'name': 'maprMinErr', 'l_guess': 'min_err', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
         methods.append({'name': 'maprMinCut', 'l_guess': 'min_cut', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
