@@ -7,7 +7,7 @@ from scipy import sparse as sps
 
 from src.graphs import Graph
 from src.node_classification._node_learner import NodeLearner
-from src.tools.projections import simplex_projection, label_projection
+from src.tools.projections import min_norm_simplex_projection, label_projection
 from src.tools.graph_tools import calc_signed_cut
 
 
@@ -22,54 +22,143 @@ def _roundSolution(X):
     return X_
 
 
-def TV(W, X, p=1):
-    return np.sum(np.maximum(_gradient(W, X, p=p), 0) ** p)
+def TV(graph, X, p=1):
+    return np.sum(np.maximum(_gradient(graph, X, p=p), 0) ** p)
 
 
-def _gradient(W, X, p=1):
-    assert sps.isspmatrix_csr(W)
-    num_nodes = W.shape[0]
-    w_row_sliced = (np.sign(W.data) * np.abs(W.data) ** (1 / p))[:, np.newaxis]
-    i = np.repeat(np.arange(num_nodes), np.diff(W.indptr))
-    j = W.indices
-    WaXi = X[i, :] * np.abs(w_row_sliced)
-    WXj = X[j, :] * w_row_sliced
-    return WaXi - WXj
+def _gradient(graph, X, p=1):
+    gradien_matrix = graph.get_gradient_matrix(p=p)
+    return gradien_matrix.dot(X)
 
 
-def _divergence(W, Z, column_slicing_permutation, column_slicing_indptr, p=1):
-    num_nodes = W.shape[0]
-    num_clusters = Z.shape[1]
-    w_row_sliced = (np.sign(W.data) * np.abs(W.data) ** (1 / p))[:, np.newaxis]
-    X = np.zeros((num_nodes, num_clusters))
-    # calculate W*Z and arange such that elements represent stacked columns of W
-    WZ_full = (w_row_sliced * Z)[column_slicing_permutation, :]
-    # sum over all elements that belong to the same column of W
-    i = [i for i in column_slicing_indptr if i < column_slicing_indptr[-1]]
-    WZ = np.zeros((num_nodes, num_clusters))
-    WZ[range(len(i)), :] = np.add.reduceat(WZ_full, i, axis=0)
-    # calculate |W|*Z (elements represent stacked rows of W)
-    WaZ_full = np.abs(w_row_sliced) * Z
-    # sum over all elements that belong to the same row of W
-    i = [i for i in W.indptr[:-1] if i < W.indptr[-1]]
-    WaZ = np.zeros((num_nodes, num_clusters))
-    WaZ[range(len(i)), :] = np.add.reduceat(WaZ_full, i, axis=0)
-    return WZ - WaZ
+def _divergence(graph, Z, p=1):
+    divergence_matrix = -graph.get_gradient_matrix(p=p).T
+    return divergence_matrix.dot(Z)
 
 
-def _get_slicing_permutations(W):
-    num_nodes = W.shape[0]
-    column_slicing_permutation = np.argsort(W.indices)
-    sorted_indices = np.sort(W.indices)
-    unique_sorted_indices = np.unique(sorted_indices)
-    column_slicing_indptr_temp = np.r_[0, np.where(np.diff(sorted_indices))[0] + 1]
-    column_slicing_indptr = W.indices.size * np.ones(num_nodes + 1, dtype='int64')
-    # copy the next indptr if current column is empty
-    j_next = 0
-    for (j, ind_ptr) in zip(unique_sorted_indices, column_slicing_indptr_temp):
-        column_slicing_indptr[j_next:j + 1] = ind_ptr
-        j_next = j + 1
-    return column_slicing_permutation, column_slicing_indptr
+def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, penalty_parameter, penalty_strat_scaling,
+                        penalty_strat_threshold, penalty_strat_init_check, penalty_strat_interval_factor, verbosity, x0,
+                        y0, y1, min_norm, return_state, save_intermediate):
+    num_nodes = graph.weights.shape[0]
+
+    intermediate_results = {}
+    save_x_list = False
+    save_y = False
+
+    if save_intermediate is not None:
+        if type(save_intermediate) is bool:
+            if save_intermediate:
+                save_x_list = True
+                save_y = True
+        elif type(save_intermediate) is list:
+            if 'x_list' in save_intermediate:
+                save_x_list = True
+                intermediate_results['x_list'] = []
+
+            if 'y' in save_intermediate:
+                save_y = True
+                intermediate_results['y'] = None
+        else:
+            raise ValueError(
+                'don''t know how to interpret save_intermediate ({s}). Its value can either be bool or a list of strings'.format(
+                    s=save_intermediate))
+
+    W = graph.weights.tocsr()
+    W2 = W.power(2)
+    d = np.array(2 * np.sum(W2 + W2.T, 1))[:, 0]
+
+    grad_matrix, div_matrix = graph.get_gradient_matrix(p=1, return_div=True)
+
+    grad = lambda x: grad_matrix.dot(x)
+    div = lambda z: div_matrix.dot(z)
+    projection = lambda x: label_projection(
+        min_norm_simplex_projection(x, sum_target=2 - num_classes, min_val=-1, min_norm=min_norm, axis=1), labels)
+
+    Xtp1 = projection(x0 * np.ones((num_nodes, num_classes)))
+    if save_x_list:
+        intermediate_results['x_list'].append(Xtp1)
+    if y0 is None:
+        y0 = 1
+    Yt = y0 * np.ones((W.data.size, num_classes))
+    if y1 is None:
+        Ct = penalty_parameter * grad(0 * Xtp1)
+        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
+        Yt = np.maximum(0, np.minimum(1, Ct))
+        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
+    else:
+        Ytp1 = y1 * np.ones((W.data.size, num_classes))
+
+    t = 0
+    t_check_rho = penalty_strat_init_check
+
+    converged = False
+    while not converged:
+        # update variables
+        t = t + 1
+        Xt = Xtp1
+        Ytm1 = Yt
+        Yt = Ytp1
+
+        # update steps
+        rho_d = sps.diags(np.array(penalty_parameter * d))
+        rho_d_inv = sps.diags(np.array([1 / (penalty_parameter * di) if di != 0 else 0 for di in d]))
+
+        # x
+        Atp1 = -div(2 * Yt - Ytm1)
+        Btp1 = rho_d_inv.dot(rho_d.dot(Xt) - Atp1)
+        Xtp1 = projection(Btp1)
+
+        # y
+        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
+        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
+
+        # residuals
+        Rtp1 = Ytp1 - Yt  # actually this is Rtp1*penalty_parameter
+        Stp1 = div(penalty_parameter * grad(Xtp1 - Xt) +
+                   2 * Yt - Ytm1 - Ytp1)
+        rtp1 = norm(Rtp1) / penalty_parameter
+        stp1 = norm(Stp1)
+
+        # tolerances
+        ePri = sqrt(num_classes) * num_nodes * eps_abs + eps_rel * norm(grad(Xtp1))
+        eDual = sqrt(num_classes * num_nodes) * eps_abs + eps_rel * \
+                norm(div(Ytp1))
+
+        # update penalty
+        if t >= t_check_rho:
+            if rtp1 * eDual >= stp1 * ePri * penalty_strat_threshold:
+                penalty_parameter = penalty_parameter * penalty_strat_scaling
+            elif rtp1 * eDual <= stp1 * ePri / penalty_strat_threshold:
+                penalty_parameter = penalty_parameter / penalty_strat_scaling
+            t_check_rho = t_check_rho * penalty_strat_interval_factor
+
+        # store intermediate result
+        if save_x_list:
+            intermediate_results['x_list'].append(Xtp1)
+
+        if verbosity > 1 and t % 1 == 0:
+            print("'\rK={K}, Keff={Keff}, {t:6d}: {rtp1:.2e}>{ePri:.2e} or {stp1:.2e}>{eDual:.2e}".format(
+                K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, rtp1=rtp1, ePri=ePri, stp1=stp1,
+                eDual=eDual),
+                end='')
+
+        converged = (rtp1 <= ePri and stp1 <= eDual)
+        if not converged and t > t_max:
+            break
+
+    if verbosity > 0:
+        print("\rK={K}, Keff={Keff}, {t}: TV={tv:.2f}, TVround={tvR:.2f}".format(
+            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(W, Xtp1), tvR=TV(W, _roundSolution(Xtp1))))
+    l_est = np.argmax(Xtp1, 1)
+    X = Xtp1
+
+    if save_y:
+        intermediate_results['y'] = (Yt, Ytp1)
+
+    if return_state:
+        return l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results
+    else:
+        return l_est, X, intermediate_results
 
 
 def _get_regularizer(labels, is_sim_neighbor, reg_weights):
@@ -117,7 +206,7 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
     Yt = y0
     Ytp1 = y1
 
-    num_resampled = np.sum(labels_k[:,None]==np.arange(num_classes)[None,:],axis=0)
+    num_resampled = np.sum(labels_k[:, None] == np.arange(num_classes)[None, :], axis=0)
 
     converged = False
     while not converged:
@@ -132,19 +221,19 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
                                                                                             **kwargs)
         is_degenerate = np.all(X <= resampling_x_min, axis=1)
         num_degenerate = np.sum(is_degenerate)
-        if num_degenerate>0:
-            if verbosity>=1:
+        if num_degenerate > 0:
+            if verbosity >= 1:
                 print('{n} degenerate entries left'.format(n=num_degenerate))
             l_est_rand_resolve = l_est.copy()
-            is_tied = np.diff(np.sort(X,axis=1)[:,-2:]).squeeze() == 0
+            is_tied = np.diff(np.sort(X, axis=1)[:, -2:]).squeeze() == 0
             num_tied = np.sum(is_tied)
-            l_est_rand_resolve[is_tied] = np.random.randint(0,num_classes, num_tied)
-            x_switch = -np.ones((num_nodes,num_classes))
-            x_switch[range(num_nodes),l_est_rand_resolve] = 1
+            l_est_rand_resolve[is_tied] = np.random.randint(0, num_classes, num_tied)
+            x_switch = -np.ones((num_nodes, num_classes))
+            x_switch[range(num_nodes), l_est_rand_resolve] = 1
 
-            class_size = np.sum(l_est_rand_resolve[:,None]==np.arange(num_classes)[None,:],axis=0)
-            num_resampled = np.maximum(np.minimum(class_size, 2*num_resampled),1)
-            rankings = np.zeros((num_nodes,num_classes),dtype=int)
+            class_size = np.sum(l_est_rand_resolve[:, None] == np.arange(num_classes)[None, :], axis=0)
+            num_resampled = np.maximum(np.minimum(class_size, 2 * num_resampled), 1)
+            rankings = np.zeros((num_nodes, num_classes), dtype=int)
 
             resampled_labels['i'] = []
             resampled_labels['k'] = []
@@ -153,7 +242,7 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
 
             for k in range(num_classes):
                 switching_cost = np.zeros(num_nodes)
-                class_k = np.flatnonzero(l_est_rand_resolve==k)
+                class_k = np.flatnonzero(l_est_rand_resolve == k)
                 for i in class_k:
                     switching_cost[i] = float('inf')
                     if not is_label[i]:
@@ -166,9 +255,11 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
                         for l in range(num_classes):
                             if l != k:
                                 # test switching node i from k to l
-                                pos_cut_switch = 2 * w_pos_neighbors.data[None, :].dot(l_est_rand_resolve[pos_neighbors][:, None] != l)
-                                neg_cut_switch = 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == l)
-                                sc_switch = sc-pos_cut-neg_cut+pos_cut_switch+neg_cut_switch
+                                pos_cut_switch = 2 * w_pos_neighbors.data[None, :].dot(
+                                    l_est_rand_resolve[pos_neighbors][:, None] != l)
+                                neg_cut_switch = 2 * w_neg_neighbors.data[None, :].dot(
+                                    l_est_rand_resolve[neg_neighbors][:, None] == l)
+                                sc_switch = sc - pos_cut - neg_cut + pos_cut_switch + neg_cut_switch
                                 # x_switch[i,:] = -1
                                 # x_switch[i,l] = 1
                                 # tv = TV(graph.weights,x_switch,p=1)
@@ -180,13 +271,11 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
                         # reset node i to k
                         # x_switch[i,:] = -1
                         # x_switch[i,k] = 1
-                rankings[:,k] = np.argsort(switching_cost)[::-1]
-                resampled_labels['i'] += rankings[:num_resampled[k],k].tolist()
+                rankings[:, k] = np.argsort(switching_cost)[::-1]
+                resampled_labels['i'] += rankings[:num_resampled[k], k].tolist()
                 resampled_labels['k'] += [k] * num_resampled[k]
         else:
             converged = True
-
-
 
     return l_est, X, intermediate_results
 
@@ -258,7 +347,7 @@ def _run_regularization(graph, num_classes, labels, verbosity, regularization_x_
         l_est_list.append(l_est)
         x_est = -np.ones((num_nodes, num_classes))
         x_est[np.arange(num_nodes), l_est] = 1
-        tv_est = TV(graph.weights, x_est, 1)
+        tv_est = TV(graph, x_est, 1)
         if tv_est < tv_min:
             tv_min = tv_est
             x_min = X.copy()
@@ -291,142 +380,20 @@ def _run_regularization(graph, num_classes, labels, verbosity, regularization_x_
         return l_est, X, intermediate_results
 
 
-def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, penalty_parameter, penalty_scaling,
-                        penalty_threshold, verbosity, x0, y0, y1, return_state, save_intermediate):
-    num_nodes = graph.weights.shape[0]
-
-    intermediate_results = {}
-    save_x_list = False
-    save_y = False
-
-    if save_intermediate is not None:
-        if type(save_intermediate) is bool:
-            if save_intermediate:
-                save_x_list = True
-                save_y = True
-        elif type(save_intermediate) is list:
-            if 'x_list' in save_intermediate:
-                save_x_list = True
-                intermediate_results['x_list'] = []
-
-            if 'y' in save_intermediate:
-                save_y = True
-                intermediate_results['y'] = None
-        else:
-            raise ValueError(
-                'don''t know how to interpret save_intermediate ({s}). Its value can either be bool or a list of strings'.format(
-                    s=save_intermediate))
-
-    W = graph.weights.tocsr()
-    W2 = W.power(2)
-    d = np.array(2 * np.sum(W2 + W2.T, 1))[:, 0]
-    (column_slicing_permutation, column_slicing_indptr) = _get_slicing_permutations(W)
-
-    grad_matrix, div_matrix = graph.get_gradient_matrix(p=1, return_div=True)
-
-    grad = lambda x: grad_matrix.dot(x)#_gradient(W, x, p=1)
-    div = lambda z: div_matrix.dot(z)#_divergence(W, z, column_slicing_permutation, column_slicing_indptr, p=1)
-    projection = lambda x: label_projection(simplex_projection(x + 1, a=2, axis=1) - 1, labels)
-
-    Xtp1 = projection(x0 * np.ones((num_nodes, num_classes)))
-    if save_x_list:
-        intermediate_results['x_list'].append(Xtp1)
-    if y0 is None:
-        y0 = 1
-    Yt = y0 * np.ones((W.data.size, num_classes))
-    if y1 is None:
-        Ct = penalty_parameter * grad(0 * Xtp1)
-        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
-        Yt = np.maximum(0, np.minimum(1, Ct))
-        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
-    else:
-        Ytp1 = y1 * np.ones((W.data.size, num_classes))
-
-    t = 0
-    t_check_rho = 1
-    i_check = 2
-
-    converged = False
-    while not converged:
-        # update variables
-        t = t + 1
-        Xt = Xtp1
-        Ytm1 = Yt
-        Yt = Ytp1
-
-        # update steps
-        rho_d = sps.diags(np.array(penalty_parameter * d))
-        rho_d_inv = sps.diags(np.array([1 / (penalty_parameter * di) if di != 0 else 0 for di in d]))
-
-        # x
-        Atp1 = -div(2 * Yt - Ytm1)
-        Btp1 = rho_d_inv.dot(rho_d.dot(Xt) - Atp1)
-        Xtp1 = projection(Btp1)
-
-        # y
-        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
-        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
-
-        # residuals
-        Rtp1 = Ytp1 - Yt  # actually this is Rtp1*penalty_parameter
-        Stp1 = div(penalty_parameter * grad(Xtp1 - Xt) +
-                   2 * Yt - Ytm1 - Ytp1)
-        rtp1 = norm(Rtp1) / penalty_parameter
-        stp1 = norm(Stp1)
-
-        # tolerances
-        ePri = sqrt(num_classes) * num_nodes * eps_abs + eps_rel * norm(grad(Xtp1))
-        eDual = sqrt(num_classes * num_nodes) * eps_abs + eps_rel * \
-                norm(div(Ytp1))
-
-        # update penalty
-        if t >= t_check_rho:
-            if rtp1 * eDual >= stp1 * ePri * penalty_threshold:
-                penalty_parameter = penalty_parameter * penalty_scaling
-            elif rtp1 * eDual <= stp1 * ePri / penalty_threshold:
-                penalty_parameter = penalty_parameter / penalty_scaling
-            t_check_rho = t_check_rho * i_check
-
-        # store intermediate result
-        if save_x_list:
-            intermediate_results['x_list'].append(Xtp1)
-
-        if verbosity > 1 and t % 1 == 0:
-            print("'\rK={K}, Keff={Keff}, {t:6d}: {rtp1:.2e}>{ePri:.2e} or {stp1:.2e}>{eDual:.2e}".format(
-                K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, rtp1=rtp1, ePri=ePri, stp1=stp1,
-                eDual=eDual),
-                end='')
-
-        converged = (rtp1 <= ePri and stp1 <= eDual)
-        if not converged and t > t_max:
-            break
-
-    if verbosity > 0:
-        print("\rK={K}, Keff={Keff}, {t}: TV={tv:.2f}, TVround={tvR:.2f}".format(
-            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(W, Xtp1), tvR=TV(W, _roundSolution(Xtp1))))
-    l_est = np.argmax(Xtp1, 1)
-    X = Xtp1
-
-    if save_y:
-        intermediate_results['y'] = (Yt, Ytp1)
-
-    if return_state:
-        return l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results
-    else:
-        return l_est, X, intermediate_results
-
-
-class TvConvex(NodeLearner):
+class TvAugmentedADMM(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None, eps_abs=1e-3, eps_rel=1e-3, t_max=10000,
-                 penalty_parameter=0.1, penalty_scaling=2, penalty_threshold=10, degenerate_heuristic=None,
-                 regularization_x_min=0.9, regularization_parameter=2, regularization_max=1024, return_min_tv=False,
-                 resampling_x_min=0.1):
+                 penalty_parameter=0.1, penalty_strat_scaling=2, penalty_strat_threshold=10, penalty_strat_init_check=1,
+                 penalty_strat_interval_factor=2, min_norm=0, degenerate_heuristic=None, regularization_x_min=0.9,
+                 regularization_parameter=2, regularization_max=1024, return_min_tv=False, resampling_x_min=0.1):
         self.eps_abs = eps_abs
         self.eps_rel = eps_rel
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
-        self.penalty_scaling = penalty_scaling
-        self.penalty_threshold = penalty_threshold
+        self.penalty_strat_scaling = penalty_strat_scaling
+        self.penalty_strat_threshold = penalty_strat_threshold
+        self.penalty_strat_init_check = penalty_strat_init_check
+        self.penalty_strat_interval_factor = penalty_strat_interval_factor
+        self.min_norm = min_norm
         if degenerate_heuristic is not None and degenerate_heuristic not in ['regularize', 'rangapuram_resampling']:
             raise ValueError(
                 'unknown heuristic ''{h}'' for degenerate solutions\nEither use None or ''regularize'' or ''rangapuram_resampling'''.format(
@@ -474,10 +441,13 @@ class TvConvex(NodeLearner):
                                                                  regularization_parameter=self.regularization_parameter,
                                                                  regularization_max=self.regularization_max,
                                                                  return_min_tv=self.return_min_tv, eps_abs=self.eps_abs,
+                                                                 min_norm=self.min_norm,
                                                                  eps_rel=self.eps_rel, t_max=self.t_max,
                                                                  penalty_parameter=self.penalty_parameter,
-                                                                 penalty_scaling=self.penalty_scaling,
-                                                                 penalty_threshold=self.penalty_threshold,
+                                                                 penalty_strat_scaling=self.penalty_strat_scaling,
+                                                                 penalty_strat_threshold=self.penalty_strat_threshold,
+                                                                 penalty_strat_init_check=self.penalty_strat_init_check,
+                                                                 penalty_strat_interval_factor=self.penalty_strat_interval_factor,
                                                                  verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                  save_intermediate=self.save_intermediate)
         elif self.degenerate_heuristic == 'rangapuram_resampling':
@@ -487,8 +457,11 @@ class TvConvex(NodeLearner):
                                                                         eps_abs=self.eps_abs, eps_rel=self.eps_rel,
                                                                         t_max=self.t_max,
                                                                         penalty_parameter=self.penalty_parameter,
-                                                                        penalty_scaling=self.penalty_scaling,
-                                                                        penalty_threshold=self.penalty_threshold,
+                                                                        penalty_strat_scaling=self.penalty_strat_scaling,
+                                                                        penalty_strat_threshold=self.penalty_strat_threshold,
+                                                                        penalty_strat_init_check=self.penalty_strat_init_check,
+                                                                        penalty_strat_interval_factor=self.penalty_strat_interval_factor,
+                                                                        min_norm=self.min_norm,
                                                                         verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                         save_intermediate=self.save_intermediate)
         elif self.degenerate_heuristic is None:
@@ -496,8 +469,11 @@ class TvConvex(NodeLearner):
                                                                  labels=labels, eps_abs=self.eps_abs,
                                                                  eps_rel=self.eps_rel, t_max=self.t_max,
                                                                  penalty_parameter=self.penalty_parameter,
-                                                                 penalty_scaling=self.penalty_scaling,
-                                                                 penalty_threshold=self.penalty_threshold,
+                                                                 penalty_strat_scaling=self.penalty_strat_scaling,
+                                                                 penalty_strat_threshold=self.penalty_strat_threshold,
+                                                                 penalty_strat_init_check=self.penalty_strat_init_check,
+                                                                 penalty_strat_interval_factor=self.penalty_strat_interval_factor,
+                                                                 min_norm=self.min_norm,
                                                                  verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                  return_state=False,
                                                                  save_intermediate=self.save_intermediate)
@@ -507,7 +483,6 @@ class TvConvex(NodeLearner):
         is_degenerate = np.all(X <= self.resampling_x_min, axis=1)
         num_degenerate = np.sum(is_degenerate)
         print('{n} degenerate entries left'.format(n=num_degenerate))
-
 
         self.embedding = X
         self.normalized_embedding = (X + 1) / 2
