@@ -384,7 +384,7 @@ class TvAugmentedADMM(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None, eps_abs=1e-3, eps_rel=1e-3, t_max=10000,
                  penalty_parameter=0.1, penalty_strat_scaling=2, penalty_strat_threshold=10, penalty_strat_init_check=1,
                  penalty_strat_interval_factor=2, min_norm=0, degenerate_heuristic=None, regularization_x_min=0.9,
-                 regularization_parameter=2, regularization_max=1024, return_min_tv=False, resampling_x_min=0.1,y0=None):
+                 regularization_parameter=2, regularization_max=1024, return_min_tv=False, resampling_x_min=0.1,y0=None,y1=None):
         self.eps_abs = eps_abs
         self.eps_rel = eps_rel
         self.t_max = t_max
@@ -405,7 +405,8 @@ class TvAugmentedADMM(NodeLearner):
         self.regularization_max = regularization_max
         self.return_min_tv = return_min_tv
         self.resampling_x_min = resampling_x_min
-        self.y0=y0
+        self.y0 = y0
+        self.y1 = y1
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
@@ -428,12 +429,12 @@ class TvAugmentedADMM(NodeLearner):
             if 'y1' in guess:
                 y1 = guess['y1']
             else:
-                y1 = None
+                y1 = self.y1
         else:
             x0 = -np.ones((graph.num_nodes, self.num_classes))
             x0[range(graph.num_nodes), guess] = 1
             y0 = self.y0
-            y1 = None
+            y1 = self.y1
 
         if self.degenerate_heuristic == 'regularize':
             l_est, X, intermediate_results = _run_regularization(graph=graph, num_classes=self.num_classes,
