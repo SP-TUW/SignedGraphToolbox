@@ -1,8 +1,10 @@
 def plot():
     print('plotting')
     import itertools
+    import json
     import os
     import matplotlib.pyplot as plt
+    import numpy as np
     import pandas as pd
     import re
     import seaborn as sns
@@ -60,9 +62,11 @@ def plot():
               ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled']]
 
-    for sim_id in [4]:#range(len(constants.results_dir['sbm_sim'])):
+    for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
         if not Path(results_file_name).is_file():
             warnings.warn(results_file_name + ' not found! Continuing next simulation.')
@@ -87,6 +91,7 @@ def plot():
         results_df = pd.DataFrame(results)
         results_df.columns = results_df.columns.str.replace("+", "p")
         results_df.columns = results_df.columns.str.replace("-", "m")
+        results_df.columns = results_df.columns.str.replace(".", "")
 
         method_names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
         pid_list = results_df['pid']
@@ -153,7 +158,7 @@ def plot():
         results_max = results_df.groupby(['name'] + groups[sim_id]).max().reset_index()
 
         if len(groups[sim_id])>2:
-            if sim_id == -1:
+            if sim_id == 8:
                 for i, df in results_max.groupby(groups[sim_id][2:]):
                     for nc in [3, 5, 10]:
                         df_nc = df[df['num_classes']==nc]
