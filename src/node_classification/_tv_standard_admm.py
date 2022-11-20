@@ -8,8 +8,7 @@ from src.tools.projections import min_norm_simplex_projection, label_projection
 from ._node_learner import NodeLearner
 
 
-def _standard_admm_x_update(x_in, Q, P, constants, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0,
-                            backtracking_param, normalize):
+def _standard_admm_x_update(x_in, Q, P, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0, backtracking_param):
     N = x_in.shape[0]
     K = x_in.shape[1]
 
@@ -86,7 +85,7 @@ def _standard_admm_y_update(beta, v, p):
 def _run_standard_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inner, t_max_no_change, eps, eps_admm,
                        eps_inner,
                        backtracking_stepsize, backtracking_tau_0, backtracking_param, laplacian_scaling,
-                       pre_iteration_version, normalize_x,
+                       pre_iteration_version,
                        penalty_strat_threshold, penalty_strat_scaling, penalty_strat_init_check,
                        penalty_strat_interval_factor, verbosity):
     gradient_matrix, divergence_matrix = graph.get_gradient_matrix(p=p, return_div=True)
@@ -143,7 +142,7 @@ def _run_standard_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inn
 
         d = div(z - beta * y) / (2 * beta)  # calc_d(y_old, z_old, beta, div)
         P = -2 * d
-        x, fx_pd_ = _standard_admm_x_update(x_old, Q=Q, P=P, labels=labels, normalize=normalize_x, **x_update_args)
+        x, fx_pd_ = _standard_admm_x_update(x_old, Q=Q, P=P, labels=labels, **x_update_args)
 
         fx_pd['p'].append(fx_pd_['f_p'])
         fx_pd['d'].append(fx_pd_['f_d'])
@@ -211,7 +210,7 @@ class TvStandardADMM(NodeLearner):
                  backtracking_stepsize=1 / 2, backtracking_tau_0=0.01, backtracking_param=1 / 2,
                  penalty_strat_threshold=float('inf'), penalty_strat_scaling=1, penalty_strat_init_check=32,
                  penalty_strat_interval_factor=2,
-                 laplacian_scaling=1, pre_iteration_version=0, normalize_x=False):
+                 laplacian_scaling=1, pre_iteration_version=0):
         self.t_max = t_max
         self.penalty_parameter = penalty_parameter
         self.beta = penalty_parameter
@@ -226,7 +225,6 @@ class TvStandardADMM(NodeLearner):
         self.backtracking_param = backtracking_param
         self.laplacian_scaling = laplacian_scaling
         self.pre_iteration_version = pre_iteration_version
-        self.normalize_x = normalize_x
         self.penalty_strat_threshold = penalty_strat_threshold
         self.penalty_strat_scaling = penalty_strat_scaling
         self.penalty_strat_init_check = penalty_strat_init_check
@@ -268,8 +266,7 @@ class TvStandardADMM(NodeLearner):
                                                              penalty_strat_init_check=self.penalty_strat_init_check,
                                                              penalty_strat_interval_factor=self.penalty_strat_interval_factor,
                                                              laplacian_scaling=self.laplacian_scaling,
-                                                             pre_iteration_version=self.pre_iteration_version,
-                                                             normalize_x=self.normalize_x)
+                                                             pre_iteration_version=self.pre_iteration_version)
 
         kMeans = SeededKMeans(num_classes=self.num_classes, verbose=self.verbosity)
         l_est = kMeans.estimate_labels(x, labels=labels)
