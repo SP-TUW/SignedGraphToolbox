@@ -223,6 +223,7 @@ def get_methods(graph_config, sim_id):
             methods.append({'name': 'diffuseInterface_sym{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=num_eig)})
             methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=num_eig)})
             methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=num_eig)})
+            methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge', num_eig=num_eig)})
         methods.append({'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                                degenerate_heuristic='rangapuram_resampling',
                                                                                eps_rel=10 ** (-15 / 10),
