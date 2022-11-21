@@ -219,12 +219,10 @@ def get_methods(graph_config, sim_id):
     if sim_id == 9:
         # high repetition nonconvex TV
         v = 1
-        methods.append({'name': 'diffuseInterface_sym020', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=20)})
-        methods.append({'name': 'diffuseInterface_sym100', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=100)})
-        methods.append({'name': 'diffuseInterface_am020', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=20)})
-        methods.append({'name': 'diffuseInterface_am100', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=100)})
-        methods.append({'name': 'diffuseInterface_lap020', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=20)})
-        methods.append({'name': 'diffuseInterface_lap100', 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=100)})
+        for num_eig in [20, 50, 100, 200]:
+            methods.append({'name': 'diffuseInterface_sym{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=num_eig)})
+            methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=num_eig)})
+            methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=num_eig)})
         methods.append({'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                                degenerate_heuristic='rangapuram_resampling',
                                                                                eps_rel=10 ** (-15 / 10),
