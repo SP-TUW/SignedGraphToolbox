@@ -149,6 +149,7 @@ class ClassificationSimulation:
             self.cut[name] = calc_signed_cut(self.graph.weights, self.l_est[name])
             print('n_err_{name}={n}'.format(name=name, n=self.n_err[name]))
             print('cut {name}={c}'.format(name=name, c=self.cut[name]))
+            print('t_run {name}={c}'.format(name=name, c=self.t_run[name]))
         self.current_graph_config = graph_config.copy()
         self.current_percentage_labeled = percentage_labeled
         self.current_is_percentage = is_percentage
