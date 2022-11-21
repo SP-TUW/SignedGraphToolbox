@@ -64,6 +64,7 @@ def plot():
               ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
               ['eps', 'num_classes', 'percentage_labeled']]
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
@@ -157,9 +158,9 @@ def plot():
         results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
         results_max = results_df.groupby(['name'] + groups[sim_id]).max().reset_index()
 
-        if len(groups[sim_id])>2:
-            if sim_id == 8:
-                for i, df in results_max.groupby(groups[sim_id][2:]):
+        if len(groups[sim_id]) > 2:
+            if sim_id == 9:
+                for i, df in results_mean.groupby(groups[sim_id][2:]):
                     for nc in [3, 5, 10]:
                         df_nc = df[df['num_classes']==nc]
                         # df_plot = df_nc[df_nc['name'].isin(['tv2', 'tv3', 'tv4', 'tv5', 'tv_bresson'])]
@@ -167,9 +168,9 @@ def plot():
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv2_re')]
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc') | df_nc['name'].isin(['mapr', 'snc'])]
                         # df_plot = df_nc[df_nc['name'].str.endswith('snc')]
-                        # df_plot = df_nc
+                        df_plot = df_nc
                         # df_plot = df_nc[df_nc['name'].str.startswith('tv_nc_beta0100_l1_pre0') | df_nc['name'].str.startswith('sponge')]
-                        df_plot = df_nc[df_nc['name'].str.endswith('sncSponge') | df_nc['name'].str.startswith('sncSponge') | df_nc['name'].str.startswith('mapr')]
+                        # df_plot = df_nc[df_nc['name'].str.endswith('sncSponge') | df_nc['name'].str.startswith('sncSponge') | df_nc['name'].str.startswith('mapr')]
 
                         plt.figure(figsize=(20, 15))
                         p1 = sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
