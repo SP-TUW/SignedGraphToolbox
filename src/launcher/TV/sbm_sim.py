@@ -219,7 +219,7 @@ def get_methods(graph_config, sim_id):
     if sim_id == 9:
         # high repetition nonconvex TV
         v = 1
-        for num_eig in [20, 50, 100, 200]:
+        for num_eig in [10, 20, 50, 100]:
             methods.append({'name': 'diffuseInterface_sym{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym', num_eig=num_eig)})
             methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am', num_eig=num_eig)})
             methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig), 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap', num_eig=num_eig)})
