@@ -240,7 +240,7 @@ def get_methods(graph_config, sim_id):
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
 
-    if sim_id in [0,4,6,8]:
+    if sim_id in [0,4,6,8,9]:
         methods.append({'name': 'maprSNC', 'l_guess': 'sncSponge', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
         methods.append({'name': 'maprMinErr', 'l_guess': 'min_err', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
         methods.append({'name': 'maprMinCut', 'l_guess': 'min_cut', 'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le, class_distribution=class_distribution, eps=1e-3)},)
