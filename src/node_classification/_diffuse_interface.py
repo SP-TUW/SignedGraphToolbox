@@ -83,7 +83,7 @@ class DiffuseInterface(NodeLearner):
     def __init__(self, num_classes=2, verbosity=1, save_intermediate=None, num_eig=20, objective='sym', eps=1e-6,
                  t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3, use_full_matrix=False):
         self.num_eig = num_eig
-        known_objectives = ['sym', 'am', 'lap']
+        known_objectives = ['sym', 'am', 'lap', 'sponge']
         if objective not in known_objectives:
             raise ValueError('unknown objective \'{s}\'\nKnown objectives are {o}'.format(s=objective, o=known_objectives))
         self.which = objective
@@ -111,6 +111,17 @@ class DiffuseInterface(NodeLearner):
         elif self.which == 'lap':
             L = graph.get_signed_laplacian()
             print('GL using the signed Laplacian')
+        elif self.which == 'sponge':
+            matrix_numerator, matrix_denominator = graph.get_sponge_matrices()
+            a_ = matrix_numerator
+            b_ = matrix_denominator
+            eig_sel = 'SM'
+            force_unsigned = False
+
+            w, v = np.linalg.eigh(matrix_denominator.A)
+            denom_inv_sqrt = (v/np.sqrt(w)).dot(v.T)
+            L = denom_inv_sqrt.dot(matrix_numerator.dot(denom_inv_sqrt))
+            print('GL using the SPONGE matrix')
         else:
             raise ValueError('unknown objective ''{s}'''.format(s=self.which))
 
