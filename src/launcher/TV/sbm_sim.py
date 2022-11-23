@@ -70,13 +70,11 @@ def get_graph_config_lists(sim_id, return_name=False):
         num_classes_list = [3, 5, 10]
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
-        eps_list = np.linspace(0, 0.5, 11)
     elif sim_id == 9:
         name = 'balancedness sweep for high repetition comparison of all algorithms'
         num_classes_list = [3, 5, 10]
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
-        eps_list = np.linspace(0.0, 0.5*(1-1/10), 10)
     else:
         raise ValueError('unknown sim_id')
     class_distribution_list = [[1] * nc for nc in num_classes_list]
