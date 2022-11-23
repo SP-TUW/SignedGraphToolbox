@@ -14,8 +14,8 @@ pid_offset      =       OFFSET
 notification	=	error
 universe        =       vanilla
 getenv          =       True
+should_transfer_files = YES
 initialdir  	= 	/Network/Servers/xserve.nt.tuwien.ac.at/Volumes/server/Users/tdittrich/GSPSimulator/SignedGraphToolboxPrivate/
-Requirements    =       (Machine != "condor02.nt.tuwien.ac.at" && Machine != "condor03.nt.tuwien.ac.at")
 Rank            =       Kflops
 executable      =       condor/pythonWrapper.sh
 log             =       condor/TV/condor_log/sbm_sim_$(sim_id)/sim.log
