@@ -179,9 +179,6 @@ def get_methods(graph_config, sim_id):
                          'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
                                                   pre_iteration_version=pre, t_max_no_change=None)})
 
-    if sim_id > len(constants.results_dir['sbm_sim']):
-        raise ValueError('unknown sim_id')
-
     if sim_id == 7:
         # high repetition nonconvex TV
         v = 1
