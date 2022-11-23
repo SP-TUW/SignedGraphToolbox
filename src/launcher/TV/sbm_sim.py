@@ -25,8 +25,9 @@ def combine_results():
 
 def get_graph_config_lists(sim_id, return_name=False):
     name = ''
-    eps_list = np.linspace(0, 0.5, 11)
     percentage_labeled_list = [10/3, 10, 20]
+    # eps_list = np.linspace(0, 0.5, 11)
+    eps_list = np.linspace(0.0, 0.5*(1-1/10), 10)
     if sim_id == 0:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900]*4
@@ -42,11 +43,10 @@ def get_graph_config_lists(sim_id, return_name=False):
         num_nodes_list = [9000]*4
         eps_list = np.linspace(0.3, 0.4, 3)
     elif sim_id == 4:
-        name = 'balancedness sweep with several values for beta'
+        name = 'balancedness sweep for nonconvex standard ADMM with several values for beta'
         num_classes_list = [3, 5, 10]
         percentage_labeled_list = [0, 10/3, 10, 20]
         num_nodes_list = [900]*3
-        eps_list = np.linspace(0, 0.5, 11)
     elif sim_id == 5:
         name = 'simulations from Asilomar'
         num_classes_list = [3]
