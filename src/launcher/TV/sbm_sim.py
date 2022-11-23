@@ -134,7 +134,7 @@ def get_methods(graph_config, sim_id):
         for b in np.logspace(0,5,6):
             for pre in [0, 1, 2]:
                 # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_sponge'.format(b=int(b),t=int(pre)),      'l_guess': 'sponge',            'is_unsupervised': True,  'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=None)})
-                for l_guess in ['sncSponge']:
+                for l_guess in ['sncSponge', 'sncBNC']:
                     methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_{g}'.format(b=int(np.log10(b)),t=int(pre), g=l_guess), 'l_guess': l_guess, 'is_unsupervised': False, 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=None)})
                 methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_rand'.format(b=int(np.log10(b)),t=int(pre)),                                   'is_unsupervised': False,  'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, pre_iteration_version=pre, t_max_no_change=None)})
                 # methods.append({'name': 'tv_nc_beta{b:0>+1d}_pre{t}_tvnc'.format(b=int(10 * b), t=int(pre)),      'l_guess': 'tv_nc_beta{b:0>4d}_l{l:d}_pre{t}_snc'.format(b=int(10*b),l=l,t=int(pre)),                             'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b, run_pre_iteration=pre)})
