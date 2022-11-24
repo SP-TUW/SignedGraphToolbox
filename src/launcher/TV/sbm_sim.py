@@ -4,7 +4,8 @@ import os
 import numpy as np
 
 from src.launcher import SBMSimulation
-from src.launcher.TV import constants, plotting
+from src.launcher.TV import constants
+from src.launcher.TV import plotting as plotting
 from src.node_classification import SpectralLearning, Sponge, TvAugmentedADMM, TvStandardADMM, LsbmMap, DiffuseInterface
 
 

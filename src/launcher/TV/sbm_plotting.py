@@ -100,6 +100,16 @@ def plot():
         print('missing PIDs:')
         print(np.setdiff1d(np.arange(max(pid_list)+1), pid_list))
 
+        if sim_id in [7]:
+            for c in results_df.columns:
+                if c.startswith('t_run'):
+                    name = c[5:]
+                    # results_df[c] /= results_df['t_run_sncSponge']
+                    if 't_run_norm_tv_nc_betap5_pre0_sncSponge' in results_df.columns:
+                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_norm_tv_nc_betap5_pre0_sncSponge']
+                    else:
+                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_norm_tv_nc_betap50_pre0_sncSponge']
+
         mean_results = results_df.groupby(groups[sim_id]).mean().reset_index(level=list(range(1, len(groups[sim_id]))))
         unique_lists = []
         for grouping in groups[sim_id][1:]:
@@ -159,7 +169,7 @@ def plot():
         results_max = results_df.groupby(['name'] + groups[sim_id]).max().reset_index()
 
         if len(groups[sim_id]) > 2:
-            if sim_id == 9:
+            if sim_id == -1:
                 for i, df in results_mean.groupby(groups[sim_id][2:]):
                     for nc in [3, 5, 10]:
                         df_nc = df[df['num_classes']==nc]
