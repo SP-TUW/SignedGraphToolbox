@@ -14,6 +14,7 @@ pid_offset      =       OFFSET
 notification	=	error
 universe        =       vanilla
 getenv          =       True
+should_transfer_files = YES
 initialdir  	= 	/Network/Servers/xserve.nt.tuwien.ac.at/Volumes/server/Users/tdittrich/GSPSimulator/SignedGraphToolboxPrivate/
 Rank            =       Kflops
 executable      =       condor/pythonWrapper.sh
