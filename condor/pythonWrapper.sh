@@ -3,6 +3,6 @@
 echo $HOSTNAME
 echo "$USER"
 echo $(pwd)
-cd ~
+cd ~/GSPSimulator/SignedGraphToolboxPrivate/
 #python3 -m $*
 ls
