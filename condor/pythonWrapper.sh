@@ -3,5 +3,5 @@
 echo $HOSTNAME
 echo "$USER"
 echo $(pwd)
-python3 -m $*
-ls
+#python3 -m $*
+#ls
