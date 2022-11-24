@@ -14,7 +14,6 @@ pid_offset      =       OFFSET
 notification	=	error
 universe        =       vanilla
 getenv          =       True
-requirements = machine=="condor01.nt.tuwien.ac.at" || machine=="condor02.nt.tuwien.ac.at" || machine=="slave01.nt.tuwien.ac.at"
 initialdir  	= 	/Network/Servers/xserve.nt.tuwien.ac.at/Volumes/server/Users/tdittrich/GSPSimulator/SignedGraphToolboxPrivate/
 Rank            =       Kflops
 executable      =       condor/pythonWrapper.sh
