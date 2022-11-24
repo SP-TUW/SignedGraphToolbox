@@ -1,5 +1,6 @@
-import numpy as np
 import warnings
+
+import numpy as np
 
 
 def label_projection(x_in, labels, values=[-1, 1]):

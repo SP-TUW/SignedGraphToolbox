@@ -1,10 +1,8 @@
 import numpy as np
-import scipy.sparse
 from numpy import sqrt
 from scipy.linalg import qr
 from scipy.sparse import csc_matrix, eye, issparse, diags
-from scipy.sparse.linalg import spsolve, eigsh, lobpcg
-from sklearn.cluster import KMeans
+from scipy.sparse.linalg import spsolve, eigsh
 
 from src.metric_learning import SeededKMeans
 from src.tools.projections import unitarization

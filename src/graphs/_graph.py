@@ -1,8 +1,8 @@
 from abc import ABC
 
+import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import diags
-import numpy as np
 
 
 class Graph(ABC):

@@ -6,9 +6,8 @@ Implementation of the spectral method of
 for the ML estimation of cluster association for the stochastic block model (SBM).
 '''
 
-import numpy as np
-import scipy as sc
 import cvxpy as cp
+import numpy as np
 from sklearn.cluster import KMeans
 
 from ._node_learner import NodeLearner

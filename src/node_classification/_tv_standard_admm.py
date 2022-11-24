@@ -1,7 +1,6 @@
 import warnings
 
 import numpy as np
-import scipy.sparse as sps
 
 from src.metric_learning import SeededKMeans
 from src.tools.projections import min_norm_simplex_projection, label_projection

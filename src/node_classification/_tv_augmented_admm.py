@@ -7,8 +7,8 @@ from scipy import sparse as sps
 
 from src.graphs import Graph
 from src.node_classification._node_learner import NodeLearner
-from src.tools.projections import min_norm_simplex_projection, label_projection
 from src.tools.graph_tools import calc_signed_cut
+from src.tools.projections import min_norm_simplex_projection, label_projection
 
 
 def _roundSolution(X):

@@ -4,12 +4,13 @@
 
 # Implemented by Thomas Dittrich 2020
 
-import numpy as np
-from src.tools.projections import simplex_projection
-import scipy.sparse as sps
 import warnings
 
+import numpy as np
+import scipy.sparse as sps
+
 from src.node_classification._node_learner import NodeLearner
+from src.tools.projections import simplex_projection
 
 
 def norm_1la(t, la):

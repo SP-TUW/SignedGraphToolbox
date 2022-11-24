@@ -2,12 +2,10 @@
 # it is necessary to install SigNet via
 # pip install git+https://github.com/alan-turing-institute/SigNet.git
 
-from signet.cluster import Cluster
 import numpy as np
-from scipy import sparse as ss
+from signet.cluster import Cluster
 
 from ._node_learner import NodeLearner
-
 
 
 class Sponge(NodeLearner):
