@@ -51,8 +51,8 @@ class ClassificationSimulation:
     def add_method(self, method):
         '''
 
-        :param method: a dict with necessary fields 'name' and 'config' and optional field 'initialization'. If
-        'initialization' is present then the result of this method will be used as initial guess for the current
+        :param method: a dict with necessary fields 'name' and 'config' and optional field 'l_guess'. If
+        'l_guess' is present then the result of this method will be used as initial guess for the current
         method :return:
         '''
         if type(method) is list:
@@ -66,8 +66,8 @@ class ClassificationSimulation:
             # add if name not already in list
             if method['name'] in methods_names:
                 warnings.warn('method already added in the list. Ovewriting old config')
-            if 'initialization' in method.keys() and method['initialization'] not in methods_names:
-                raise ValueError(method['initialization'] + ' not yet added to the list of methods. Please add dependent methods after their dependency')
+            if 'l_guess' in method.keys() and method['l_guess'] not in methods_names and method['l_guess'] not in ['min_err', 'min_cut']:
+                raise ValueError(method['l_guess'] + ' not yet added to the list of methods. Please add dependent methods after their dependency')
             self.methods_list.append(method)
 
     def add_graphs(self, graph_config):
@@ -94,7 +94,10 @@ class ClassificationSimulation:
 
     def __get_graph(self, sim_id):
         graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
-        graph = graph_factory.make_graph(**graph_config)
+        stripped_graph_config = graph_config.copy()
+        if 'result_fields' in stripped_graph_config:
+            stripped_graph_config.pop('result_fields')
+        graph = graph_factory.make_graph(**stripped_graph_config)
         if 'str' in graph_config.keys():
             print(graph_config['str'])
 

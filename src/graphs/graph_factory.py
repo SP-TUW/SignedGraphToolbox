@@ -4,13 +4,13 @@ from enum import Enum
 import numpy as np
 import scipy.sparse as sps
 
-from src.graphs import StochasticBlockModel as SBM
+from src.graphs import StochasticBlockModel, WikiEditorGraph, WikiElecGraph, WikiRfAGraph
 # from src.graphs.staticModels.UciGama import UciGama
 # from src.graphs.staticModels.MultiCirculant import MultiCirculant
 # from src.graphs.staticModels.SNAPNetwork import SNAPNetwork
 # from src.graphs.staticModels.WikiEditorGraph import WikiEditorGraph
 # from src.graphs.staticModels.WikiElecGraph import WikiElecGraph
-# from src.graphs.staticModels.WikiRFAGraph import WikiRFAGraph
+# from src.graphs.staticModels.WikiRfAGraph import WikiRfAGraph
 # from src.graphs.staticModels.KNNGraph import KNNGraph
 # from src.graphs.staticModels.TVMinimizationGraph import TVMinimizationGraph
 # from src.graphs.dynamicModels.DynSBM import DynSBM
@@ -20,22 +20,22 @@ from src.tools.simulation_tools import str_to_enum
 
 def make_graph(model, num_largest_classes=None, **kwargs):
     # models = Enum('models', 'SBM TM UCI_GAMA MULTI_CIRC SNAP WIKI_EDITOR WIKI_ELEC WIKI_RFA KNN TVMinimization DYN_SBM')
-    models = Enum('models', 'SBM')
+    models = Enum('models', 'SBM WIKI_EDITOR WIKI_ELEC WIKI_RFA')
     model_enum = str_to_enum(model, models)
     if model_enum is models.SBM:
-        graph = SBM(**kwargs)
+        graph = StochasticBlockModel(**kwargs)
     # elif model_enum is models.UCI_GAMA:
     #     graph = UciGama(**kwargs)
     # elif model_enum is models.MULTI_CIRC:
     #     graph = MultiCirculant(**kwargs)
     # elif model_enum is models.SNAP:
     #     graph = SNAPNetwork(**kwargs)
-    # elif model_enum is models.WIKI_EDITOR:
-    #     graph = WikiEditorGraph(**kwargs)
-    # elif model_enum is models.WIKI_ELEC:
-    #     graph = WikiElecGraph(**kwargs)
-    # elif model_enum is models.WIKI_RFA:
-    #     graph = WikiRFAGraph(**kwargs)
+    elif model_enum is models.WIKI_EDITOR:
+        graph = WikiEditorGraph(**kwargs)
+    elif model_enum is models.WIKI_ELEC:
+        graph = WikiElecGraph(**kwargs)
+    elif model_enum is models.WIKI_RFA:
+        graph = WikiRfAGraph(**kwargs)
     # elif model_enum is models.KNN:
     #     graph = KNNGraph(**kwargs)
     # elif model_enum is models.TVMinimization:

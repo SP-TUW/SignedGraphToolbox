@@ -122,7 +122,7 @@ class StochasticBlockModel(Graph):
         ji = j_list + i_list
         dd = data_list + data_list
         W = sps.coo_matrix((dd, (ij, ji)), shape=(num_nodes, num_nodes))
-        super().__init__(num_classes=num_classes,class_labels=l0,weights=W)
+        super().__init__(num_classes=num_classes,class_labels=l0,weights=W, **kwargs)
 
     @staticmethod
     def bernoulli_weights(nnz, li, le, is_intern):

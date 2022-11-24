@@ -128,7 +128,10 @@ class DiffuseInterface(NodeLearner):
         if not self.use_full_matrix:
             eig_vals, eig_vecs = sps.linalg.eigsh(L, k=num_eig, which='SM')
         else:
-            eig_vals, eig_vecs = np.linalg.eigh(L.A)
+            if sps.issparse(L):
+                eig_vals, eig_vecs = np.linalg.eigh(L.A)
+            else:
+                eig_vals, eig_vecs = np.linalg.eigh(L)
             i_sort = np.argsort(eig_vals)
             eig_vals = eig_vals[i_sort[:num_eig]]
             eig_vecs = eig_vecs[:, i_sort[:num_eig]]

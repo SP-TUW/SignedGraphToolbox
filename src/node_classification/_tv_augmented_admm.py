@@ -410,7 +410,7 @@ class TvAugmentedADMM(NodeLearner):
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
-        if (labels is None or len(labels['i']) == 0):
+        if (labels is None or len(labels['i']) == 0) and not self.degenerate_heuristic == 'rangapuram_resampling':
             i = np.argmax(np.sum(graph.weights.maximum(0), 1))
             labels = {'i': [i], 'k': [0]}
             warnings.warn(
