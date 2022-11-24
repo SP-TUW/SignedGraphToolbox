@@ -18,14 +18,14 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
     force_unsigned = True
     if objective == "RC":
         d = abs(weight_matrix).sum(axis=1).T
-        d_nz = np.where(d == 0, 1, d)
+        d_nz = np.where(d == 0, 1, d).squeeze()
         deg_matrix = diags(d_nz)
         a = deg_matrix - weight_matrix
         normalization = diags(np.ones(graph.num_nodes))
         eig_sel = 'SM'
     elif objective == "NC":
         d = abs(weight_matrix).sum(axis=1).T
-        d_nz = np.where(d == 0, 1, d)
+        d_nz = np.where(d == 0, 1, d).squeeze()
         deg_matrix = diags(d_nz)
         a = deg_matrix - weight_matrix
         dd = sqrt(d)
@@ -175,7 +175,7 @@ def _sequential_multiclass(obj_matrix, B, c, random_init, return_intermediate, e
 
 class SpectralLearning(NodeLearner):
 
-    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, eps=1e-5, t_max=int(1e5)):
+    def __init__(self, num_classes=2, verbosity=0, save_intermediate=False, objective='BNC', multiclass_method='joint', random_init=False, drop_last_column=False, eps=1e-5, t_max=int(1e5)):
         self.num_classes = num_classes
         self.objective = objective
         self.multiclass_method=multiclass_method
@@ -183,6 +183,7 @@ class SpectralLearning(NodeLearner):
         self.verbosity = verbosity
         self.eps=eps
         self.t_max = t_max
+        self.drop_last_column = drop_last_column
         self.save_intermediate = save_intermediate
         self.intermediate_results = None
         self.kmeans = None
@@ -208,7 +209,7 @@ class SpectralLearning(NodeLearner):
             if eig_sel == 'LM':
                 obj_matrix = a
             else:
-                eig_upper_bound = max(abs(a).sum(1))
+                eig_upper_bound = np.array(max(abs(a).sum(1)),ndmin=2)[0,0]
                 if issparse(a):
                     obj_matrix = eig_upper_bound * eye(a.shape[0]) - a
                 else:
@@ -231,6 +232,8 @@ class SpectralLearning(NodeLearner):
                 x = x[0]
 
         x = normalization.dot(x)
+        if self.drop_last_column:
+            x = x[:,:-1]
         self.kmeans = SeededKMeans(num_classes=self.num_classes)
         l_est = self.kmeans.estimate_labels(data=x, labels=labels)
 

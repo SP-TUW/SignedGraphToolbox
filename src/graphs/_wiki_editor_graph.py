@@ -23,8 +23,8 @@ class WikiEditorGraph(Graph):
     DATA_DIR = os.path.join('data', 'wiki_editor')
 
     def __init__(self, only_pos=False, **kwargs):
-        l0, W = WikiEditorGraph.__get_labels_and_weights(only_pos=only_pos)
-        super().__init__(W, l0, **kwargs)
+        class_labels, weights = WikiEditorGraph.__get_labels_and_weights(only_pos=only_pos)
+        super().__init__(weights=weights, class_labels=class_labels, num_classes=2, **kwargs)
 
     @staticmethod
     def __read_data():

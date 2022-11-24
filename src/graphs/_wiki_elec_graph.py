@@ -1,3 +1,4 @@
+import pandas as pd
 import scipy.io
 
 from src.graphs._wiki_rfa_graph import WikiRfAGraph
@@ -94,7 +95,9 @@ class WikiElecGraph(WikiRfAGraph):
             voter_array[i_vote:i_vote + election_size, 4] = election['E']
             i_vote += election_size
 
-        return voter_array
+        voter_df = pd.DataFrame(voter_array,columns=['SRC','TGT','DAT','VOT','RES'])
+
+        return voter_df
 
 
 if __name__ == '__main__':

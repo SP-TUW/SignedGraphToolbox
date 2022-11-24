@@ -113,14 +113,15 @@ class DiffuseInterface(NodeLearner):
             print('GL using the signed Laplacian')
         elif self.which == 'sponge':
             matrix_numerator, matrix_denominator = graph.get_sponge_matrices()
-            a_ = matrix_numerator
-            b_ = matrix_denominator
-            eig_sel = 'SM'
-            force_unsigned = False
+            # a_ = matrix_numerator
+            # b_ = matrix_denominator
+            # eig_sel = 'SM'
+            # force_unsigned = False
 
-            w, v = np.linalg.eigh(matrix_denominator.A)
-            denom_inv_sqrt = (v/np.sqrt(w)).dot(v.T)
-            L = denom_inv_sqrt.dot(matrix_numerator.dot(denom_inv_sqrt))
+            # w, v = np.linalg.eigh(matrix_denominator.A)
+            # denom_inv_sqrt = (v/np.sqrt(w)).dot(v.T)
+            # L = denom_inv_sqrt.dot(matrix_numerator.dot(denom_inv_sqrt))
+            L = sps.linalg.spsolve(matrix_denominator.T, matrix_numerator.T)
             print('GL using the SPONGE matrix')
         else:
             raise ValueError('unknown objective ''{s}'''.format(s=self.which))

@@ -36,8 +36,14 @@ def get_methods(graph_config, sim_id):
     num_classes = 2
     v = 1
     methods = [
-        {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-        # {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
+        {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
+        {'name': 'sncRCDlc', 'method': SpectralLearning(num_classes=num_classes, objective='RC',drop_last_column=True)},
+        {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
+        {'name': 'sncBNCDlc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC',drop_last_column=True)},
+        {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+        {'name': 'sncBNCIndefDlc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF',drop_last_column=True)},
+        {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
+        {'name': 'sncSpongeDlc', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE',drop_last_column=True)},
     ]
     # b = 1e4
     # pre = 0
@@ -47,6 +53,16 @@ def get_methods(graph_config, sim_id):
     #                 'l_guess': l_guess, 'is_unsupervised': False,
     #                 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
     #                                          pre_iteration_version=pre, t_max_no_change=None)})
+    methods.append({'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                              degenerate_heuristic=None,
+                                                              eps_rel=10 ** (-15 / 10),
+                                                              eps_abs=10 ** (-15 / 10),
+                                                              resampling_x_min=90 / 100)})
+    methods.append({'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                              degenerate_heuristic=None,
+                                                              eps_rel=10 ** (-20 / 10),
+                                                              eps_abs=10 ** (-20 / 10),
+                                                              resampling_x_min=90 / 100)})
     methods.append({'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                               degenerate_heuristic=None,
                                                               eps_rel=10 ** (-30 / 10),
@@ -61,30 +77,36 @@ def get_methods(graph_config, sim_id):
                                                                            degenerate_heuristic='regularize',
                                                                            eps_rel=10 ** (-15 / 10),
                                                                            eps_abs=10 ** (-15 / 10),
-                                                                           resampling_x_min=90 / 100)})
+                                                                           regularization_x_min=90 / 100,
+                                                                           regularization_max=2 ** 15,
+                                                                           return_min_tv=True)})
     methods.append({'name': 'tv30_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                            degenerate_heuristic='regularize',
                                                                            eps_rel=10 ** (-30 / 10),
                                                                            eps_abs=10 ** (-30 / 10),
-                                                                           resampling_x_min=90 / 100)})
+                                                                           regularization_x_min=90 / 100,
+                                                                           regularization_max=2 ** 15,
+                                                                           return_min_tv=True)})
 
     if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
         num_eig = 20
+        use_full_matrix = True
     else:
         num_eig = 100
+        use_full_matrix = False
 
     methods.append({'name': 'diffuseInterface_sym{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
-                                               num_eig=num_eig, use_full_matrix=True)})
+                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
     methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
-                                               num_eig=num_eig, use_full_matrix=True)})
+                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
     methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-                                               num_eig=num_eig, use_full_matrix=True)})
-    methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
-                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-                                               num_eig=num_eig, use_full_matrix=True)})
+                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
+    # methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
+    #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+    #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
@@ -98,7 +120,7 @@ def run(pid,sim_id):
     sim.add_method(method_configs)
     sim.run_simulation(pid)
     sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=False,
-                     reduce_data=True)
+                     reduce_data=False)
 
 
 if __name__ == '__main__':
