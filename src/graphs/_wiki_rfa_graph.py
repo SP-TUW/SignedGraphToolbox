@@ -153,7 +153,7 @@ class WikiRfAGraph(Graph):
         data_loaded = False
         if os.path.isfile(os.path.join(data_dir, 'voter_df.json')):
             try:
-                voter_df = pd.read_pickle(os.path.join(data_dir, 'voter_df.pkl'))
+                voter_df = pd.read_csv(os.path.join(data_dir, 'voter_df.csv'))
                 # with open(os.path.join(data_dir, 'voter_df.json')) as voter_array_file:
                 #     voter_df = np.array(json.load(voter_array_file))
                 data_loaded = True
