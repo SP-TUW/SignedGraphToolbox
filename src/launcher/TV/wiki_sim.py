@@ -61,19 +61,19 @@ def get_methods(graph_config, sim_id):
                                                           eps_rel=10 ** (-30 / 10),
                                                           eps_abs=10 ** (-30 / 10),
                                                           resampling_x_min=90 / 100)},
-               {'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+               {'name': 'tv15_res05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                        degenerate_heuristic='rangapuram_resampling',
                                                                        eps_rel=10 ** (-15 / 10),
                                                                        eps_abs=10 ** (-15 / 10),
                                                                        resampling_x_min=5 / 100)},
-               {'name': 'tv15_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+               {'name': 'tv15_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                        degenerate_heuristic='regularize',
                                                                        eps_rel=10 ** (-15 / 10),
                                                                        eps_abs=10 ** (-15 / 10),
                                                                        regularization_x_min=90 / 100,
                                                                        regularization_max=2 ** 15,
                                                                        return_min_tv=True)},
-               {'name': 'tv30_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+               {'name': 'tv30_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
                                                                        degenerate_heuristic='regularize',
                                                                        eps_rel=10 ** (-30 / 10),
                                                                        eps_abs=10 ** (-30 / 10),
@@ -97,16 +97,16 @@ def get_methods(graph_config, sim_id):
         num_eig = 100
         use_full_matrix = False
 
-    methods.append({'name': 'diffuseInterface_sym{n:0>3d}'.format(n=num_eig),
+    methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig),
+    methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    # methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig),
+    # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
     #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
     #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
+    methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
