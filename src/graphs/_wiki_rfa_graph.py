@@ -17,9 +17,24 @@ class WikiRfAGraph(Graph):
             w_pos, w_neg, class_labels = self.__load_matlab()
             if combination_method == 'mean_sign':
                 weights = w_pos-w_neg
+                w = w_pos+w_neg
             else:
                 weights = w_pos
-                w_neg.data[:] = 0
+                w = w_pos
+                w_neg.data = np.zeros(w_neg.data.shape)
+
+            ccs = get_connected_components(w)
+
+            weights = weights[ccs[0], :]
+            weights = weights[:, ccs[0]]
+            class_labels = class_labels[ccs[0]]
+
+            w_pos = w_pos[ccs[0], :]
+            w_pos = w_pos[:, ccs[0]]
+
+            w_neg = w_neg[ccs[0], :]
+            w_neg = w_neg[:, ccs[0]]
+
         else:
             voter_array = self.__load_votes(do_safe_voter_array)
             class_labels, weights, w_pos, w_neg = self.__votes_to_l0W(voter_array, combination_method)
