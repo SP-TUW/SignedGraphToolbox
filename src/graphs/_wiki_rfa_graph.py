@@ -7,7 +7,6 @@ from scipy.sparse import csr_matrix
 import os
 import json
 import pandas as pd
-import h5py
 
 
 class WikiRfAGraph(Graph):
