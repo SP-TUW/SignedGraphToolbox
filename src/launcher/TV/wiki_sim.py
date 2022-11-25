@@ -5,6 +5,11 @@ from src.node_classification import DiffuseInterface, SpectralLearning, TvAugmen
 
 
 def make_result_dirs():
+    print('making result and plot directories')
+    from pathlib import Path
+    for dir in constants.results_dir['wiki_sim']:
+        Path(dir).mkdir(parents=True, exist_ok=True)
+    Path(constants.plots_dir['wiki_sim']).mkdir(parents=True, exist_ok=True)
     pass
 
 
@@ -119,7 +124,7 @@ def run(pid,sim_id):
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
-    sim.save_results(constants.results_dir['sbm_sim'][sim_id], split_file=False, save_degenerate_stats=False,
+    sim.save_results(constants.results_dir['wiki_sim'][sim_id], split_file=False, save_degenerate_stats=False,
                      reduce_data=False)
 
 
@@ -135,7 +140,7 @@ if __name__ == '__main__':
         elif args[1] == '-c':
             combine_results()
         elif args[1] == '-n':
-            for i in range(len(constants.results_dir['sbm_sim'])):
+            for i in range(len(constants.results_dir['wiki_sim'])):
                 config_lists, name = get_graph_config_lists(sim_id=i, return_name=True)
                 sim = ClassificationSimulation(**config_lists)
                 print('{n: >3d} configs in simulation {i} --- {name}'.format(n=len(sim.graph_config_list), i=i,
