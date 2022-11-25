@@ -87,7 +87,7 @@ class WikiElecGraph(WikiRfAGraph):
         i_vote = 0
         for election in elections:
             election_size = len(election['V'][0])
-            print(election['U'])
+            # print(election['U'])
             voter_array[i_vote:i_vote + election_size, 0] = id_to_index[election['V'][0]]
             voter_array[i_vote:i_vote + election_size, 1] = id_to_index[election['U']]
             voter_array[i_vote:i_vote + election_size, 2] = election['V'][2]
