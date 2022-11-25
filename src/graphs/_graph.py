@@ -7,7 +7,7 @@ from scipy.sparse import diags
 
 class Graph(ABC):
 
-    def __init__(self, num_classes, class_labels, weights, weights_neg=None, name=None):
+    def __init__(self, num_classes, class_labels, weights, weights_pos=None, weights_neg=None, name=None):
         '''
 
         :param num_classes: ground truth number of classes
@@ -21,16 +21,23 @@ class Graph(ABC):
         self.class_labels = class_labels
         self.weights = csr_matrix(weights)
         self.weights.eliminate_zeros()
-        if weights_neg is not None:
-            self.w_pos = csr_matrix(weights).maximum(0)
-            self.w_neg = csr_matrix(weights_neg).maximum(0)
+        if weights_pos is not None:
+            self.w_pos = csr_matrix(weights_pos).maximum(0)
         else:
             self.w_pos = csr_matrix(weights).maximum(0)
+
+        if weights_neg is not None:
+            self.w_neg = csr_matrix(weights_neg).maximum(0)
+        else:
             self.w_neg = csr_matrix(-weights).maximum(0)
         self.d_pos = np.squeeze(np.asarray(self.w_pos.sum(1)))
         self.d_neg = np.squeeze(np.asarray(self.w_neg.sum(1)))
         self.degree = self.d_pos + self.d_neg
         self._gradient_matrix = {}
+        print('graph has')
+        print('num pos: {n}'.format(n=self.w_pos.count_nonzero()))
+        print('num neg: {n}'.format(n=self.w_neg.count_nonzero()))
+        print('num tot: {n}'.format(n=self.weights.count_nonzero()))
 
     def get_pos_laplacian(self):
         '''

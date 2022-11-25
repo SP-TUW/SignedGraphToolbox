@@ -3,6 +3,8 @@ from src.launcher import ClassificationSimulation
 from src.launcher.TV import wiki_plotting as plotting
 from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, TvAugmentedADMM
 
+import numpy as np
+
 
 def make_result_dirs():
     print('making result and plot directories')
@@ -26,13 +28,23 @@ def get_graph_config_lists(sim_id, return_name=False):
         name = 'WIKI_EDITOR'
     elif sim_id == 1:  # wiki elec
         name = 'WIKI_ELEC'
-        graph_args['combination_method'] = 'last_vote'
+        graph_args['combination_method'] = 'mean_sign'
+        graph_args['from_matlab'] = True
     elif sim_id == 2:  # wiki RfA
         name = 'WIKI_RFA'
-        graph_args['combination_method'] = 'last_vote'
-    if sim_id == 3:  # wiki editor
+        graph_args['combination_method'] = 'mean_sign'
+        graph_args['from_matlab'] = True
+    elif sim_id == 3:  # wiki editor
         name = 'WIKI_EDITOR'
         graph_args = {'only_pos': True}
+    elif sim_id == 4:  # wiki elec
+        name = 'WIKI_ELEC'
+        graph_args['combination_method'] = 'only_pos'
+        graph_args['from_matlab'] = True
+    elif sim_id == 5:  # wiki RfA
+        name = 'WIKI_RFA'
+        graph_args['combination_method'] = 'only_pos'
+        graph_args['from_matlab'] = True
     else:
         raise ValueError('unknown sim_id')
 
@@ -129,6 +141,11 @@ def run(pid,sim_id):
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
+    num_pos = sim.graph.w_pos.count_nonzero()
+    num_neg = sim.graph.w_neg.count_nonzero()
+    num_tot = sim.graph.weights.count_nonzero()
+    print(np.sum(sim.graph.class_labels)/sim.graph.num_nodes)
+    print(sim.graph.num_nodes, num_tot, num_pos / num_tot, num_neg / num_tot)
     sim.save_results(constants.results_dir['wiki_sim'][sim_id], split_file=False, save_degenerate_stats=False,
                      reduce_data=False)
 

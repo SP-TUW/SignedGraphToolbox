@@ -7,16 +7,31 @@ from scipy.sparse import csr_matrix
 import os
 import json
 import pandas as pd
+import h5py
 
 
 class WikiRfAGraph(Graph):
     DATA_DIR = os.path.join('data', 'wiki_rfa')
 
-    def __init__(self, do_safe_voter_array=True, combination_method='mean_sign', **kwargs):
-        voter_array = self.__load_votes(do_safe_voter_array)
-        class_labels, weights = self.__votes_to_l0W(voter_array, combination_method)
-        super().__init__(weights=weights, class_labels=class_labels, num_classes=2, **kwargs)
+    def __init__(self, do_safe_voter_array=True, combination_method='mean_sign', from_matlab=True, **kwargs):
+        if from_matlab:
+            w_pos, w_neg, class_labels = self.__load_matlab()
+            if combination_method == 'mean_sign':
+                weights = w_pos-w_neg
+            else:
+                weights = w_pos
+                w_neg.data[:] = 0
+        else:
+            voter_array = self.__load_votes(do_safe_voter_array)
+            class_labels, weights, w_pos, w_neg = self.__votes_to_l0W(voter_array, combination_method)
 
+        super().__init__(weights=weights, weights_pos=w_pos, weights_neg=w_neg, class_labels=class_labels, num_classes=2, **kwargs)
+
+    def __load_matlab(self):
+        mat_wpos = np.genfromtxt(os.path.join(self.DATA_DIR, 'wpos.csv'), delimiter=',')
+        mat_wneg = np.genfromtxt(os.path.join(self.DATA_DIR, 'wneg.csv'), delimiter=',')
+        mat_l0 = (np.genfromtxt(os.path.join(self.DATA_DIR, 'l0.csv'), delimiter=',',dtype=int) + 1) // 2
+        return mat_wpos, mat_wneg, mat_l0
 
     @staticmethod
     def __votes_to_l0W(voter_df, combination_method='mean_sign'):
@@ -39,7 +54,8 @@ class WikiRfAGraph(Graph):
         res = voter_df['RES']
 
         # find set of nodes with class information
-        last_vote_df = voter_df.sort_values('DAT', ascending=False).groupby('TGT').head(1)
+        last_vote_df = voter_df.sort_index(ascending=False).groupby('TGT').head(1)
+        # last_vote_df = voter_df.sort_values('DAT', ascending=False).groupby('TGT').head(1)
         target = total_to_tgt_map[np.array(last_vote_df['TGT'])]
         l0 = np.zeros(num_nodes, dtype=int)
         l0[target] = (np.array(last_vote_df['RES']) + 1)//2
@@ -60,6 +76,8 @@ class WikiRfAGraph(Graph):
         voter_df = voter_df[keep_votes]
 
         # generate weight matrix
+        w_pos = None
+        w_neg = None
         if combination_method == 'mean_sign':
             w_pos = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
             w_pos = (w_pos+w_pos.T).sign()
@@ -96,13 +114,31 @@ class WikiRfAGraph(Graph):
 
             w = w_pos.sign()
             w.eliminate_zeros()
+        elif combination_method == 'only_neg':
+            w_neg = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=-1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
+            w_neg = (w_neg+w_neg.T).sign()
+
+            # l0_matlab = np.genfromtxt(os.path.join('data', 'SNAP', 'wiki_rfa', 'l0_full.csv'), delimiter=',')
+            # names = []
+            # with open(os.path.join('data', 'SNAP', 'wiki_rfa', 'names.txt')) as name_file:
+            #     for line in name_file:
+            #         names.append(line)
+            #
+            # i_diff = tgt_nodes[np.flatnonzero((l0_matlab[tgt_nodes]+1)//2-l0)]
+            # print('diff at', i_diff)
+            # for i in i_diff:
+            #     print(names[i])
+
+            w = w_neg.sign()
+            w.eliminate_zeros()
         elif combination_method == 'last_vote':
 
 
             # first add reverse voter_df
             votes_reversed = voter_df.copy()
-            votes_reversed[:, [0, 1]] = voter_df[:, [1, 0]]
-            voter_df = np.concatenate((voter_df, votes_reversed), axis=0)
+            votes_reversed['SRC'] = voter_df['TGT']
+            votes_reversed['TGT'] = voter_df['SRC']
+            voter_df = pd.concat((voter_df, votes_reversed), axis=0)
 
             src = voter_df['SRC']
             tgt = voter_df['TGT']
@@ -111,22 +147,64 @@ class WikiRfAGraph(Graph):
             res = voter_df['RES']
 
             # use only the last vote in chronological order
-            i_sort = np.lexsort(voter_df[:, [4, 3, 2, 0, 1]].T)
-            vot_sorted = vot[i_sort]
-            tgt_sorted = tgt[i_sort]
-            src_sorted = src[i_sort]
+            sorted_voter_df = voter_df
+            last_vote_df = voter_df.sort_values('DAT', ascending=False).groupby(['SRC','TGT']).head(1)
+            # i_sort = np.lexsort(voter_df[:, [4, 3, 2, 0, 1]].T)
+            # vot_sorted = vot[i_sort]
+            # tgt_sorted = tgt[i_sort]
+            # src_sorted = src[i_sort]
+            #
+            # voter_df = voter_df.sort_values(by=['RES','VOT','DAT','SRC','TGT'])
+            # tgt_diff = np.flatnonzero(np.diff(tgt_sorted))
+            # src_diff = np.flatnonzero(np.diff(src_sorted))
+            # ind = np.unique(np.r_[0, tgt_diff, src_diff])
 
-            voter_df = voter_df.sort_values(by=['RES','VOT','DAT','SRC','TGT'])
-            tgt_diff = np.flatnonzero(np.diff(tgt_sorted))
-            src_diff = np.flatnonzero(np.diff(src_sorted))
-            ind = np.unique(np.r_[0, tgt_diff, src_diff])
-
-            i = total_to_tgt_map[src_sorted[ind]]
-            j = total_to_tgt_map[tgt_sorted[ind]]
-            v = vot_sorted[ind]
+            i = total_to_tgt_map[last_vote_df['SRC']]
+            j = total_to_tgt_map[last_vote_df['TGT']]
+            v = last_vote_df['VOT']
 
             w = csr_matrix((v, (i, j)), shape=(num_nodes, num_nodes))
             # w = (w + w.T).sign()
+        elif combination_method == 'first_entry':
+            # first add reverse voter_df
+            votes_reversed = voter_df.copy()
+            votes_reversed['SRC'] = voter_df['TGT']
+            votes_reversed['TGT'] = voter_df['SRC']
+            voter_df = pd.concat((voter_df, votes_reversed), axis=0)
+
+            # use only the last vote in chronological order
+            last_vote_df = voter_df.sort_index(ascending=True).reset_index().groupby(['SRC','TGT']).head(1)
+
+            i = total_to_tgt_map[last_vote_df['SRC']]
+            j = total_to_tgt_map[last_vote_df['TGT']]
+            v = last_vote_df['VOT']
+
+            w = csr_matrix((v, (i, j)), shape=(num_nodes, num_nodes))
+        elif combination_method == 'last_entry':
+            # first add reverse voter_df
+            votes_reversed = voter_df.copy()
+            votes_reversed['SRC'] = voter_df['TGT']
+            votes_reversed['TGT'] = voter_df['SRC']
+            voter_df = pd.concat((voter_df, votes_reversed), axis=0)
+
+            # use only the last vote in chronological order
+            last_vote_df = voter_df.sort_index(ascending=False).reset_index().groupby(['SRC','TGT']).head(1)
+
+            i = total_to_tgt_map[last_vote_df['SRC']]
+            j = total_to_tgt_map[last_vote_df['TGT']]
+            v = last_vote_df['VOT']
+
+            w = csr_matrix((v, (i, j)), shape=(num_nodes, num_nodes))
+            w_pos = w.maximum(0)
+            w_neg = -w.minimum(0)
+        elif combination_method == 'both':
+            # first add reverse voter_df
+            w_pos = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
+            w_pos = (w_pos+w_pos.T).sign()
+            w_neg = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=-1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
+            w_neg = (w_neg+w_neg.T).sign()
+
+            w = (w_pos - w_neg).sign()
         else:
             raise ValueError("unknown combination method ""{m}""".format(m=combination_method))
 
@@ -136,7 +214,13 @@ class WikiRfAGraph(Graph):
         w = w[:, ccs[0]]
         l0 = l0[ccs[0]]
 
-        return l0, w
+        w_pos = w_pos[ccs[0], :]
+        w_pos = w_pos[:, ccs[0]]
+
+        w_neg = w_neg[ccs[0], :]
+        w_neg = w_neg[:, ccs[0]]
+
+        return l0, w, w_pos, -w_neg
 
     @staticmethod
     def __get_w_sign(voter_df, sign, num_nodes, total_to_tgt_map):
