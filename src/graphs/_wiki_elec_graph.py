@@ -96,6 +96,7 @@ class WikiElecGraph(WikiRfAGraph):
             i_vote += election_size
 
         voter_df = pd.DataFrame(voter_array,columns=['SRC','TGT','DAT','VOT','RES'])
+        voter_df['VOT'] = voter_df['VOT'].astype(float)
 
         return voter_df
 
