@@ -17,13 +17,13 @@ class HarmonicFunctions(NodeLearner):
         super().__init__(num_classes=num_classes, verbosity=verbosity, save_intermediate=save_intermediate)
 
     def estimate_labels(self, graph, labels=None, guess=None):
-        if self.num_clusters>2:
+        if self.num_classes > 2:
             raise ValueError('more than 2 clusters currenly not supported')
         fl = np.array(labels['k'])
         labelled_nodes = labels['i']
-        unlabelled_nodes = [i for i in range(graph.N) if i not in labelled_nodes]
+        unlabelled_nodes = [i for i in range(graph.num_nodes) if i not in labelled_nodes]
 
-        W = graph.W.maximum(0)
+        W = graph.w_pos
         D = np.array(W.sum(1)).flatten()
         L = diags(D)-W
 
@@ -32,7 +32,7 @@ class HarmonicFunctions(NodeLearner):
         w_ul = W[unlabelled_nodes, :]
         w_ul = w_ul[:, labelled_nodes]
         fu = lsqr(laplacian_uu, w_ul.dot(fl))[0]
-        f = np.zeros(graph.N)
+        f = np.zeros(graph.num_nodes)
         f[labelled_nodes] = fl
         f[unlabelled_nodes] = fu
 
@@ -43,4 +43,4 @@ class HarmonicFunctions(NodeLearner):
         label_estimates = label_estimates.astype(int)
         self.embedding = f
         self.normalized_embedding = f
-        return
+        return label_estimates
