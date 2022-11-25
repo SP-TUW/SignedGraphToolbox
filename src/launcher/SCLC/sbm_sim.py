@@ -36,7 +36,7 @@ def plot():
     del results['graph_config']
     results_df = pd.DataFrame(results)
 
-    mean_results = results_df.groupby(['eps', 'percentage_labeled', 'num_classes']).mean().reset_index(level=[1, 2])
+    mean_results = results_df.groupby(['stopping_tol', 'percentage_labeled', 'num_classes']).mean().reset_index(level=[1, 2])
     num_classes_list = results_df['num_classes'].unique()
     for pl, nc in itertools.product(results_df['percentage_labeled'].unique(), results_df['num_classes'].unique()):
         subdf = mean_results[mean_results['percentage_labeled'] == pl]
@@ -45,7 +45,7 @@ def plot():
                 os.path.join(constants.plots_dir['sbm_sim'], 'sbm_mean_{n}_{pl}.csv'.format(n=nc, pl=pl)))
 
     names = [col[len('n_err_unlabeled') + 1:] for col in results_df.columns if col.startswith('n_err_unlabeled')]
-    global_cols = ['eps', 'percentage_labeled']
+    global_cols = ['stopping_tol', 'percentage_labeled']
     name_dfs = []
     for name in names:
         name_cols = [col for col in results_df.columns if col.endswith(name)]
@@ -60,11 +60,11 @@ def plot():
         name_dfs.append(name_df)
         pass
     results_df = pd.concat(name_dfs, ignore_index=True)
-    results_mean = results_df.groupby(['name', 'eps', 'percentage_labeled']).mean().reset_index()
+    results_mean = results_df.groupby(['name', 'stopping_tol', 'percentage_labeled']).mean().reset_index()
 
-    sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue='percentage_labeled', style='name')
+    sns.lineplot(data=results_mean, x='stopping_tol', y='n_err_unlabeled', hue='percentage_labeled', style='name')
     plt.show()
-    sns.lineplot(data=results_mean, x='eps', y='t_run', hue='percentage_labeled', style='name')
+    sns.lineplot(data=results_mean, x='stopping_tol', y='t_run', hue='percentage_labeled', style='name')
     plt.show()
 
     x_filename = os.path.join(constants.plots_dir['sbm_sim'], 'x.json')

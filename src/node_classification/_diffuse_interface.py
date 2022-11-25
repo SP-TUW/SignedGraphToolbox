@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.linalg import eigh as eigh_full
+from scipy.sparse.linalg import eigsh as eigh_sparse
 import scipy.sparse as sps
 from numpy import max
 from numpy.linalg import norm
@@ -9,18 +11,18 @@ from src.tools.projections import simplex_projection
 
 
 def _multiclass_GL_minimization(diffusion_parameter, stepsize, num_classes, label_weight, labels, eig_vals, eig_vecs,
-                                eps, t_max, verbosity):
+                                stopping_tol, t_max, verbosity):
     '''
     Implementation of Multiclass GL algorithm (Fig. 1. on page 1605) of :cite:p:`Gar14Diffuse`
 
-    :param diffusion_parameter: eps
+    :param diffusion_parameter: stopping_tol
     :param stepsize: dt
     :param num_classes: K
     :param label_weight: mu
     :param labels: used as a proxy for Uhat
     :param eig_val: [Nx1] ndarray Lambda
     :param eig_vec: x
-    :param eps: threshold for stopping criterion
+    :param stopping_tol: threshold for stopping criterion
     :param t_max: maximum number of iteration
     :return:
     :param u: a local optimum of the optimization problem
@@ -69,7 +71,7 @@ def _multiclass_GL_minimization(diffusion_parameter, stepsize, num_classes, labe
         u = simplex_projection(u, a=1, axis=1)
         norm_diff = norm(u - u_old, axis=1)
         norm_val = norm(u, axis=1)
-        converged = max(norm_diff) / max(norm_val) <= eps
+        converged = max(norm_diff) / max(norm_val) <= stopping_tol
         if verbosity > 0:
             print('\rt:{t:d}, max_diff/max_abs={c}'.format(t=t, c=max(norm_diff) / max(norm_val)), end='')
         if not converged and t >= t_max:
@@ -80,14 +82,14 @@ def _multiclass_GL_minimization(diffusion_parameter, stepsize, num_classes, labe
 
 
 class DiffuseInterface(NodeLearner):
-    def __init__(self, num_classes=2, verbosity=1, save_intermediate=None, num_eig=20, objective='sym', eps=1e-6,
+    def __init__(self, num_classes=2, verbosity=1, save_intermediate=None, num_eig=20, objective='sym', stopping_tol=1e-6,
                  t_max=2 * 1e3, diffusion_parameter=1e-1, stepsize=1e-1, label_weight=1e3, use_full_matrix=False):
         self.num_eig = num_eig
         known_objectives = ['sym', 'am', 'lap', 'sponge']
         if objective not in known_objectives:
             raise ValueError('unknown objective \'{s}\'\nKnown objectives are {o}'.format(s=objective, o=known_objectives))
         self.which = objective
-        self.eps = eps
+        self.stopping_tol = stopping_tol
         self.t_max = t_max
         self.diffusion_parameter = diffusion_parameter
         self.stepsize = stepsize
@@ -143,7 +145,7 @@ class DiffuseInterface(NodeLearner):
 
         u = _multiclass_GL_minimization(diffusion_parameter=self.diffusion_parameter, stepsize=self.stepsize,
                                         num_classes=self.num_classes, label_weight=self.label_weight,
-                                        labels=labels, eig_vals=eig_vals, eig_vecs=eig_vecs, eps=self.eps,
+                                        labels=labels, eig_vals=eig_vals, eig_vecs=eig_vecs, stopping_tol=self.stopping_tol,
                                         t_max=self.t_max, verbosity=self.verbosity)
 
         u[labels['i'], :] = 0

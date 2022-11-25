@@ -56,16 +56,16 @@ def plot():
     #             # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
-    groups = [['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled'],
-              ['eps', 'num_classes', 'percentage_labeled']]
+    groups = [['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled'],
+              ['stopping_tol', 'num_classes', 'percentage_labeled']]
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
@@ -130,7 +130,7 @@ def plot():
             other_strategies = [n for n in method_names if n not in tv_strategies]
             x_min_list = np.unique([float(s[-2:])/100 for s in tv_strategies])
             strategy_list = np.unique([s[:-2] for s in tv_strategies])
-            eps_list = np.unique(subdf.reset_index()['eps'])
+            eps_list = np.unique(subdf.reset_index()['stopping_tol'])
             # initialize with large negative value to indicate if something went wrong
             n_err = -1000*np.ones((len(x_min_list),len(strategy_list)*len(eps_list)))
             columns = list(itertools.product(strategy_list,eps_list))
@@ -183,7 +183,7 @@ def plot():
                         # df_plot = df_nc[df_nc['name'].str.endswith('sncSponge') | df_nc['name'].str.startswith('sncSponge') | df_nc['name'].str.startswith('mapr')]
 
                         plt.figure(figsize=(20, 15))
-                        p1 = sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+                        p1 = sns.lineplot(data=df_plot, x='stopping_tol', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
                         p1.set(title='n_err at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # p1.set(yscale='log')
                         plt.grid()
@@ -191,19 +191,19 @@ def plot():
                         plt.show()
 
                         # plt.figure(figsize=(20, 15))
-                        # sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # sns.lineplot(data=df_plot, x='stopping_tol', y='cut', hue=groups[sim_id][1], style='name').set(title='cut at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # plt.grid()
                         # plt.legend(handlelength=5)
                         # plt.show()
 
                         # plt.figure(figsize=(20, 15))
-                        # sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='t_run at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # sns.lineplot(data=df_plot, x='stopping_tol', y='t_run', hue=groups[sim_id][1], style='name').set(title='t_run at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # plt.grid()
                         # plt.legend(handlelength=5)
                         # plt.show()
         else:
-            sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+            sns.lineplot(data=results_mean, x='stopping_tol', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
             plt.show()
-            sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
+            sns.lineplot(data=results_mean, x='stopping_tol', y='t_run', hue=groups[sim_id][1], style='name')
             plt.show()
 

@@ -97,7 +97,7 @@ def _run_standard_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inn
         d_ = divergence_matrix.dot(z_)
         return d_
 
-    x_update_args = {'eps': eps_inner, 't_max': t_max_inner, 'backtracking_stepsize': backtracking_stepsize,
+    x_update_args = {'stopping_tol': eps_inner, 't_max': t_max_inner, 'backtracking_stepsize': backtracking_stepsize,
                      'backtracking_tau_0': backtracking_tau_0, 'backtracking_param': backtracking_param}
 
     gradient_matrix = graph.get_gradient_matrix(p=p, return_div=False)
@@ -193,7 +193,7 @@ def _run_standard_admm(graph, num_classes, p, beta, labels, x0, t_max, t_max_inn
         converged = not cont and (
                 dx_ <= eps * np.sqrt(x.size) and dy_ <= eps * np.sqrt(y.size) and dz_ <= eps * np.sqrt(
             z.size)) or t_since_last >= t_max_no_change
-        # converged = dx_ <= eps
+        # converged = dx_ <= stopping_tol
         if t >= t_max and not converged:
             warnings.warn('TVNC did not converge')
             break

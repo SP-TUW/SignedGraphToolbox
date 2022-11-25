@@ -30,9 +30,9 @@ def plot():
     import matplotlib.pyplot as plt
     import itertools
 
-    groups = [['eps', 'scale_pi'],
-              ['eps', 'num_classes'],
-              ['eps', 'num_classes']]
+    groups = [['stopping_tol', 'scale_pi'],
+              ['stopping_tol', 'num_classes'],
+              ['stopping_tol', 'num_classes']]
 
     for sim_id in range(3):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
@@ -74,9 +74,9 @@ def plot():
         results_df = pd.concat(name_dfs, ignore_index=True)
         results_mean = results_df.groupby(['name'] + groups[sim_id]).mean().reset_index()
 
-        sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+        sns.lineplot(data=results_mean, x='stopping_tol', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
         plt.show()
-        sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
+        sns.lineplot(data=results_mean, x='stopping_tol', y='t_run', hue=groups[sim_id][1], style='name')
         plt.show()
 
     plots_folder = constants.plots_dir['sbm_sim']

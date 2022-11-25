@@ -31,14 +31,14 @@ def plot():
     print('loading {f}'.format(f=results_file_name))
     results_df = pd.read_json(results_file_name)
     print('done loading')
-    decimals = pd.Series([2], index=['eps'])
+    decimals = pd.Series([2], index=['stopping_tol'])
     results_df.round(decimals)
-    grouped_results = results_df.set_index(['num_classes','percentage_labeled','eps','i_rep']).sort_index()
+    grouped_results = results_df.set_index(['num_classes','percentage_labeled','stopping_tol','i_rep']).sort_index()
 
     list_df = pd.DataFrame(grouped_results.objective.tolist(),index=grouped_results.index)
 
-    for (num_classes, eps, percentage_labeled), pl_df in list_df.groupby(level=['num_classes', 'eps', 'percentage_labeled']):
-        pl_df = pl_df.droplevel(['num_classes', 'eps', 'percentage_labeled'])
+    for (num_classes, eps, percentage_labeled), pl_df in list_df.groupby(level=['num_classes', 'stopping_tol', 'percentage_labeled']):
+        pl_df = pl_df.droplevel(['num_classes', 'stopping_tol', 'percentage_labeled'])
         fig_name = 'conv_K{k}_eps{eps}_pl{pl}'.format(k=num_classes,eps=eps,pl=percentage_labeled)
         print('plotting {s}'.format(s=fig_name))
         min_ = np.min(np.array(pl_df), axis=0)
@@ -125,12 +125,12 @@ def get_config(pid, sim_id, suppress_output=False):
     use_det = pid == 0
     sim_config = {'use_det': use_det,
                   'i_rand_rep': pid,
-                  'eps': eps,
+                  'stopping_tol': eps,
                   't_max': t_max,
                   'percentage_labeled': percentage_labeled}
     if not suppress_output:
         print('i_config: {i}'.format(i=sim_id))
-        print('classifying SBM with {n} classes and eps={eps} making use of {p:.0%} labels'.format(n=num_classes, eps=eps, p=percentage_labeled / 100))
+        print('classifying SBM with {n} classes and stopping_tol={eps} making use of {p:.0%} labels'.format(n=num_classes, eps=eps, p=percentage_labeled / 100))
         print('deterministic initialization = {d}'.format(d='True' if use_det else 'False'))
     return graph_config, sim_config, num_configs
 
@@ -142,11 +142,11 @@ def run(pid, sim_id=1):
     results = {'objective': [],
               'i_rep': [],
               'num_classes': [],
-              'eps': [],
+              'stopping_tol': [],
               'percentage_labeled': []}
 
     graph_config, sim_config, num_graph_config = get_config(pid, sim_id)
-    eps = sim_config['eps']
+    eps = sim_config['stopping_tol']
     percentage_labeled = sim_config['percentage_labeled']
     use_det = sim_config['use_det']
     i_rand_rep = sim_config['i_rand_rep']
@@ -172,7 +172,7 @@ def run(pid, sim_id=1):
     results['objective'].append(objective_values)
     results['i_rep'].append(i_rand_rep)
     results['num_classes'].append(graph.num_classes)
-    results['eps'].append(eps)
+    results['stopping_tol'].append(eps)
     results['percentage_labeled'].append(percentage_labeled)
 
     results_dir = constants.results_dir['init_sim']
