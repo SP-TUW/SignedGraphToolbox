@@ -21,17 +21,23 @@ def combine_results():
 
 def get_graph_config_lists(sim_id, return_name=False):
     config_lists = []
+    graph_args = {}
     if sim_id == 0:  # wiki editor
         name = 'WIKI_EDITOR'
     elif sim_id == 1:  # wiki elec
         name = 'WIKI_ELEC'
+        graph_args['combination_method'] = 'last_vote'
     elif sim_id == 2:  # wiki RfA
         name = 'WIKI_RFA'
+        graph_args['combination_method'] = 'last_vote'
+    if sim_id == 3:  # wiki editor
+        name = 'WIKI_EDITOR'
+        graph_args = {'only_pos': True}
     else:
         raise ValueError('unknown sim_id')
 
     for p in [1, 5, 10, 15]:
-        config_lists.append({'model': name, 'percentage_labeled': p, 'is_percentage': True, 'name': '{n}{p:0>2d}'.format(n=name,p=p)})
+        config_lists.append({'model': name, 'percentage_labeled': p, 'is_percentage': True, 'name': '{n}{p:0>2d}'.format(n=name,p=p), **graph_args})
 
     if return_name:
         return config_lists, name
