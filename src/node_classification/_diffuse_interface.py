@@ -102,6 +102,7 @@ class DiffuseInterface(NodeLearner):
         else:
             num_eig = self.num_eig
 
+        M=None
         if self.which == 'sym':
             L = graph.get_signed_sym_laplacian()
             print('GL using the symmetric normalized signed Laplacian')
@@ -112,7 +113,7 @@ class DiffuseInterface(NodeLearner):
             L = graph.get_signed_laplacian()
             print('GL using the signed Laplacian')
         elif self.which == 'sponge':
-            matrix_numerator, matrix_denominator = graph.get_sponge_matrices()
+            L, M = graph.get_sponge_matrices()
             # a_ = matrix_numerator
             # b_ = matrix_denominator
             # eig_sel = 'SM'
@@ -121,18 +122,20 @@ class DiffuseInterface(NodeLearner):
             # w, v = np.linalg.eigh(matrix_denominator.A)
             # denom_inv_sqrt = (v/np.sqrt(w)).dot(v.T)
             # L = denom_inv_sqrt.dot(matrix_numerator.dot(denom_inv_sqrt))
-            L = sps.linalg.spsolve(matrix_denominator.T, matrix_numerator.T)
+            # L = sps.linalg.spsolve(matrix_denominator.T, matrix_numerator.T)
+
             print('GL using the SPONGE matrix')
         else:
             raise ValueError('unknown objective ''{s}'''.format(s=self.which))
 
         if not self.use_full_matrix:
-            eig_vals, eig_vecs = sps.linalg.eigsh(L, k=num_eig, which='SM')
+            eig_vals, eig_vecs = eigh_sparse(L, M=M, k=num_eig, which='SM')
         else:
             if sps.issparse(L):
-                eig_vals, eig_vecs = np.linalg.eigh(L.A)
+                A = L.A
             else:
-                eig_vals, eig_vecs = np.linalg.eigh(L)
+                A = L
+            eig_vals, eig_vecs = eigh_full(a=A, b=M)
             i_sort = np.argsort(eig_vals)
             eig_vals = eig_vals[i_sort[:num_eig]]
             eig_vecs = eig_vecs[:, i_sort[:num_eig]]

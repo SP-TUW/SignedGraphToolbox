@@ -41,6 +41,7 @@ def get_methods(graph_config, sim_id):
     num_classes = 2
     v = 1
     methods = [{'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
+               {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
                {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
                {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
                {'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
@@ -103,9 +104,9 @@ def get_methods(graph_config, sim_id):
     # methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig),
     #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
     #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    # methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
-    #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-    #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
+    methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
+                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
