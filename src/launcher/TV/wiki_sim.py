@@ -76,7 +76,8 @@ def get_methods(graph_config, sim_id):
                                                                        eps_abs=10 ** (-30 / 10),
                                                                        regularization_x_min=90 / 100,
                                                                        regularization_max=2 ** 15,
-                                                                       return_min_tv=True)}]
+                                                                       return_min_tv=True)}
+               ]
     # b = 1e4
     # pre = 0
     # l_guess = 'sncSponge'
@@ -88,7 +89,7 @@ def get_methods(graph_config, sim_id):
 
     if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
         num_eig = 20
-        use_full_matrix = True
+        use_full_matrix = False
     else:
         num_eig = 100
         use_full_matrix = False
@@ -99,9 +100,9 @@ def get_methods(graph_config, sim_id):
     methods.append({'name': 'diffuseInterface_am{n:0>3d}'.format(n=num_eig),
                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig),
-                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
+    # methods.append({'name': 'diffuseInterface_lap{n:0>3d}'.format(n=num_eig),
+    #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+    #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
     # methods.append({'name': 'diffuseInterface_sponge{n:0>3d}'.format(n=num_eig),
     #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
     #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
