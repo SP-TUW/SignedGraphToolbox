@@ -10,11 +10,13 @@ def make_result_dirs():
     for dir in constants.results_dir['wiki_sim']:
         Path(dir).mkdir(parents=True, exist_ok=True)
     Path(constants.plots_dir['wiki_sim']).mkdir(parents=True, exist_ok=True)
-    pass
 
 
 def combine_results():
-    pass
+    print('combining results')
+    from src.tools.combine_results import combine_results as cr
+    for dir in constants.results_dir['wiki_sim']:
+        cr(dir, has_lists=False)
 
 
 def get_graph_config_lists(sim_id, return_name=False):
