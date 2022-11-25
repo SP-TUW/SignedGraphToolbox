@@ -59,7 +59,7 @@ class WikiElecGraph(WikiRfAGraph):
                     names = insert_name(id, name, names)
                     state = states.V
                 elif state == states.V and line_split[0] == 'V':
-                    vot = int(line_split[1])
+                    vot = float(line_split[1])
                     id = int(line_split[2])
                     dat_str = line_split[3].translate({ord(c): None for c in '- :'})
                     dat = int(dat_str)
