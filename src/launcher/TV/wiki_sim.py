@@ -40,16 +40,43 @@ def get_graph_config_lists(sim_id, return_name=False):
 def get_methods(graph_config, sim_id):
     num_classes = 2
     v = 1
-    methods = [
-        {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
-        {'name': 'sncRCDlc', 'method': SpectralLearning(num_classes=num_classes, objective='RC',drop_last_column=True)},
-        {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
-        {'name': 'sncBNCDlc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC',drop_last_column=True)},
-        {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-        {'name': 'sncBNCIndefDlc', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF',drop_last_column=True)},
-        {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
-        {'name': 'sncSpongeDlc', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE',drop_last_column=True)},
-    ]
+    methods = [{'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
+               {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
+               {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+               {'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                          degenerate_heuristic=None,
+                                                          eps_rel=10 ** (-15 / 10),
+                                                          eps_abs=10 ** (-15 / 10),
+                                                          resampling_x_min=90 / 100)},
+               {'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                          degenerate_heuristic=None,
+                                                          eps_rel=10 ** (-20 / 10),
+                                                          eps_abs=10 ** (-20 / 10),
+                                                          resampling_x_min=90 / 100)},
+               {'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                          degenerate_heuristic=None,
+                                                          eps_rel=10 ** (-30 / 10),
+                                                          eps_abs=10 ** (-30 / 10),
+                                                          resampling_x_min=90 / 100)},
+               {'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                       degenerate_heuristic='rangapuram_resampling',
+                                                                       eps_rel=10 ** (-15 / 10),
+                                                                       eps_abs=10 ** (-15 / 10),
+                                                                       resampling_x_min=5 / 100)},
+               {'name': 'tv15_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                       degenerate_heuristic='regularize',
+                                                                       eps_rel=10 ** (-15 / 10),
+                                                                       eps_abs=10 ** (-15 / 10),
+                                                                       regularization_x_min=90 / 100,
+                                                                       regularization_max=2 ** 15,
+                                                                       return_min_tv=True)},
+               {'name': 'tv30_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                       degenerate_heuristic='regularize',
+                                                                       eps_rel=10 ** (-30 / 10),
+                                                                       eps_abs=10 ** (-30 / 10),
+                                                                       regularization_x_min=90 / 100,
+                                                                       regularization_max=2 ** 15,
+                                                                       return_min_tv=True)}]
     # b = 1e4
     # pre = 0
     # l_guess = 'sncSponge'
@@ -58,40 +85,6 @@ def get_methods(graph_config, sim_id):
     #                 'l_guess': l_guess, 'is_unsupervised': False,
     #                 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
     #                                          pre_iteration_version=pre, t_max_no_change=None)})
-    methods.append({'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-15 / 10),
-                                                              eps_abs=10 ** (-15 / 10),
-                                                              resampling_x_min=90 / 100)})
-    methods.append({'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-20 / 10),
-                                                              eps_abs=10 ** (-20 / 10),
-                                                              resampling_x_min=90 / 100)})
-    methods.append({'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-30 / 10),
-                                                              eps_abs=10 ** (-30 / 10),
-                                                              resampling_x_min=90 / 100)})
-    methods.append({'name': 'tv15_resampling05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='rangapuram_resampling',
-                                                                           eps_rel=10 ** (-15 / 10),
-                                                                           eps_abs=10 ** (-15 / 10),
-                                                                           resampling_x_min=5 / 100)})
-    methods.append({'name': 'tv15_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='regularize',
-                                                                           eps_rel=10 ** (-15 / 10),
-                                                                           eps_abs=10 ** (-15 / 10),
-                                                                           regularization_x_min=90 / 100,
-                                                                           regularization_max=2 ** 15,
-                                                                           return_min_tv=True)})
-    methods.append({'name': 'tv30_regularize90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='regularize',
-                                                                           eps_rel=10 ** (-30 / 10),
-                                                                           eps_abs=10 ** (-30 / 10),
-                                                                           regularization_x_min=90 / 100,
-                                                                           regularization_max=2 ** 15,
-                                                                           return_min_tv=True)})
 
     if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
         num_eig = 20
