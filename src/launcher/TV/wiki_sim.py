@@ -1,7 +1,7 @@
 from src.launcher.TV import constants
 from src.launcher import ClassificationSimulation
 from src.launcher.TV import wiki_plotting as plotting
-from src.node_classification import DiffuseInterface, SpectralLearning, TvAugmentedADMM
+from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, TvAugmentedADMM
 
 
 def make_result_dirs():
@@ -42,7 +42,8 @@ def get_graph_config_lists(sim_id, return_name=False):
 def get_methods(graph_config, sim_id):
     num_classes = 2
     v = 1
-    methods = [{'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
+    methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)},
+               {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
                {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
                {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
                {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
@@ -91,24 +92,25 @@ def get_methods(graph_config, sim_id):
     #                                          pre_iteration_version=pre, t_max_no_change=None)})
 
     if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
-        num_eig = 20
+        num_eig_list = [20,40,60,80,100]
         use_full_matrix = False
     else:
-        num_eig = 100
+        num_eig_list = [200,400,600,800,1000]
         use_full_matrix = False
 
-    methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
-                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
-                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
-                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
-                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
-    #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-    #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
-                    'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-                                               num_eig=num_eig, use_full_matrix=use_full_matrix)})
+    for num_eig in num_eig_list:
+        methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
+        #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+        #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
