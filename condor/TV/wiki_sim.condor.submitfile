@@ -1,0 +1,25 @@
+## ---------------------------------------------------------
+## -- SIMULATION Parameters (User Section)
+## ---------------------------------------------------------
+nr_jobs         =       NRJOBS
+sim_id          =       PARAM
+pid_offset      =       OFFSET
+
+
+
+## ---------------------------------------------------------
+## -- CONDOR setup : DO NOT TOUCH
+## ---------------------------------------------------------
+
+notification	=	error
+universe        =       vanilla
+getenv          =       True
+should_transfer_files = YES
+initialdir  	= 	/Network/Servers/xserve.nt.tuwien.ac.at/Volumes/server/Users/tdittrich/GSPSimulator/SignedGraphToolboxPrivate/
+Rank            =       Kflops
+executable      =       condor/pythonWrapper.sh
+log             =       condor/TV/condor_log/wiki_sim_$(sim_id)/sim.log
+output          =       condor/TV/condor_log/wiki_sim_$(sim_id)/sim.out.$(Process).log
+error           =       condor/TV/condor_log/wiki_sim_$(sim_id)/sim.err.$(Process).log
+Arguments       =       src.launcher.TV.wiki_sim $(pid_offset) $(Process) $(sim_id)
+Queue $(nr_jobs)
