@@ -6,7 +6,7 @@
 # Implemented by Thomas Dittrich 2020
 
 import numpy as np
-from scipy.sparse.linalg import lsqr
+from scipy.sparse.linalg import lsqr, spsolve
 from scipy.sparse import diags
 from ._node_learner import NodeLearner
 
@@ -31,7 +31,8 @@ class HarmonicFunctions(NodeLearner):
         laplacian_uu = laplacian_uu[:, unlabelled_nodes]
         w_ul = W[unlabelled_nodes, :]
         w_ul = w_ul[:, labelled_nodes]
-        fu = lsqr(laplacian_uu, w_ul.dot(fl))[0]
+        # fu = lsqr(laplacian_uu, w_ul.dot(fl))[0]
+        fu = spsolve(laplacian_uu, w_ul.dot(fl))
         f = np.zeros(graph.num_nodes)
         f[labelled_nodes] = fl
         f[unlabelled_nodes] = fu
@@ -41,6 +42,7 @@ class HarmonicFunctions(NodeLearner):
         # label_estimates = np.maximum(np.minimum(np.round(f), 1), 0).astype(int)
         label_estimates = self.class_prior*f/class_mass[1] > (1-self.class_prior)*(1-f)/class_mass[0]
         label_estimates = label_estimates.astype(int)
+        label_estimates[labels['i']] = labels['k']
         self.embedding = f
         self.normalized_embedding = f
         return label_estimates
