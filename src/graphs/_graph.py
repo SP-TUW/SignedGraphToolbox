@@ -22,14 +22,14 @@ class Graph(ABC):
         self.weights = csr_matrix(weights)
         self.weights.eliminate_zeros()
         if weights_pos is not None:
-            self.w_pos = csr_matrix(weights_pos).maximum(0)
+            self.w_pos = abs(csr_matrix(weights_pos))
         else:
             self.w_pos = csr_matrix(weights).maximum(0)
 
         if weights_neg is not None:
-            self.w_neg = csr_matrix(weights_neg).maximum(0)
+            self.w_neg = -abs(csr_matrix(weights_neg))
         else:
-            self.w_neg = csr_matrix(-weights).maximum(0)
+            self.w_neg = csr_matrix(weights).minimum(0)
         self.d_pos = np.squeeze(np.asarray(self.w_pos.sum(1)))
         self.d_neg = np.squeeze(np.asarray(self.w_neg.sum(1)))
         self.degree = self.d_pos + self.d_neg
