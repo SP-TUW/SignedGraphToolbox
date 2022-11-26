@@ -109,26 +109,26 @@ def get_methods(graph_config, sim_id):
     #                 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
     #                                          pre_iteration_version=pre, t_max_no_change=None)})
 
-    # if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
-    #     num_eig_list = [20,40,60,80,100]
-    #     use_full_matrix = False
-    # else:
-    #     num_eig_list = [200,400,600,800,1000]
-    #     use_full_matrix = False
-    #
-    # for num_eig in num_eig_list:
-    #     methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
-    #                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
-    #                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    #     methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
-    #                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
-    #                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    #     # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
-    #     #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-    #     #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    #     methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
-    #                     'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-    #                                                num_eig=num_eig, use_full_matrix=use_full_matrix)})
+    if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
+        num_eig_list = [20,40,60,80,100]
+        use_full_matrix = False
+    else:
+        num_eig_list = [200,400,600,800,1000]
+        use_full_matrix = False
+
+    for num_eig in num_eig_list:
+        methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
+        #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+        #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
+                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
