@@ -3,6 +3,8 @@ from src.launcher import ClassificationSimulation
 from src.launcher.TV import wiki_plotting as plotting
 from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, TvAugmentedADMM
 
+from src.graphs import graph_factory
+
 import numpy as np
 
 
@@ -58,12 +60,14 @@ def get_graph_config_lists(sim_id, return_name=False):
 
 
 def get_methods(graph_config, sim_id):
+    graph = graph_factory.make_graph(**graph_config)
+    class_prior = np.mean(graph.class_labels)
     num_classes = 2
     v = 1
     if sim_id >= 3:
-        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)}]
+        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)}]
     else:
-        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)},
+        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)},
                    {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
                    {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
                    {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
