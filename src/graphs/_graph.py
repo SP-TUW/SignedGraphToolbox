@@ -53,7 +53,7 @@ class Graph(ABC):
         :return: symmetric laplacian of positive edges
         '''
         lap_pos = self.get_pos_laplacian()
-        inv_sqrt_pos_deg = np.array([1/d if d>0 else 0 for d in np.sqrt(self.d_pos)])
+        inv_sqrt_pos_deg = np.array([1/d if d>0 else 1 for d in np.sqrt(self.d_pos)])
         lap_pos = diags(inv_sqrt_pos_deg).dot(lap_pos).dot(diags(inv_sqrt_pos_deg))
         return lap_pos
 
@@ -62,7 +62,7 @@ class Graph(ABC):
 
         :return: laplacian of negative edges
         '''
-        lap_neg = diags(self.d_neg) + self.w_neg
+        lap_neg = diags(self.d_neg) - self.w_neg
         return lap_neg
 
     def get_neg_sym_laplacian(self):
@@ -71,7 +71,7 @@ class Graph(ABC):
         :return: symmetric laplacian of negative edges
         '''
         lap_neg = self.get_neg_laplacian()
-        inv_sqrt_neg_deg = np.array([1/np.sqrt(d) if d > 0 else 0 for d in self.d_neg])
+        inv_sqrt_neg_deg = np.array([1/np.sqrt(d) if d > 0 else 1 for d in self.d_neg])
         lap_neg = diags(inv_sqrt_neg_deg).dot(lap_neg).dot(diags(inv_sqrt_neg_deg))
         return lap_neg
 
@@ -89,7 +89,7 @@ class Graph(ABC):
         :return: symmetric normalized signed laplacian
         '''
         lap = diags(self.degree) - self.w_pos + self.w_neg
-        inv_sqrt_deg = np.array([1/np.sqrt(d) if d > 0 else 0 for d in self.degree])
+        inv_sqrt_deg = np.array([1/np.sqrt(d) if d > 0 else 1 for d in self.degree])
         lap = diags(inv_sqrt_deg).dot(lap).dot(diags(inv_sqrt_deg))
 
         return lap
