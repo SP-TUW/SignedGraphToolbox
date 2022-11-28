@@ -23,7 +23,7 @@ class HarmonicFunctions(NodeLearner):
         labelled_nodes = labels['i']
         unlabelled_nodes = [i for i in range(graph.num_nodes) if i not in labelled_nodes]
 
-        W = graph.w_pos
+        W = graph.weights.maximum(0)
         D = np.array(W.sum(1)).flatten()
         L = diags(D)-W
 
