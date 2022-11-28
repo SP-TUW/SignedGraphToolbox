@@ -34,10 +34,10 @@ class Graph(ABC):
         self.d_neg = -np.squeeze(np.asarray(self.w_neg.sum(1)))
         self.degree = self.d_pos + self.d_neg
         self._gradient_matrix = {}
-        print('graph has')
-        print('num pos: {n}'.format(n=self.w_pos.count_nonzero()))
-        print('num neg: {n}'.format(n=self.w_neg.count_nonzero()))
-        print('num tot: {n}'.format(n=self.weights.count_nonzero()))
+        # print('graph has')
+        # print('num pos: {n}'.format(n=self.w_pos.count_nonzero()))
+        # print('num neg: {n}'.format(n=self.w_neg.count_nonzero()))
+        # print('num tot: {n}'.format(n=self.weights.count_nonzero()))
 
     def get_pos_laplacian(self):
         '''
