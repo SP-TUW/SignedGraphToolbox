@@ -131,7 +131,7 @@ class DiffuseInterface(NodeLearner):
             raise ValueError('unknown objective ''{s}'''.format(s=self.which))
 
         if not self.use_full_matrix:
-            eig_vals, eig_vecs = eigh_sparse(L, M=M, k=num_eig, which='SM')
+            eig_vals, eig_vecs = eigh_sparse(L, M=M, k=num_eig, which='SA')
         else:
             if sps.issparse(L):
                 A = L.A
