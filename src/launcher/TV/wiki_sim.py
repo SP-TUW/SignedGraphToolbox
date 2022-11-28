@@ -113,10 +113,12 @@ def get_methods(graph_config, sim_id):
         #                                          pre_iteration_version=pre, t_max_no_change=None)})
 
         if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
-            num_eig_list = [20,40,60,80,100]
+            # num_eig_list = [20,40,60,80,100]
+            num_eig_list = [20,100]
             use_full_matrix = False
         else:
-            num_eig_list = [200,400,600,800,1000]
+            # num_eig_list = [200,400,600,800,1000]
+            num_eig_list = [20, 100, 200]
             use_full_matrix = False
 
         for num_eig in num_eig_list:
@@ -126,9 +128,9 @@ def get_methods(graph_config, sim_id):
             methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
                             'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
                                                        num_eig=num_eig, use_full_matrix=use_full_matrix)})
-            # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
-            #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-            #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
+                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
             methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
                             'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
                                                        num_eig=num_eig, use_full_matrix=use_full_matrix)})
@@ -140,15 +142,15 @@ def run(pid,sim_id):
 
     sim = ClassificationSimulation(graph_config_list=config_lists)
     graph_config, percentage_labeled, is_percentage = sim.get_graph_config(pid)
-    print('{s} with {p:d}% labels'.format(s=graph_config['model'], p=percentage_labeled))
+    print('pid:{pid:5d}\t{s} with {p:d}% labels'.format(pid=pid,s=graph_config['model'], p=percentage_labeled))
     method_configs = get_methods(graph_config, sim_id)
     sim.add_method(method_configs)
     sim.run_simulation(pid)
     num_pos = sim.graph.w_pos.count_nonzero()
     num_neg = sim.graph.w_neg.count_nonzero()
     num_tot = sim.graph.weights.count_nonzero()
-    print(np.sum(sim.graph.class_labels)/sim.graph.num_nodes)
-    print(sim.graph.num_nodes, num_tot, num_pos / num_tot, num_neg / num_tot)
+    # print('ratio in class 1: {r:.2f}'.format(r=np.sum(sim.graph.class_labels)/sim.graph.num_nodes))
+    # print(sim.graph.num_nodes, num_tot, num_pos / num_tot, num_neg / num_tot)
     sim.save_results(constants.results_dir['wiki_sim'][sim_id], split_file=False, save_degenerate_stats=False,
                      reduce_data=False)
 
