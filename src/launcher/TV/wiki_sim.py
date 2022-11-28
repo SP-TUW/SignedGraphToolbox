@@ -60,75 +60,78 @@ def get_graph_config_lists(sim_id, return_name=False):
 def get_methods(graph_config, sim_id):
     num_classes = 2
     v = 1
-    methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)},
-               # {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
-               # {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
-               # {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
-               # {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-               # {'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                            degenerate_heuristic=None,
-               #                                            eps_rel=10 ** (-15 / 10),
-               #                                            eps_abs=10 ** (-15 / 10),
-               #                                            resampling_x_min=90 / 100)},
-               # {'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                            degenerate_heuristic=None,
-               #                                            eps_rel=10 ** (-20 / 10),
-               #                                            eps_abs=10 ** (-20 / 10),
-               #                                            resampling_x_min=90 / 100)},
-               # {'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                            degenerate_heuristic=None,
-               #                                            eps_rel=10 ** (-30 / 10),
-               #                                            eps_abs=10 ** (-30 / 10),
-               #                                            resampling_x_min=90 / 100)},
-               # {'name': 'tv15_res05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                                         degenerate_heuristic='rangapuram_resampling',
-               #                                                         eps_rel=10 ** (-15 / 10),
-               #                                                         eps_abs=10 ** (-15 / 10),
-               #                                                         resampling_x_min=5 / 100)},
-               # {'name': 'tv15_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                                         degenerate_heuristic='regularize',
-               #                                                         eps_rel=10 ** (-15 / 10),
-               #                                                         eps_abs=10 ** (-15 / 10),
-               #                                                         regularization_x_min=90 / 100,
-               #                                                         regularization_max=2 ** 15,
-               #                                                         return_min_tv=True)},
-               # {'name': 'tv30_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-               #                                                         degenerate_heuristic='regularize',
-               #                                                         eps_rel=10 ** (-30 / 10),
-               #                                                         eps_abs=10 ** (-30 / 10),
-               #                                                         regularization_x_min=90 / 100,
-               #                                                         regularization_max=2 ** 15,
-               #                                                         return_min_tv=True)}
-               ]
-    # b = 1e4
-    # pre = 0
-    # l_guess = 'sncSponge'
-    # methods.append({'name': 'tv_nc_beta{penalty:0>+1.1f}_pre{pre}_{guess}'.format(penalty=np.log10(b), pre=int(pre),
-    #                                                                               guess=l_guess),
-    #                 'l_guess': l_guess, 'is_unsupervised': False,
-    #                 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
-    #                                          pre_iteration_version=pre, t_max_no_change=None)})
-
-    if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
-        num_eig_list = [20,40,60,80,100]
-        use_full_matrix = False
+    if sim_id >= 3:
+        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)}]
     else:
-        num_eig_list = [200,400,600,800,1000]
-        use_full_matrix = False
+        methods = [
+                   {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
+                   {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
+                   {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
+                   {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
+                   {'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                              degenerate_heuristic=None,
+                                                              eps_rel=10 ** (-15 / 10),
+                                                              eps_abs=10 ** (-15 / 10),
+                                                              resampling_x_min=90 / 100)},
+                   {'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                              degenerate_heuristic=None,
+                                                              eps_rel=10 ** (-20 / 10),
+                                                              eps_abs=10 ** (-20 / 10),
+                                                              resampling_x_min=90 / 100)},
+                   {'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                              degenerate_heuristic=None,
+                                                              eps_rel=10 ** (-30 / 10),
+                                                              eps_abs=10 ** (-30 / 10),
+                                                              resampling_x_min=90 / 100)},
+                   {'name': 'tv15_res05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                           degenerate_heuristic='rangapuram_resampling',
+                                                                           eps_rel=10 ** (-15 / 10),
+                                                                           eps_abs=10 ** (-15 / 10),
+                                                                           resampling_x_min=5 / 100)},
+                   {'name': 'tv15_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                           degenerate_heuristic='regularize',
+                                                                           eps_rel=10 ** (-15 / 10),
+                                                                           eps_abs=10 ** (-15 / 10),
+                                                                           regularization_x_min=90 / 100,
+                                                                           regularization_max=2 ** 15,
+                                                                           return_min_tv=True)},
+                   {'name': 'tv30_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
+                                                                           degenerate_heuristic='regularize',
+                                                                           eps_rel=10 ** (-30 / 10),
+                                                                           eps_abs=10 ** (-30 / 10),
+                                                                           regularization_x_min=90 / 100,
+                                                                           regularization_max=2 ** 15,
+                                                                           return_min_tv=True)}
+                   ]
+        # b = 1e4
+        # pre = 0
+        # l_guess = 'sncSponge'
+        # methods.append({'name': 'tv_nc_beta{penalty:0>+1.1f}_pre{pre}_{guess}'.format(penalty=np.log10(b), pre=int(pre),
+        #                                                                               guess=l_guess),
+        #                 'l_guess': l_guess, 'is_unsupervised': False,
+        #                 'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=b,
+        #                                          pre_iteration_version=pre, t_max_no_change=None)})
 
-    for num_eig in num_eig_list:
-        methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
-                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
-                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
-        methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
-                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
-                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
-        # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
-        #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-        #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-        methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
-                        'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-                                                   num_eig=num_eig, use_full_matrix=use_full_matrix)})
+        if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
+            num_eig_list = [20,40,60,80,100]
+            use_full_matrix = False
+        else:
+            num_eig_list = [200,400,600,800,1000]
+            use_full_matrix = False
+
+        for num_eig in num_eig_list:
+            methods.append({'name': 'DI_sym{n:0>3d}'.format(n=num_eig),
+                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sym',
+                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
+                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
+                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
+            #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+            #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
+                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
