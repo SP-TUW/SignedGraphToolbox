@@ -127,6 +127,8 @@ class WikiRfAGraph(Graph):
             #     print(names[i])
 
             w = w_pos.sign()
+            w_neg = (0 * w_pos)
+            w_neg.eliminate_zeros()
             w.eliminate_zeros()
         elif combination_method == 'only_neg':
             w_neg = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=-1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
@@ -210,7 +212,7 @@ class WikiRfAGraph(Graph):
 
             w = csr_matrix((v, (i, j)), shape=(num_nodes, num_nodes))
             w_pos = w.maximum(0)
-            w_neg = -w.minimum(0)
+            w_neg = w.minimum(0)
         elif combination_method == 'both':
             # first add reverse voter_df
             w_pos = WikiRfAGraph.__get_w_sign(voter_df=voter_df, sign=1, num_nodes=num_nodes, total_to_tgt_map=total_to_tgt_map)
@@ -234,7 +236,7 @@ class WikiRfAGraph(Graph):
         w_neg = w_neg[ccs[0], :]
         w_neg = w_neg[:, ccs[0]]
 
-        return l0, w, w_pos, -w_neg
+        return l0, w, w_pos, w_neg
 
     @staticmethod
     def __get_w_sign(voter_df, sign, num_nodes, total_to_tgt_map):
