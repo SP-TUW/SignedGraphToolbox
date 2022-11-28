@@ -31,7 +31,7 @@ class HarmonicFunctions(NodeLearner):
         laplacian_uu = laplacian_uu[:, unlabelled_nodes]
         w_ul = W[unlabelled_nodes, :]
         w_ul = w_ul[:, labelled_nodes]
-        fu = lsqr(laplacian_uu, w_ul.dot(fl))[0]
+        fu = lsqr(laplacian_uu, w_ul.dot(fl), atol=1e-8, btol=1e-8)[0]
         # fu = spsolve(laplacian_uu, w_ul.dot(fl))
         f = np.zeros(graph.num_nodes)
         f[labelled_nodes] = fl
