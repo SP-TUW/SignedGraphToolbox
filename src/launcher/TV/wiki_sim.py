@@ -63,7 +63,7 @@ def get_methods(graph_config, sim_id):
     if sim_id >= 3:
         methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)}]
     else:
-        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)}
+        methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes)},
                    {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
                    {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
                    {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
