@@ -40,11 +40,11 @@ def get_graph_config_lists(sim_id, return_name=False):
     elif sim_id == 4:  # wiki elec
         name = 'WIKI_ELEC'
         graph_args['combination_method'] = 'only_pos'
-        graph_args['from_matlab'] = True
+        graph_args['from_matlab'] = False
     elif sim_id == 5:  # wiki RfA
         name = 'WIKI_RFA'
         graph_args['combination_method'] = 'only_pos'
-        graph_args['from_matlab'] = True
+        graph_args['from_matlab'] = False
     else:
         raise ValueError('unknown sim_id')
 
