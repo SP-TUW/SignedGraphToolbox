@@ -82,15 +82,23 @@ def args_to_pid_and_sim_id(args):
         pid_offset = 0
 
     if len(args) > 0:
-        rel_pid = int(args.pop(0))
+        pid_arg = args.pop(0)
+        split_pid = pid_arg.split('-')
+        if len(split_pid) > 1:
+            rel_pid_start = int(split_pid[0])
+            rel_pid_stop = int(split_pid[1])
+        else:
+            rel_pid_start = int(pid_arg)
+            rel_pid_stop = rel_pid_start + 1
     else:
-        rel_pid = 0
+        rel_pid_start = 0
+        rel_pid_stop = 1
 
     if len(args) > 0:
         sim_id = int(args.pop(0))
     else:
         sim_id = 1
 
-    pid = pid_offset + rel_pid
+    pid = range(pid_offset + rel_pid_start, pid_offset + rel_pid_stop)
 
     return pid, sim_id

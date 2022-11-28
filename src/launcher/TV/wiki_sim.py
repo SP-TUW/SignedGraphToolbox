@@ -179,4 +179,5 @@ if __name__ == '__main__':
         pass
     else:
         pid, sim_id = args_to_pid_and_sim_id(sys.argv)
-        run(pid, sim_id)
+        for p in pid:
+            run(p, sim_id)
