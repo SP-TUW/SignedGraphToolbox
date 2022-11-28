@@ -80,7 +80,7 @@ class Graph(ABC):
 
         :return: signed laplacian
         '''
-        lap = diags(self.degree) - self.w_pos + self.w_neg
+        lap = diags(self.degree) - self.w_pos - self.w_neg
         return lap
 
     def get_signed_sym_laplacian(self):
@@ -88,7 +88,7 @@ class Graph(ABC):
 
         :return: symmetric normalized signed laplacian
         '''
-        lap = diags(self.degree) - self.w_pos + self.w_neg
+        lap = diags(self.degree) - self.w_pos - self.w_neg
         inv_sqrt_deg = np.array([1/np.sqrt(d) if d > 0 else 0 for d in self.degree])
         lap = diags(inv_sqrt_deg).dot(lap).dot(diags(inv_sqrt_deg))
 
@@ -109,7 +109,7 @@ class Graph(ABC):
 
     def get_sponge_matrices(self, tau_sim=1, tau_dis=1):
         matrix_numerator = diags(self.d_pos) - self.w_pos + tau_dis*diags(self.d_neg)
-        matrix_denominator = diags(self.d_neg) - self.w_neg + tau_sim*diags(self.d_pos)
+        matrix_denominator = diags(self.d_neg) + self.w_neg + tau_sim*diags(self.d_pos)
         return matrix_numerator, matrix_denominator
 
     def get_gradient_matrix(self, p, return_div=False):
