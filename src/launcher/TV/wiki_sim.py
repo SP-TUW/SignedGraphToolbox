@@ -68,45 +68,16 @@ def get_methods(graph_config, sim_id):
         methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)}]
     else:
         methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)},
+                   {'name': 'sncAM', 'method': SpectralLearning(num_classes=num_classes, objective='AM')},
                    {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
                    {'name': 'sncNC', 'method': SpectralLearning(num_classes=num_classes, objective='NC')},
                    {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC')},
-                   {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-                   {'name': 'tv15', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-15 / 10),
-                                                              eps_abs=10 ** (-15 / 10),
-                                                              resampling_x_min=90 / 100)},
-                   {'name': 'tv20', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-20 / 10),
-                                                              eps_abs=10 ** (-20 / 10),
-                                                              resampling_x_min=90 / 100)},
-                   {'name': 'tv30', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                              degenerate_heuristic=None,
-                                                              eps_rel=10 ** (-30 / 10),
-                                                              eps_abs=10 ** (-30 / 10),
-                                                              resampling_x_min=90 / 100)},
-                   {'name': 'tv15_res05', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='rangapuram_resampling',
-                                                                           eps_rel=10 ** (-15 / 10),
-                                                                           eps_abs=10 ** (-15 / 10),
-                                                                           resampling_x_min=5 / 100)},
-                   {'name': 'tv15_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='regularize',
-                                                                           eps_rel=10 ** (-15 / 10),
-                                                                           eps_abs=10 ** (-15 / 10),
-                                                                           regularization_x_min=90 / 100,
-                                                                           regularization_max=2 ** 15,
-                                                                           return_min_tv=True)},
-                   {'name': 'tv30_reg90', 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
-                                                                           degenerate_heuristic='regularize',
-                                                                           eps_rel=10 ** (-30 / 10),
-                                                                           eps_abs=10 ** (-30 / 10),
-                                                                           regularization_x_min=90 / 100,
-                                                                           regularization_max=2 ** 15,
-                                                                           return_min_tv=True)}
-                   ]
+                   {'name': 'sncBNCIndef', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')}
+                    ]
+        for e in range(10,45,5):
+            methods.append({'name': 'tv{e:2d}'.format(e=e), 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, degenerate_heuristic=None, eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), resampling_x_min=90 / 100)})
+            methods.append({'name': 'tv{e:2d}_res'.format(e=e), 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, degenerate_heuristic='rangapuram_resampling', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), resampling_x_min=5 / 100)})
+            methods.append({'name': 'tv{e:2d}_reg90'.format(e=e), 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v, degenerate_heuristic='regularize', eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10), regularization_x_min=90 / 100, regularization_max=2 ** 15, return_min_tv=True)})
         # b = 1e4
         # pre = 0
         # l_guess = 'sncSponge'
@@ -135,9 +106,9 @@ def get_methods(graph_config, sim_id):
             # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
             #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
             #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-            methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
-                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
-                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            # methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
+            #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
+            #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
     return methods
 
 
