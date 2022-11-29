@@ -183,7 +183,7 @@ def _get_regularizer(labels, is_sim_neighbor, reg_weights):
     sparse_reg_data *= 2
     reg_ij, reg_ji = (reg_ij + reg_ji, reg_ji + reg_ij)
     regularizer = sps.csc_matrix((sparse_reg_data, (reg_ij, reg_ji)), shape=(num_nodes, num_nodes))
-    return
+    return regularizer
 
 
 def _run_two_class_resampling(graph, num_classes, labels, resampling_x_min, x0, y0, y1, save_intermediate, verbosity,
