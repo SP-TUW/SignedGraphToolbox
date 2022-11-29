@@ -22,6 +22,15 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
         deg_matrix = diags(d_nz)
         a = deg_matrix - weight_matrix
         normalization = diags(np.ones(graph.num_nodes))
+        if num_classes == 2:
+            force_unsigned = False
+        else:
+            force_unsigned = True
+        eig_sel = 'SM'
+    elif objective == "AM":
+        a = graph.get_signed_am_laplacian()
+        normalization = diags(np.ones(graph.num_nodes))
+        force_unsigned = False
         eig_sel = 'SM'
     elif objective == "NC":
         d = abs(weight_matrix).sum(axis=1).T
@@ -32,7 +41,10 @@ def _get_objective_matrices_and_eig_selector(graph, objective, num_classes):
         dd = np.where(dd == 0, 1, dd).squeeze()
         inv_sqrt_deg_matrix = diags(1 / dd)
         a = inv_sqrt_deg_matrix.dot(a.dot(inv_sqrt_deg_matrix))
-
+        if num_classes == 2:
+            force_unsigned = False
+        else:
+            force_unsigned = True
         normalization = diags(np.array(1 / dd))
         eig_sel = 'SM'
     elif objective == "BNC" or objective == "BNC_INDEF":
