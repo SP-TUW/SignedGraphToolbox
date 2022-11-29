@@ -148,7 +148,8 @@ def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, pen
 
     if verbosity > 0:
         print("\rK={K}, Keff={Keff}, {t}: TV={tv:.2f}, TVround={tvR:.2f}".format(
-            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(graph, Xtp1), tvR=TV(graph, _roundSolution(Xtp1))))
+            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(graph, Xtp1),
+            tvR=TV(graph, _roundSolution(Xtp1))))
     l_est = np.argmax(Xtp1, 1)
     X = Xtp1
 
@@ -182,7 +183,125 @@ def _get_regularizer(labels, is_sim_neighbor, reg_weights):
     sparse_reg_data *= 2
     reg_ij, reg_ji = (reg_ij + reg_ji, reg_ji + reg_ij)
     regularizer = sps.csc_matrix((sparse_reg_data, (reg_ij, reg_ji)), shape=(num_nodes, num_nodes))
-    return regularizer
+    return
+
+
+def _run_two_class_resampling(graph, num_classes, labels, resampling_x_min, x0, y0, y1, save_intermediate, verbosity,
+                              penalty_parameter, eps_abs, eps_rel, **kwargs):
+    num_nodes = graph.num_nodes
+
+    assert num_classes == 2
+
+    labels_i = np.array(labels['i'])
+    labels_k = np.array(labels['k'])
+
+    resampled_labels = {'i': labels['i'].copy(),
+                        'k': labels['k'].copy()}
+
+    is_label = np.zeros(num_nodes, dtype=bool)
+    label_encoding = np.zeros((num_nodes, num_classes))
+
+    is_label[labels['i']] = True
+    label_encoding[is_label, :] = -1
+    label_encoding[is_label, labels['k']] = 1
+
+
+    l_est, X, intermediate_results = _run_augmented_admm(graph=graph,
+                                                         num_classes=num_classes,
+                                                         labels=resampled_labels,
+                                                         verbosity=verbosity,
+                                                         return_state=False,
+                                                         x0=0,
+                                                         y0=None,
+                                                         y1=None,
+                                                         penalty_parameter=penalty_parameter,
+                                                         save_intermediate=save_intermediate,
+                                                         eps_abs=1e-4,
+                                                         eps_rel=1e-4,
+                                                         **kwargs)
+
+    is_valid = np.any(X > resampling_x_min, axis=1)
+    resampled_labels['i'] = np.flatnonzero(is_valid)
+    resampled_labels['k'] = l_est[resampled_labels['i']]
+
+    X = x0
+    Yt = None
+    Ytp1 = None
+
+    num_resampled = np.sum(resampled_labels['k'][:, None] == np.arange(num_classes)[None, :], axis=0)
+
+    converged = False
+    while not converged:
+        l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results = _run_augmented_admm(graph=graph,
+                                                                                            num_classes=num_classes,
+                                                                                            labels=resampled_labels,
+                                                                                            verbosity=verbosity,
+                                                                                            return_state=True, x0=X,
+                                                                                            y0=Yt, y1=Ytp1,
+                                                                                            penalty_parameter=penalty_parameter,
+                                                                                            save_intermediate=save_intermediate,
+                                                                                            eps_abs=eps_abs,
+                                                                                            eps_rel=eps_rel,
+                                                                                            **kwargs)
+        is_degenerate = np.all(X <= resampling_x_min, axis=1)
+        num_degenerate = np.sum(is_degenerate)
+        if num_degenerate > 0:
+            if verbosity >= 1:
+                print('{n} degenerate entries left'.format(n=num_degenerate))
+            l_est_rand_resolve = l_est.copy()
+            is_tied = np.diff(np.sort(X, axis=1)[:, -2:]).squeeze() == 0
+            num_tied = np.sum(is_tied)
+            l_est_rand_resolve[is_tied] = np.random.randint(0, num_classes, num_tied)
+            x_switch = -np.ones((num_nodes, num_classes))
+            x_switch[range(num_nodes), l_est_rand_resolve] = 1
+
+            class_size = np.sum(l_est_rand_resolve[:, None] == np.arange(num_classes)[None, :], axis=0)
+            num_resampled = np.maximum(np.minimum(class_size, 2 * num_resampled), 1)
+            rankings = np.zeros((num_nodes, num_classes), dtype=int)
+
+            resampled_labels['i'] = []
+            resampled_labels['k'] = []
+
+            sc = calc_signed_cut(graph.weights, l_est_rand_resolve)
+
+            for k in range(num_classes):
+                switching_cost = np.zeros(num_nodes)
+                class_k = np.flatnonzero(l_est_rand_resolve == k)
+                for i in class_k:
+                    switching_cost[i] = float('inf')
+                    if not is_label[i]:
+                        w_pos_neighbors = graph.w_pos.getrow(i)
+                        w_neg_neighbors = graph.w_neg.getrow(i)
+                        pos_neighbors = w_pos_neighbors.indices
+                        neg_neighbors = w_neg_neighbors.indices
+                        pos_cut = 2 * w_pos_neighbors.data[None, :].dot(l_est_rand_resolve[pos_neighbors][:, None] != k)
+                        neg_cut = 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == k)
+                        for l in range(num_classes):
+                            if l != k:
+                                # test switching node i from k to l
+                                pos_cut_switch = 2 * w_pos_neighbors.data[None, :].dot(
+                                    l_est_rand_resolve[pos_neighbors][:, None] != l)
+                                neg_cut_switch = 2 * w_neg_neighbors.data[None, :].dot(
+                                    l_est_rand_resolve[neg_neighbors][:, None] == l)
+                                sc_switch = sc - pos_cut - neg_cut + pos_cut_switch + neg_cut_switch
+                                # x_switch[i,:] = -1
+                                # x_switch[i,l] = 1
+                                # tv = TV(graph.weights,x_switch,p=1)
+                                # l_switch = l_est_rand_resolve.copy()
+                                # l_switch[i] = l
+                                # sc_test = calc_signed_cut(graph.weights, l_switch)
+                                if sc_switch < switching_cost[i]:
+                                    switching_cost[i] = sc_switch
+                        # reset node i to k
+                        # x_switch[i,:] = -1
+                        # x_switch[i,k] = 1
+                rankings[:, k] = np.argsort(switching_cost)[::-1]
+                resampled_labels['i'] += rankings[:num_resampled[k], k].tolist()
+                resampled_labels['k'] += [k] * num_resampled[k]
+        else:
+            converged = True
+
+    return l_est, X, intermediate_results
 
 
 def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0, y0, y1, save_intermediate, verbosity,
@@ -384,7 +503,8 @@ class TvAugmentedADMM(NodeLearner):
     def __init__(self, num_classes=2, verbosity=0, save_intermediate=None, eps_abs=1e-3, eps_rel=1e-3, t_max=10000,
                  penalty_parameter=0.1, penalty_strat_scaling=2, penalty_strat_threshold=10, penalty_strat_init_check=1,
                  penalty_strat_interval_factor=2, min_norm=0, degenerate_heuristic=None, regularization_x_min=0.9,
-                 regularization_parameter=2, regularization_max=1024, return_min_tv=False, resampling_x_min=0.1,y0=None,y1=None):
+                 regularization_parameter=2, regularization_max=1024, return_min_tv=False, resampling_x_min=0.1,
+                 y0=None, y1=None):
         self.eps_abs = eps_abs
         self.eps_rel = eps_rel
         self.t_max = t_max
@@ -394,10 +514,11 @@ class TvAugmentedADMM(NodeLearner):
         self.penalty_strat_init_check = penalty_strat_init_check
         self.penalty_strat_interval_factor = penalty_strat_interval_factor
         self.min_norm = min_norm
-        if degenerate_heuristic is not None and degenerate_heuristic not in ['regularize', 'rangapuram_resampling']:
+        if degenerate_heuristic is not None and degenerate_heuristic not in ['regularize', 'rangapuram_resampling',
+                                                                             'two_class_resampling']:
             raise ValueError(
                 'unknown heuristic ''{h}'' for degenerate solutions\nEither use None or ''regularize'' or ''rangapuram_resampling'''.format(
-                    h=self.degenerate_heuristic))
+                    h=degenerate_heuristic))
         else:
             self.degenerate_heuristic = degenerate_heuristic
         self.regularization_x_min = regularization_x_min
@@ -466,6 +587,20 @@ class TvAugmentedADMM(NodeLearner):
                                                                         min_norm=self.min_norm,
                                                                         verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
                                                                         save_intermediate=self.save_intermediate)
+        elif self.degenerate_heuristic == 'two_class_resampling':
+            l_est, X, intermediate_results = _run_two_class_resampling(graph=graph, num_classes=self.num_classes,
+                                                                       labels=labels,
+                                                                       resampling_x_min=self.resampling_x_min,
+                                                                       eps_abs=self.eps_abs, eps_rel=self.eps_rel,
+                                                                       t_max=self.t_max,
+                                                                       penalty_parameter=self.penalty_parameter,
+                                                                       penalty_strat_scaling=self.penalty_strat_scaling,
+                                                                       penalty_strat_threshold=self.penalty_strat_threshold,
+                                                                       penalty_strat_init_check=self.penalty_strat_init_check,
+                                                                       penalty_strat_interval_factor=self.penalty_strat_interval_factor,
+                                                                       min_norm=self.min_norm,
+                                                                       verbosity=self.verbosity, x0=x0, y0=y0, y1=y1,
+                                                                       save_intermediate=self.save_intermediate)
         elif self.degenerate_heuristic is None:
             l_est, X, intermediate_results = _run_augmented_admm(graph=graph, num_classes=self.num_classes,
                                                                  labels=labels, eps_abs=self.eps_abs,
