@@ -2,14 +2,15 @@ def plot():
     import json
     import os
     import pandas as pd
+    import numpy as np
     from src.launcher.TV import constants
 
     # % HF(ours) & 0.632 & 0.847 & 0.854 & 0.858 & 0.615 & 0.624 & 0.634 & 0.642 & 0.557 & 0.579 & 0.603 & 0.622
 
     result_dfs = {}
-    keys = ['acc_unlabeled']
+    keys = ['acc_unlabeled','cut']
 
-    for sim_id in range(3,6):
+    for sim_id in range(6):
         results_file_name = os.path.join(constants.results_dir['wiki_sim'][sim_id], 'comb.json')
         with open(results_file_name) as results_file:
             results = json.load(results_file)
@@ -26,13 +27,38 @@ def plot():
         perc_lab_df = perc_lab_df.drop(['pid','num_nodes'],axis=1)
         for key in keys:
             result_dfs.setdefault(key,{})
-            result_dfs[key][name] = perc_lab_df.filter(regex='(?={k})'.format(k=key),axis=1).unstack()
+            filtered_df = perc_lab_df.filter(regex='(?={k})'.format(k=key),axis=1)
+            if sim_id < 3:
+                filtered_df = filtered_df.filter(regex='{k}(?!_HF)'.format(k=key), axis=1).filter(regex='{k}(?!_gt)'.format(k=key), axis=1)
+            filtered_df.columns = [c.replace(key+'_','').replace('_','') for c in filtered_df.columns]
+            filtered_df = filtered_df.unstack()
+            result_dfs[key].setdefault(name, None)
+            # result_dfs[key][name] = filtered_df
+            result_dfs[key][name] = pd.concat((result_dfs[key][name],filtered_df),axis=0)
+            # print(result_dfs[key][name])
 
     for key in keys:
-        joint_df = pd.DataFrame(result_dfs[key]).unstack('percentage_labeled')
+        joint_df = pd.DataFrame(result_dfs[key])
+        joint_df.columns = [c.replace('_','') for c in joint_df.columns]
+        joint_df = joint_df.unstack('percentage_labeled')
+        joint_df.columns.names = ('','$M$')
         print(joint_df.to_string())
+        if key=='cut':
+            joint_df = joint_df.drop('HF',axis=0)
+            scaled_df = (joint_df/1000)
+            s = scaled_df.style.highlight_min(props='textbf:--rwrap', axis=0).format(precision=1)
+            s = s.highlight_between(axis=1, left=scaled_df.min(axis=0)+np.array([2]*4+[0.25]*4+[0.3]*4),right=scaled_df.max(axis=0), inclusive='right', props='color{lightgray}:--rwrap')
+        else:
+            scaled_df = joint_df
+            s = scaled_df.style.highlight_max(props='textbf:--rwrap', axis=0).format(precision=3)
+            s = s.highlight_between(axis=1, right=scaled_df.max(axis=0)-np.array([0.015]*4+[0.075]*4+[0.1]*4),left=scaled_df.min(axis=0), inclusive='left', props='color{lightgray}:--rwrap')
+            # s = s.highlight_quantile(axis=0, q_right=1-5/scaled_df.shape[0], inclusive='both', props='color{lightgray}:--rwrap')
+        # s.render
+        thesis_path = os.path.join('~','Desktop','LatexRepositories','PHD-Thesis')
+        s.to_latex(buf=os.path.join(thesis_path,'source','figures','TV_CONVEX', 'wiki_sim', '{k}.tex'.format(k=key)),multicol_align='r|')
+        s.to_html(buf=os.path.join(thesis_path,'source','figures','TV_CONVEX', 'wiki_sim', '{k}.html'.format(k=key)))
 
-    print('HF(ours)              0.632     0.847     0.854     0.858     0.615     0.624     0.634     0.642     0.557     0.579     0.603     0.622')
+    # print('HF(ours)              0.632     0.847     0.854     0.858     0.615     0.624     0.634     0.642     0.557     0.579     0.603     0.622')
 
     pass
 
