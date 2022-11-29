@@ -118,7 +118,7 @@ def get_methods(graph_config, sim_id):
 
         if graph_config['model'] in ['WIKI_ELEC', 'WIKI_RFA']:
             # num_eig_list = [20,40,60,80,100]
-            num_eig_list = [20,100]
+            num_eig_list = [20, 100, 200]
             use_full_matrix = False
         else:
             # num_eig_list = [200,400,600,800,1000]
@@ -132,9 +132,9 @@ def get_methods(graph_config, sim_id):
             methods.append({'name': 'DI_am{n:0>3d}'.format(n=num_eig),
                             'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='am',
                                                        num_eig=num_eig, use_full_matrix=use_full_matrix)})
-            methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
-                            'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
-                                                       num_eig=num_eig, use_full_matrix=use_full_matrix)})
+            # methods.append({'name': 'DI_lap{n:0>3d}'.format(n=num_eig),
+            #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='lap',
+            #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
             methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
                             'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
                                                        num_eig=num_eig, use_full_matrix=use_full_matrix)})
