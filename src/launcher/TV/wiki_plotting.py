@@ -8,7 +8,7 @@ def plot():
     # % HF(ours) & 0.632 & 0.847 & 0.854 & 0.858 & 0.615 & 0.624 & 0.634 & 0.642 & 0.557 & 0.579 & 0.603 & 0.622
 
     result_dfs = {}
-    keys = ['acc_unlabeled','cut']
+    keys = ['acc_unlabeled','acc_total','cut']
 
     for sim_id in range(6):
         results_file_name = os.path.join(constants.results_dir['wiki_sim'][sim_id], 'comb.json')
@@ -47,7 +47,7 @@ def plot():
             joint_df = joint_df.drop('HF',axis=0)
             scaled_df = (joint_df/1000)
             s = scaled_df.style.highlight_min(props='textbf:--rwrap', axis=0).format(precision=1)
-            s = s.highlight_between(axis=1, left=scaled_df.min(axis=0)+np.array([2]*4+[0.25]*4+[0.3]*4),right=scaled_df.max(axis=0), inclusive='right', props='color{lightgray}:--rwrap')
+            s = s.highlight_between(axis=1, left=scaled_df.min(axis=0)+np.array([0.6]*4+[0.15]*4+[0.35]*4),right=scaled_df.max(axis=0), inclusive='right', props='color{lightgray}:--rwrap')
         else:
             scaled_df = joint_df
             s = scaled_df.style.highlight_max(props='textbf:--rwrap', axis=0).format(precision=3)
