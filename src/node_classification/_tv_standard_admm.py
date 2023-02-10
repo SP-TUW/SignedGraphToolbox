@@ -7,7 +7,7 @@ from src.tools.projections import min_norm_simplex_projection, label_projection
 from ._node_learner import NodeLearner
 
 
-def _standard_admm_x_update(x_in, Q, P, labels, t_max, eps, backtracking_stepsize, backtracking_tau_0, backtracking_param):
+def _standard_admm_x_update(x_in, Q, P, labels, t_max, stopping_tol, backtracking_stepsize, backtracking_tau_0, backtracking_param):
     N = x_in.shape[0]
     K = x_in.shape[1]
 
@@ -41,13 +41,13 @@ def _standard_admm_x_update(x_in, Q, P, labels, t_max, eps, backtracking_stepsiz
             a = -backtracking_param * tau * slope
             b = f_t - f_tp1
             backtracking_converged = a <= b
-            if (tau == 0.0 or np.linalg.norm(x_t - x_tp1) < eps ** 2) and not backtracking_converged:
+            if (tau <= 1e-20 or np.linalg.norm(x_t - x_tp1) < stopping_tol ** 2) and not backtracking_converged:
                 x_tp1 = x_t
                 # warnings.warn('no improvement found in backtracking')
                 break
             tau *= backtracking_stepsize
         dv = np.linalg.norm(x_t - x_tp1)
-        dv_max = eps
+        dv_max = stopping_tol
         converged = dv < dv_max
         if t > t_max:
             print('x update did not converge')
