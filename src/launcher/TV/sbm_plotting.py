@@ -4,6 +4,7 @@ def plot():
     import json
     import os
     import matplotlib.pyplot as plt
+    from matplotlib import colors
     import numpy as np
     import pandas as pd
     import re
