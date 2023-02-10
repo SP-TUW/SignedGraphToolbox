@@ -33,7 +33,7 @@ def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, retur
 
     is_randomized = np.zeros(N,dtype=bool)
     if r0 < K:
-        is_randomized = z_sort[:,0] == z_sort[:,r0]
+        is_randomized = np.isclose(z_sort[:,0], z_sort[:,r0])
 
     xi = np.ones((N,K))
     cond = np.ones((N,K), dtype=bool)
