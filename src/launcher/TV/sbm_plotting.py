@@ -106,10 +106,10 @@ def plot():
                 if c.startswith('t_run'):
                     name = c[5:]
                     # results_df[c] /= results_df['t_run_sncSponge']
-                    if 't_run_norm_tv_nc_betap5_pre0_sncSponge' in results_df.columns:
-                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_norm_tv_nc_betap5_pre0_sncSponge']
+                    if 't_run_tv_nc_betap5_pre0_sncSponge' in results_df.columns:
+                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_tv_nc_betap5_pre0_sncSponge']
                     else:
-                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_norm_tv_nc_betap50_pre0_sncSponge']
+                        results_df['t_run_norm' + name] = results_df[c] / results_df['t_run_tv_nc_betap50_pre0_sncSponge']
 
         mean_results = results_df.groupby(groups[sim_id]).mean().reset_index(level=list(range(1, len(groups[sim_id]))))
         unique_lists = []
