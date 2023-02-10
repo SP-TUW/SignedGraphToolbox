@@ -33,17 +33,21 @@ def get_graph_config_lists(sim_id, return_name=False):
     if sim_id == 0:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900] * 4
+        percentage_labeled_list = [10, 15, 20]
     elif sim_id == 1:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [9000] * 4
+        percentage_labeled_list = [10, 15, 20]
     elif sim_id == 2:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [900] * 4
         eps_list = np.linspace(0.3, 0.4, 3)
+        percentage_labeled_list = [10, 15, 20]
     elif sim_id == 3:
         num_classes_list = [2, 3, 5, 10]
         num_nodes_list = [9000] * 4
         eps_list = np.linspace(0.3, 0.4, 3)
+        percentage_labeled_list = [10, 15, 20]
     elif sim_id == 4:
         name = 'balancedness sweep for nonconvex standard ADMM with several values for beta'
         num_classes_list = [3, 5, 10]
