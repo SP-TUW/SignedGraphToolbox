@@ -16,45 +16,44 @@ def plot():
 
 
     plots_folder = constants.plots_dir['sbm_sim']
-    # for root, subdirs, files in os.walk(plots_folder):
-    #     filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(len(constants.results_dir['sbm_sim']))] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
-    #     for x_json_name in sorted(files):
-    #     # for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:
-    #     # for x_json_name in filename_list:
-    #         if x_json_name.startswith("x") and x_json_name.endswith(".json") and x_json_name in filename_list:
-    #             print(x_json_name)
-    #             x_name = x_json_name[:-5]
-    #             x_csv_name = x_name + '.csv'
-    #             with open(os.path.join(plots_folder,x_json_name)) as x_file:
-    #                 x = json.load(x_file)
-    #
-    #             x_array_style = {}
-    #             for key, val in x.items():
-    #                 if key not in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]:
-    #                     continue
-    #                 # x_array = np.array(val)
-    #                 # x_array = np.sort(x_array,axis=0)
-    #                 # for n in range(x_array.shape[1]):
-    #                 #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n
-    #                 x_df = pd.DataFrame(val)
-    #                 x_df['max'] = x_df.idxmax(axis=1)
-    #                 x_df.index = x_df.index.rename('i')
-    #                 # x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
-    #                 num_nodes = x_df.shape[0]
-    #                 s = (4-np.log10(num_nodes/9))**2
-    #                 for k in range(len(val[0])):
-    #                     plt.figure(figsize=(3.1/2.54, 2.0/2.54), dpi=600)
-    #                     plt.scatter(x_df.index, x_df[k], c=x_df['max']==k, marker='.', s=s, cmap='PiYG', norm=colors.Normalize(vmin=-.2, vmax=1.2), linewidths=0)
-    #                     # plt.show()
-    #                     plt.xlim(np.array([-0.05, 1.05])*x_df.shape[0])
-    #                     plt.ylim([-1.1, 1.1])
-    #                     plt.axis('off')
-    #                     plt.tight_layout(pad=0)
-    #                     plt.savefig(os.path.join(plots_folder,x_name+'_'+key+'{k:0>2d}'.format(k=k)+'.png'))
-    #                     plt.close()
-    #             # x_df = pd.DataFrame(x_array_style)
-    #             # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
+    for root, subdirs, files in os.walk(plots_folder):
+        filename_list = ['x_s{s}_p24.json'.format(s=s) for s in range(len(constants.results_dir['sbm_sim']))] + ['x_s{s}_p34.json'.format(s=s) for s in range(4)]
+        for x_json_name in sorted(files):
+        # for x_json_name in ['x_s0_p24.json','x_s0_p34.json','x_s0_p38.json','x_s0_p39.json']:
+        # for x_json_name in filename_list:
+            if x_json_name.startswith("x") and x_json_name.endswith(".json") and x_json_name in filename_list:
+                print(x_json_name)
+                x_name = x_json_name[:-5]
+                x_csv_name = x_name + '.csv'
+                with open(os.path.join(plots_folder,x_json_name)) as x_file:
+                    x = json.load(x_file)
 
+                x_array_style = {}
+                for key, val in x.items():
+                    if key not in ['tv{e:0>2d}'.format(e=e) for e in range(0,45,5)]:
+                        continue
+                    # x_array = np.array(val)
+                    # x_array = np.sort(x_array,axis=0)
+                    # for n in range(x_array.shape[1]):
+                    #     x_array_style['{k}{n}'.format(k=key.replace('_',''), n=n)] = x_array[:, n
+                    x_df = pd.DataFrame(val)
+                    x_df['max'] = x_df.idxmax(axis=1)
+                    x_df.index = x_df.index.rename('i')
+                    # x_df.to_csv(os.path.join(plots_folder,x_name+'_'+key+'.csv'))
+                    num_nodes = x_df.shape[0]
+                    s = (4-np.log10(num_nodes/9))**2
+                    for k in range(len(val[0])):
+                        plt.figure(figsize=(3.1/2.54, 2.0/2.54), dpi=600)
+                        plt.scatter(x_df.index, x_df[k], c=x_df['max']==k, marker='.', s=s, cmap='PiYG', norm=colors.Normalize(vmin=-.2, vmax=1.2), linewidths=0)
+                        # plt.show()
+                        plt.xlim(np.array([-0.05, 1.05])*x_df.shape[0])
+                        plt.ylim([-1.1, 1.1])
+                        plt.axis('off')
+                        plt.tight_layout(pad=0)
+                        plt.savefig(os.path.join(plots_folder,x_name+'_'+key+'{k:0>2d}'.format(k=k)+'.png'))
+                        plt.close()
+                # x_df = pd.DataFrame(x_array_style)
+                # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
     groups = [['eps', 'num_classes', 'percentage_labeled'],
