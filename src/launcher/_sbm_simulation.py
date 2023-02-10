@@ -54,7 +54,7 @@ class SBMSimulation(ClassificationSimulation):
                                                                                  eps=eps, p=percentage_labeled / 100,
                                                                                  pi=scale_pi, pe=scale_pe),
                             'result_fields': {
-                                'stopping_tol': eps,
+                                'eps': eps,
                                 'scale_pi': scale_pi,
                                 'scale_pe': scale_pe,
                                 'num_classes': num_classes}
