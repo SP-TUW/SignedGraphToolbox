@@ -184,7 +184,7 @@ def plot():
                         # df_plot = df_nc[df_nc['name'].str.endswith('sncSponge') | df_nc['name'].str.startswith('sncSponge') | df_nc['name'].str.startswith('mapr')]
 
                         plt.figure(figsize=(20, 15))
-                        p1 = sns.lineplot(data=df_plot, x='stopping_tol', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+                        p1 = sns.lineplot(data=df_plot, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
                         p1.set(title='n_err at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # p1.set(yscale='log')
                         plt.grid()
@@ -192,19 +192,19 @@ def plot():
                         plt.show()
 
                         # plt.figure(figsize=(20, 15))
-                        # sns.lineplot(data=df_plot, x='stopping_tol', y='cut', hue=groups[sim_id][1], style='name').set(title='cut at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # sns.lineplot(data=df_plot, x='eps', y='cut', hue=groups[sim_id][1], style='name').set(title='cut at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # plt.grid()
                         # plt.legend(handlelength=5)
                         # plt.show()
 
                         # plt.figure(figsize=(20, 15))
-                        # sns.lineplot(data=df_plot, x='stopping_tol', y='t_run', hue=groups[sim_id][1], style='name').set(title='t_run at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
+                        # sns.lineplot(data=df_plot, x='eps', y='t_run', hue=groups[sim_id][1], style='name').set(title='t_run at pl: {val}, nc: {nc}'.format(val=i, nc=nc))
                         # plt.grid()
                         # plt.legend(handlelength=5)
                         # plt.show()
         else:
-            sns.lineplot(data=results_mean, x='stopping_tol', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
+            sns.lineplot(data=results_mean, x='eps', y='n_err_unlabeled', hue=groups[sim_id][1], style='name')
             plt.show()
-            sns.lineplot(data=results_mean, x='stopping_tol', y='t_run', hue=groups[sim_id][1], style='name')
+            sns.lineplot(data=results_mean, x='eps', y='t_run', hue=groups[sim_id][1], style='name')
             plt.show()
 
