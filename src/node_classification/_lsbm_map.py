@@ -125,12 +125,15 @@ class LsbmMap(NodeLearner):
                 else:
                     tau = tau/2
             if self.verbosity > 0 and t % 10 == 0:
-                print('{t:4d}, {n:e}, {o:e}'.format(t=t, n=np.linalg.norm(direction), o=f_x_new))
+                print('\r{t:4d}, {n:e}, {o:e}'.format(t=t, n=np.linalg.norm(direction), o=f_x_new), end='')
             t = t + 1
             converged = np.linalg.norm(direction) < np.sqrt(num_nodes * self.num_classes) * self.eps and t>1
             if not converged and t > self.t_max:
                 warnings.warn("Algorithm did not converge within {t} steps".format(t=self.t_max))
                 break
+
+        if self.verbosity > 0:
+            print('')
 
         self.embedding = x_new
         self.normalized_embedding = x_new
