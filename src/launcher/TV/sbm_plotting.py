@@ -56,16 +56,17 @@ def plot():
     #             # x_df.to_csv(os.path.join(plots_folder,x_csv_name))
 
 
-    groups = [['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled'],
-              ['stopping_tol', 'num_classes', 'percentage_labeled']]
+
+    groups = [['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled'],
+              ['eps', 'num_classes', 'percentage_labeled']]
 
     for sim_id in range(len(constants.results_dir['sbm_sim'])):
         results_file_name = os.path.join(constants.results_dir['sbm_sim'][sim_id], 'comb.json')
@@ -130,7 +131,7 @@ def plot():
             other_strategies = [n for n in method_names if n not in tv_strategies]
             x_min_list = np.unique([float(s[-2:])/100 for s in tv_strategies])
             strategy_list = np.unique([s[:-2] for s in tv_strategies])
-            eps_list = np.unique(subdf.reset_index()['stopping_tol'])
+            eps_list = np.unique(subdf.reset_index()['eps'])
             # initialize with large negative value to indicate if something went wrong
             n_err = -1000*np.ones((len(x_min_list),len(strategy_list)*len(eps_list)))
             columns = list(itertools.product(strategy_list,eps_list))
