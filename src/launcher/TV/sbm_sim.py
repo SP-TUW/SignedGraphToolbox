@@ -367,5 +367,6 @@ if __name__ == '__main__':
             print('unknown command {c}'.format(c=args[1]))
         pass
     else:
-        pid, sim_id = args_to_pid_and_sim_id(sys.argv)
-        run(pid, sim_id)
+        pid_range, sim_id = args_to_pid_and_sim_id(sys.argv)
+        for pid in pid_range:
+            run(pid, sim_id)
