@@ -1,7 +1,7 @@
 from src.launcher.TV import constants
 from src.launcher import ClassificationSimulation
 from src.launcher.TV import wiki_plotting as plotting
-from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, TvAugmentedADMM
+from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, Sponge, TvAugmentedADMM, TvStandardADMM
 
 from src.graphs import graph_factory
 
