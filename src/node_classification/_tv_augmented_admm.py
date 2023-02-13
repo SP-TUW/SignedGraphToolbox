@@ -234,13 +234,13 @@ def _run_rangapuram_resampling(graph, num_classes, labels, resampling_x_min, x0,
                         pos_neighbors = w_pos_neighbors.indices
                         neg_neighbors = w_neg_neighbors.indices
                         pos_cut = 2 * w_pos_neighbors.data[None, :].dot(l_est_rand_resolve[pos_neighbors][:, None] != k)
-                        neg_cut = 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == k)
+                        neg_cut = - 2 * w_neg_neighbors.data[None, :].dot(l_est_rand_resolve[neg_neighbors][:, None] == k)
                         for l in range(num_classes):
                             if l != k:
                                 # test switching node i from k to l
                                 pos_cut_switch = 2 * w_pos_neighbors.data[None, :].dot(
                                     l_est_rand_resolve[pos_neighbors][:, None] != l)
-                                neg_cut_switch = 2 * w_neg_neighbors.data[None, :].dot(
+                                neg_cut_switch = - 2 * w_neg_neighbors.data[None, :].dot(
                                     l_est_rand_resolve[neg_neighbors][:, None] == l)
                                 sc_switch = sc - pos_cut - neg_cut + pos_cut_switch + neg_cut_switch
                                 # x_switch[i,:] = -1
