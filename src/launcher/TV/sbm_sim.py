@@ -311,6 +311,10 @@ def get_methods(graph_config, sim_id):
         methods.append({'name': 'maprSNC', 'l_guess': 'sncSponge',
                         'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le,
                                           class_distribution=class_distribution, eps=1e-3)}, )
+    if sim_id in [0]:
+        methods.append({'name': 'maprBNC', 'l_guess': 'sncBNC',
+                        'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le,
+                                          class_distribution=class_distribution, eps=1e-3)}, )
 
     if sim_id in [0, 4, 6, 8, 9]:
         methods.append({'name': 'maprMinErr', 'l_guess': 'min_err',
