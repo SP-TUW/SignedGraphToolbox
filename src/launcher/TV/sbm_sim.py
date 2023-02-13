@@ -127,7 +127,7 @@ def get_methods(graph_config, sim_id):
             x_range = [1, 2, 5, 10, 20, 50, 90]
         else:
             x_range = [5, 10, 50, 90]
-        for e in range(10, 35, 5):
+        for e in [10,15,20,30]:#range(10, 35, 5):
             for x in x_range:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e, x=x),
                                 'method': TvAugmentedADMM(num_classes=num_classes, verbosity=v,
