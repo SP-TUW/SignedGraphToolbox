@@ -114,8 +114,9 @@ def get_methods(graph_config, sim_id):
     v = 0
     methods = [
         {'name': 'sncBNC', 'method': SpectralLearning(num_classes=num_classes, objective='BNC_INDEF')},
-        {'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')},
     ]
+    if sim_id >= 4:
+        methods.append({'name': 'sncSponge', 'method': SpectralLearning(num_classes=num_classes, objective='SPONGE')})
     if sim_id in [0, 1]:
         for e in range(0, 45, 5):
             methods.append({'name': 'tv{e:0>2d}'.format(e=e),
@@ -126,7 +127,7 @@ def get_methods(graph_config, sim_id):
         if sim_id in [2, 3]:
             x_range = [1, 2, 5, 10, 20, 50, 90]
         else:
-            x_range = [5, 10, 50, 90]
+            x_range = [5, 10, 20, 50, 90]
         for e in [10,15,20,30]:#range(10, 35, 5):
             for x in x_range:
                 methods.append({'name': 'tv{e:0>2d}_regularization{x:0>2d}'.format(e=e, x=x),
@@ -139,6 +140,7 @@ def get_methods(graph_config, sim_id):
                                                           degenerate_heuristic='rangapuram_resampling',
                                                           eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10),
                                                           resampling_x_min=x / 100)})
+        v = 1
 
     if sim_id == 4:
         v = 1
@@ -305,10 +307,12 @@ def get_methods(graph_config, sim_id):
     if sim_id > len(constants.results_dir['sbm_sim']):
         raise ValueError('unknown sim_id')
 
-    if sim_id in [0, 4, 6, 8, 9]:
+    if sim_id in [4, 6, 8, 9]:
         methods.append({'name': 'maprSNC', 'l_guess': 'sncSponge',
                         'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le,
                                           class_distribution=class_distribution, eps=1e-3)}, )
+
+    if sim_id in [0, 4, 6, 8, 9]:
         methods.append({'name': 'maprMinErr', 'l_guess': 'min_err',
                         'method': LsbmMap(num_classes=num_classes, verbosity=v, pi=pi, pe=pe, li=li, le=le,
                                           class_distribution=class_distribution, eps=1e-3)}, )
