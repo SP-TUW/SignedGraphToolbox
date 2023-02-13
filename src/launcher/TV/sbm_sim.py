@@ -124,7 +124,7 @@ def get_methods(graph_config, sim_id):
                                                       eps_rel=10 ** (-e / 10), eps_abs=10 ** (-e / 10))})
 
     if sim_id in [0, 1, 2, 3]:
-        if sim_id in [2, 3]:
+        if sim_id in [0, 2, 3]:
             x_range = [1, 2, 5, 10, 20, 50, 90]
         else:
             x_range = [5, 10, 20, 50, 90]
