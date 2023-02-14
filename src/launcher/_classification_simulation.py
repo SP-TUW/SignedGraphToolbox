@@ -164,7 +164,7 @@ class ClassificationSimulation:
     def save_results(self, results_dir, split_file=False, save_degenerate_stats=False, reduce_data=False):
         if self.sim_id >= 0:
             # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
-            # graph_config, num_nodes, num_classes, stopping_tol, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
+            # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
             num_nodes = self.graph.num_nodes
             num_classes = self.graph.num_classes
             num_labels = len(self.labels['i'])

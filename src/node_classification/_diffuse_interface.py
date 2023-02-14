@@ -15,7 +15,7 @@ def _multiclass_GL_minimization(diffusion_parameter, stepsize, num_classes, labe
     '''
     Implementation of Multiclass GL algorithm (Fig. 1. on page 1605) of :cite:p:`Gar14Diffuse`
 
-    :param diffusion_parameter: stopping_tol
+    :param diffusion_parameter: eps
     :param stepsize: dt
     :param num_classes: K
     :param label_weight: mu
