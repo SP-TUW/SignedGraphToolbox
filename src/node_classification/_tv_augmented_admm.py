@@ -26,6 +26,142 @@ def TV(graph, X, p=1):
     return np.sum(np.maximum(_gradient(graph, X, p=p), 0) ** p)
 
 
+def _gradient(graph, X, p=1):
+    gradien_matrix = graph.get_gradient_matrix(p=p)
+    return gradien_matrix.dot(X)
+
+
+def _divergence(graph, Z, p=1):
+    divergence_matrix = -graph.get_gradient_matrix(p=p).T
+    return divergence_matrix.dot(Z)
+
+
+def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, penalty_parameter, penalty_strat_scaling,
+                        penalty_strat_threshold, penalty_strat_init_check, penalty_strat_interval_factor, verbosity, x0,
+                        y0, y1, min_norm, return_state, save_intermediate):
+    num_nodes = graph.weights.shape[0]
+
+    intermediate_results = {}
+    save_x_list = False
+    save_y = False
+
+    if save_intermediate is not None:
+        if type(save_intermediate) is bool:
+            if save_intermediate:
+                save_x_list = True
+                save_y = True
+        elif type(save_intermediate) is list:
+            if 'x_list' in save_intermediate:
+                save_x_list = True
+                intermediate_results['x_list'] = []
+
+            if 'y' in save_intermediate:
+                save_y = True
+                intermediate_results['y'] = None
+        else:
+            raise ValueError(
+                'don''t know how to interpret save_intermediate ({s}). Its value can either be bool or a list of strings'.format(
+                    s=save_intermediate))
+
+    W = graph.weights.tocsr()
+    W2 = W.power(2)
+    d = np.array(2 * np.sum(W2 + W2.T, 1))[:, 0]
+
+    grad_matrix, div_matrix = graph.get_gradient_matrix(p=1, return_div=True)
+
+    grad = lambda x: grad_matrix.dot(x)
+    div = lambda z: div_matrix.dot(z)
+    projection = lambda x: label_projection(
+        min_norm_simplex_projection(x, sum_target=2 - num_classes, min_val=-1, min_norm=min_norm, axis=1), labels)
+
+    Xtp1 = projection(x0 * np.ones((num_nodes, num_classes)))
+    if save_x_list:
+        intermediate_results['x_list'].append(Xtp1)
+    if y0 is None:
+        y0 = 1
+    Yt = y0 * np.ones((W.data.size, num_classes))
+    if y1 is None:
+        Ct = penalty_parameter * grad(0 * Xtp1)
+        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
+        Yt = np.maximum(0, np.minimum(1, Ct))
+        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
+    else:
+        Ytp1 = y1 * np.ones((W.data.size, num_classes))
+
+    t = 0
+    t_check_rho = penalty_strat_init_check
+
+    converged = False
+    while not converged:
+        # update variables
+        t = t + 1
+        Xt = Xtp1
+        Ytm1 = Yt
+        Yt = Ytp1
+
+        # update steps
+        rho_d = sps.diags(np.array(penalty_parameter * d))
+        rho_d_inv = sps.diags(np.array([1 / (penalty_parameter * di) if di != 0 else 0 for di in d]))
+
+        # x
+        Atp1 = -div(2 * Yt - Ytm1)
+        Btp1 = rho_d_inv.dot(rho_d.dot(Xt) - Atp1)
+        Xtp1 = projection(Btp1)
+
+        # y
+        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
+        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
+
+        # residuals
+        Rtp1 = Ytp1 - Yt  # actually this is Rtp1*penalty_parameter
+        Stp1 = div(penalty_parameter * grad(Xtp1 - Xt) +
+                   2 * Yt - Ytm1 - Ytp1)
+        rtp1 = norm(Rtp1) / penalty_parameter
+        stp1 = norm(Stp1)
+
+        # tolerances
+        ePri = sqrt(num_classes) * num_nodes * eps_abs + eps_rel * norm(grad(Xtp1))
+        eDual = sqrt(num_classes * num_nodes) * eps_abs + eps_rel * \
+                norm(div(Ytp1))
+
+        # update penalty
+        if t >= t_check_rho:
+            if rtp1 * eDual >= stp1 * ePri * penalty_strat_threshold:
+                penalty_parameter = penalty_parameter * penalty_strat_scaling
+            elif rtp1 * eDual <= stp1 * ePri / penalty_strat_threshold:
+                penalty_parameter = penalty_parameter / penalty_strat_scaling
+            t_check_rho = t_check_rho * penalty_strat_interval_factor
+
+        # store intermediate result
+        if save_x_list:
+            intermediate_results['x_list'].append(Xtp1)
+
+        if verbosity >= 1 and t % 1 == 0:
+            print("'\rK={K}, Keff={Keff}, {t:6d}: {rtp1:.2e}>{ePri:.2e} or {stp1:.2e}>{eDual:.2e}".format(
+                K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, rtp1=rtp1, ePri=ePri, stp1=stp1,
+                eDual=eDual),
+                end='')
+
+        converged = (rtp1 <= ePri and stp1 <= eDual)
+        if not converged and t > t_max:
+            break
+
+    if verbosity > 0:
+        print("\rK={K}, Keff={Keff}, {t}: TV={tv:.2f}, TVround={tvR:.2f}".format(
+            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(graph, Xtp1),
+            tvR=TV(graph, _roundSolution(Xtp1))))
+    l_est = np.argmax(Xtp1, 1)
+    X = Xtp1
+
+    if save_y:
+        intermediate_results['y'] = (Yt, Ytp1)
+
+    if return_state:
+        return l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results
+    else:
+        return l_est, X, intermediate_results
+
+
 def _get_regularizer(labels, is_sim_neighbor, reg_weights):
     '''
     turn list of regularization weights per labeled node into weight matrix
@@ -360,142 +496,6 @@ def _run_regularization(graph, num_classes, labels, verbosity, regularization_x_
         return l_est_min, x_min, intermediate_results
     else:
         intermediate_results['reg_weights'] = reg_weights
-        return l_est, X, intermediate_results
-
-
-def _gradient(graph, X, p=1):
-    gradien_matrix = graph.get_gradient_matrix(p=p)
-    return gradien_matrix.dot(X)
-
-
-def _divergence(graph, Z, p=1):
-    divergence_matrix = -graph.get_gradient_matrix(p=p).T
-    return divergence_matrix.dot(Z)
-
-
-def _run_augmented_admm(graph, num_classes, labels, eps_abs, eps_rel, t_max, penalty_parameter, penalty_strat_scaling,
-                        penalty_strat_threshold, penalty_strat_init_check, penalty_strat_interval_factor, verbosity, x0,
-                        y0, y1, min_norm, return_state, save_intermediate):
-    num_nodes = graph.weights.shape[0]
-
-    intermediate_results = {}
-    save_x_list = False
-    save_y = False
-
-    if save_intermediate is not None:
-        if type(save_intermediate) is bool:
-            if save_intermediate:
-                save_x_list = True
-                save_y = True
-        elif type(save_intermediate) is list:
-            if 'x_list' in save_intermediate:
-                save_x_list = True
-                intermediate_results['x_list'] = []
-
-            if 'y' in save_intermediate:
-                save_y = True
-                intermediate_results['y'] = None
-        else:
-            raise ValueError(
-                'don''t know how to interpret save_intermediate ({s}). Its value can either be bool or a list of strings'.format(
-                    s=save_intermediate))
-
-    W = graph.weights.tocsr()
-    W2 = W.power(2)
-    d = np.array(2 * np.sum(W2 + W2.T, 1))[:, 0]
-
-    grad_matrix, div_matrix = graph.get_gradient_matrix(p=1, return_div=True)
-
-    grad = lambda x: grad_matrix.dot(x)
-    div = lambda z: div_matrix.dot(z)
-    projection = lambda x: label_projection(
-        min_norm_simplex_projection(x, sum_target=2 - num_classes, min_val=-1, min_norm=min_norm, axis=1), labels)
-
-    Xtp1 = projection(x0 * np.ones((num_nodes, num_classes)))
-    if save_x_list:
-        intermediate_results['x_list'].append(Xtp1)
-    if y0 is None:
-        y0 = 1
-    Yt = y0 * np.ones((W.data.size, num_classes))
-    if y1 is None:
-        Ct = penalty_parameter * grad(0 * Xtp1)
-        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
-        Yt = np.maximum(0, np.minimum(1, Ct))
-        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
-    else:
-        Ytp1 = y1 * np.ones((W.data.size, num_classes))
-
-    t = 0
-    t_check_rho = penalty_strat_init_check
-
-    converged = False
-    while not converged:
-        # update variables
-        t = t + 1
-        Xt = Xtp1
-        Ytm1 = Yt
-        Yt = Ytp1
-
-        # update steps
-        rho_d = sps.diags(np.array(penalty_parameter * d))
-        rho_d_inv = sps.diags(np.array([1 / (penalty_parameter * di) if di != 0 else 0 for di in d]))
-
-        # x
-        Atp1 = -div(2 * Yt - Ytm1)
-        Btp1 = rho_d_inv.dot(rho_d.dot(Xt) - Atp1)
-        Xtp1 = projection(Btp1)
-
-        # y
-        Ctp1 = Yt + penalty_parameter * grad(Xtp1)
-        Ytp1 = np.maximum(0, np.minimum(1, Ctp1))
-
-        # residuals
-        Rtp1 = Ytp1 - Yt  # actually this is Rtp1*penalty_parameter
-        Stp1 = div(penalty_parameter * grad(Xtp1 - Xt) +
-                   2 * Yt - Ytm1 - Ytp1)
-        rtp1 = norm(Rtp1) / penalty_parameter
-        stp1 = norm(Stp1)
-
-        # tolerances
-        ePri = sqrt(num_classes) * num_nodes * eps_abs + eps_rel * norm(grad(Xtp1))
-        eDual = sqrt(num_classes * num_nodes) * eps_abs + eps_rel * \
-                norm(div(Ytp1))
-
-        # update penalty
-        if t >= t_check_rho:
-            if rtp1 * eDual >= stp1 * ePri * penalty_strat_threshold:
-                penalty_parameter = penalty_parameter * penalty_strat_scaling
-            elif rtp1 * eDual <= stp1 * ePri / penalty_strat_threshold:
-                penalty_parameter = penalty_parameter / penalty_strat_scaling
-            t_check_rho = t_check_rho * penalty_strat_interval_factor
-
-        # store intermediate result
-        if save_x_list:
-            intermediate_results['x_list'].append(Xtp1)
-
-        if verbosity >= 1 and t % 1 == 0:
-            print("'\rK={K}, Keff={Keff}, {t:6d}: {rtp1:.2e}>{ePri:.2e} or {stp1:.2e}>{eDual:.2e}".format(
-                K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, rtp1=rtp1, ePri=ePri, stp1=stp1,
-                eDual=eDual),
-                end='')
-
-        converged = (rtp1 <= ePri and stp1 <= eDual)
-        if not converged and t > t_max:
-            break
-
-    if verbosity > 0:
-        print("\rK={K}, Keff={Keff}, {t}: TV={tv:.2f}, TVround={tvR:.2f}".format(
-            K=num_classes, Keff=np.sum(np.any(Xtp1 > 0, 0)), t=t, tv=TV(graph, Xtp1),
-            tvR=TV(graph, _roundSolution(Xtp1))))
-    l_est = np.argmax(Xtp1, 1)
-    X = Xtp1
-
-    if save_y:
-        intermediate_results['y'] = (Yt, Ytp1)
-
-    if return_state:
-        return l_est, X, (Yt, Ytp1, penalty_parameter), intermediate_results
-    else:
         return l_est, X, intermediate_results
 
 
