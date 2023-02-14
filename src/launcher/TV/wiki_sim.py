@@ -1,7 +1,7 @@
 from src.launcher.TV import constants
 from src.launcher import ClassificationSimulation
 from src.launcher.TV import wiki_plotting as plotting
-from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, Sponge, TvAugmentedADMM, TvStandardADMM
+from src.node_classification import DiffuseInterface, HarmonicFunctions, SpectralLearning, TvAugmentedADMM
 
 from src.graphs import graph_factory
 
@@ -47,28 +47,11 @@ def get_graph_config_lists(sim_id, return_name=False):
         name = 'WIKI_RFA'
         graph_args['combination_method'] = 'only_pos'
         graph_args['from_matlab'] = False
-    elif sim_id == 6:  # wiki editor
-        name = 'WIKI_EDITOR'
-        graph_args = {'only_pos': False}
-    elif sim_id == 7:  # wiki elec
-        name = 'WIKI_ELEC'
-        graph_args['combination_method'] = 'mean_sign'
-        graph_args['from_matlab'] = True
-    elif sim_id == 8:  # wiki RfA
-        name = 'WIKI_RFA'
-        graph_args['combination_method'] = 'mean_sign'
-        graph_args['from_matlab'] = True
     else:
         raise ValueError('unknown sim_id')
 
-    if sim_id < 6:
-        for p in [1, 5, 10, 15]:
-            config_lists.append({'model': name, 'percentage_labeled': p, 'is_percentage': True,
-                                 'name': '{n}{p:0>2d}'.format(n=name, p=p), **graph_args})
-    else:
-        config_lists.append(
-            {'model': name, 'percentage_labeled': 0, 'is_percentage': True, 'name': '{n}{p:0>2d}'.format(n=name, p=0),
-             **graph_args})
+    for p in [1, 5, 10, 15]:
+        config_lists.append({'model': name, 'percentage_labeled': p, 'is_percentage': True, 'name': '{n}{p:0>2d}'.format(n=name,p=p), **graph_args})
 
     if return_name:
         return config_lists, name
@@ -78,14 +61,12 @@ def get_graph_config_lists(sim_id, return_name=False):
 
 def get_methods(graph_config, sim_id):
     graph = graph_factory.make_graph(**graph_config)
+    class_prior = np.mean(graph.class_labels)
+    num_classes = 2
     v = 1
-    if 3 <= sim_id < 6:
-        class_prior = np.mean(graph.class_labels)
-        num_classes = 2
+    if sim_id >= 3:
         methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)}]
-    elif sim_id < 3:
-        class_prior = np.mean(graph.class_labels)
-        num_classes = 2
+    else:
         methods = [{'name': 'HF', 'method': HarmonicFunctions(num_classes=num_classes, class_prior=class_prior)},
                    {'name': 'sncAM', 'method': SpectralLearning(num_classes=num_classes, objective='AM')},
                    {'name': 'sncRC', 'method': SpectralLearning(num_classes=num_classes, objective='RC')},
@@ -128,19 +109,6 @@ def get_methods(graph_config, sim_id):
             # methods.append({'name': 'DI_sponge{n:0>3d}'.format(n=num_eig),
             #                 'method': DiffuseInterface(num_classes=num_classes, verbosity=v, objective='sponge',
             #                                            num_eig=num_eig, use_full_matrix=use_full_matrix)})
-    else:
-        methods = []
-        for num_classes in [3, 5, 10]:
-            methods.append({'name': 'sponge_{n:d}'.format(n=num_classes), 'is_unsupervised': True,
-                            'method': Sponge(num_classes=num_classes)})
-            methods.append({'name': 'tv_nc_{n:d}'.format(n=num_classes),
-                            'l_guess': 'sponge_{n:d}'.format(n=num_classes),
-                            'is_unsupervised': True,
-                            'method': TvStandardADMM(num_classes=num_classes, verbosity=v, penalty_parameter=1e5,
-                                                     laplacian_scaling=1, pre_iteration_version=0, t_max=10000,
-                                                     eps=1e-3, t_max_no_change=None,
-                                                     eps_inner=1e-8, t_max_inner=20000, backtracking_param=1/2,
-                                                     backtracking_tau_0=1e-1)})
     return methods
 
 

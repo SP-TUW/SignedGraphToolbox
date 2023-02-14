@@ -11,9 +11,8 @@ def str_to_enum(str_val, enum):
 
 def find_min_err_label_permutation(l, l0, K, K0):
     e = 0
-    K_max = max(K,K0)
-    C = np.zeros((K_max, K_max))
-    E = np.zeros((K_max, K_max))
+    C = np.zeros((K, K0))
+    E = np.zeros((K, K0))
     for k0 in range(K0):
         for k in range(K):
             C[k, k0] = np.sum(l0[l == k] == k0)
