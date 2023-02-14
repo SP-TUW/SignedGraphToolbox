@@ -55,6 +55,7 @@ def plot():
             # s = s.highlight_quantile(axis=0, q_right=1-5/scaled_df.shape[0], inclusive='both', props='color{lightgray}:--rwrap')
         # s.render
         thesis_path = os.path.join('~','Desktop','LatexRepositories','PHD-Thesis')
+        thesis_path = os.path.join('~','Desktop','LatexRepositories','Publications','TVConvex')
         s.to_latex(buf=os.path.join(thesis_path,'source','figures','TV_CONVEX', 'wiki_sim', '{k}.tex'.format(k=key)),multicol_align='r|')
         s.to_html(buf=os.path.join(thesis_path,'source','figures','TV_CONVEX', 'wiki_sim', '{k}.html'.format(k=key)))
 
