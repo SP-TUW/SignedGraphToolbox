@@ -49,7 +49,7 @@ class SBMSimulation(ClassificationSimulation):
                             'le': 0.5 + eps,
                             'percentage_labeled': percentage_labeled,
                             'is_percentage': True,
-                            'name':'SBM with {nn} nodes, {nc} classes, and eps={eps} making use of {p:.0%} '
+                            'name':'SBM with {nn} nodes, {nc} classes, and eps={eps} making use of {p:.1%} '
                                    'labels\nscale_pi={pi}, scale_pe={pe}'.format(nn=num_nodes, nc=num_classes,
                                                                                  eps=eps, p=percentage_labeled / 100,
                                                                                  pi=scale_pi, pe=scale_pe),

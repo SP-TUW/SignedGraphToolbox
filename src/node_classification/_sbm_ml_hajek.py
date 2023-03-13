@@ -6,9 +6,8 @@ Implementation of the spectral method of
 for the ML estimation of cluster association for the stochastic block model (SBM).
 '''
 
-import numpy as np
-import scipy as sc
 import cvxpy as cp
+import numpy as np
 from sklearn.cluster import KMeans
 
 from ._node_learner import NodeLearner
@@ -49,4 +48,5 @@ class SbmMlHajek(NodeLearner):
         kmeans = KMeans(n_clusters=self.num_classes)
         l_est = kmeans.fit_predict(x[:, -self.num_classes:], **self.kmeans_args)
         self.embedding = x[:, -self.num_classes:]
+        self.normalized_embedding = x[:, -self.num_classes:] + 1/2
         return l_est

@@ -2,12 +2,10 @@
 # it is necessary to install SigNet via
 # pip install git+https://github.com/alan-turing-institute/SigNet.git
 
-from signet.cluster import Cluster
 import numpy as np
-from scipy import sparse as ss
+from signet.cluster import Cluster
 
 from ._node_learner import NodeLearner
-
 
 
 class Sponge(NodeLearner):
@@ -30,4 +28,5 @@ class Sponge(NodeLearner):
             l_pred = c.spectral_cluster_bnc(self.num_classes, **self.sponge_kwargs)
 
         self.embedding = np.zeros((graph.num_nodes,self.num_classes))
+        self.normalized_embedding = np.zeros((graph.num_nodes,self.num_classes))
         return l_pred

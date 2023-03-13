@@ -1,13 +1,79 @@
-import numpy as np
 import warnings
 
+import numpy as np
 
-def label_projection(x_in, labels):
+
+def label_projection(x_in, labels, values=[-1, 1]):
     x_out = x_in.copy()
     if labels is not None:
-        x_out[labels['i'], :] = -1
-        x_out[labels['i'], labels['k']] = 1
+        x_out[labels['i'], :] = values[0]
+        x_out[labels['i'], labels['k']] = values[1]
     return x_out
+
+
+def min_norm_simplex_projection(y, min_norm, sum_target, min_val, axis=-1, return_lags=False):
+    assert len(y.shape) == 2 and (axis == -1 or axis == 1), 'currently only implemented for rows of matrices'
+    N = y.shape[0]
+    K = y.shape[axis]
+
+    # parameters for affine transformation
+    k = sum_target - K * min_val
+    d = min_val
+
+    # transform input
+    z = (y - d) / k
+    alpha = (min_norm - 2 * k * d - d ** 2 * K) / k ** 2
+
+    if alpha > 0:
+        r0 = min(np.floor(1 / alpha).astype(int), K)
+    else:
+        r0 = K
+
+    z_sort = -np.sort(-z, axis=axis)
+
+    is_randomized = np.zeros(N,dtype=bool)
+    if r0 < K:
+        is_randomized = np.isclose(z_sort[:,0], z_sort[:,r0])
+
+    xi = np.ones((N,K))
+    cond = np.ones((N,K), dtype=bool)
+    r = np.arange(1,K+1)[None,:]
+    z_cumsum = np.cumsum(z_sort,axis=axis)
+    z_cumnorm = np.cumsum(z_sort ** 2, axis=axis)
+    mean_zr = z_cumsum/r
+    if r0 < K:
+        # use maximum to remove nonegative values resulting from numerical imprecision
+        radicand = np.maximum(0,(z_cumnorm[:,r0:]-z_cumsum[:,r0:]**2/r[:,r0:])/(alpha - 1 / r[:,r0:]))
+        xi[:, r0:] = np.minimum(1, np.sqrt(radicand))
+    nu = xi / r - mean_zr
+    cond[:, :-1] = np.bitwise_and(z_sort[:, :-1] >= -nu[:, :-1], -nu[:, :-1] >= z_sort[:, 1:])
+    r__ = np.argmax(cond, axis=axis)
+    xi_r = np.take_along_axis(xi, r__[:, None], axis=axis)
+    xi_r[is_randomized] = 1
+    nu_r = np.take_along_axis(nu, r__[:, None], axis=axis)
+    x_ = np.maximum(0,(z+nu_r)/xi_r)
+
+    if r0 < K:
+        if np.any(is_randomized):
+            # warnings.warn('at least one element needs randomization')
+            randomized_indices = np.nonzero(is_randomized)
+
+            if axis == -1:
+                full_indices = randomized_indices[:axis] + (slice(None),)
+            else:
+                full_indices = randomized_indices[:axis] + (slice(None),) + randomized_indices[axis + 1:]
+            z_randomized = z[full_indices]
+            z_randomized += np.random.standard_normal(z_randomized.shape) / 100
+            x_randomized = min_norm_simplex_projection(z_randomized, min_norm=alpha, sum_target=1, min_val=0, axis=axis)
+            x_[full_indices] = x_randomized
+
+    # transform output
+    x = k * np.maximum(x_, 0) + d
+
+    if return_lags:
+        return x, xi, nu
+    else:
+        return x
 
 
 def simplex_projection(x, a=1, axis=1):

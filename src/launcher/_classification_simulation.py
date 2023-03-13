@@ -7,11 +7,9 @@ import numpy as np
 from sklearn.metrics import adjusted_rand_score, f1_score
 
 from src.graphs import graph_factory
+from src.tools.graph_tools import calc_signed_cut
 from src.tools.graph_tools import select_labels
 from src.tools.simulation_tools import find_min_err_label_permutation
-
-
-# from src.node_learning.TVMinimization import TV
 
 
 class ClassificationSimulation:
@@ -24,8 +22,11 @@ class ClassificationSimulation:
             self.add_method(methods_list)
 
         self.embedding = {}
+        self.normalized_embedding = {}
         self.l_est = {}
         self.t_run = {}
+        self.n_err = {}
+        self.cut = {}
         self.sim_id = -1
         self.graph = None
         self.labels = None
@@ -50,8 +51,8 @@ class ClassificationSimulation:
     def add_method(self, method):
         '''
 
-        :param method: a dict with necessary fields 'name' and 'config' and optional field 'initialization'. If
-        'initialization' is present then the result of this method will be used as initial guess for the current
+        :param method: a dict with necessary fields 'name' and 'config' and optional field 'l_guess'. If
+        'l_guess' is present then the result of this method will be used as initial guess for the current
         method :return:
         '''
         if type(method) is list:
@@ -65,8 +66,8 @@ class ClassificationSimulation:
             # add if name not already in list
             if method['name'] in methods_names:
                 warnings.warn('method already added in the list. Ovewriting old config')
-            if 'initialization' in method.keys() and method['initialization'] not in methods_names:
-                raise ValueError(method['initialization'] + ' not yet added to the list of methods. Please add dependent methods after their dependency')
+            if 'l_guess' in method.keys() and method['l_guess'] not in methods_names and method['l_guess'] not in ['min_err', 'min_cut']:
+                raise ValueError(method['l_guess'] + ' not yet added to the list of methods. Please add dependent methods after their dependency')
             self.methods_list.append(method)
 
     def add_graphs(self, graph_config):
@@ -93,7 +94,10 @@ class ClassificationSimulation:
 
     def __get_graph(self, sim_id):
         graph_config, percentage_labeled, is_percentage = self.get_graph_config(sim_id)
-        graph = graph_factory.make_graph(**graph_config)
+        stripped_graph_config = graph_config.copy()
+        if 'result_fields' in stripped_graph_config:
+            stripped_graph_config.pop('result_fields')
+        graph = graph_factory.make_graph(**stripped_graph_config)
         if 'str' in graph_config.keys():
             print(graph_config['str'])
 
@@ -106,6 +110,7 @@ class ClassificationSimulation:
         self.graph, self.labels = self.__get_graph(sim_id)
         print('running simulations for {n}'.format(n=graph_config['name']))
 
+        print('cut gt={c}'.format(c=calc_signed_cut(self.graph.weights, self.graph.class_labels)))
 
 
         for method in self.methods_list:
@@ -116,21 +121,38 @@ class ClassificationSimulation:
             # elif 'num_classes' not in method.keys():
             #     method['num_classes'] = self.graph.K0
 
-            if 'l_guess' in method:
+            if 'l_guess' in method and method['l_guess'] not in ['min_err','min_cut']:
                 l_guess = self.l_est[method['l_guess']]
+            elif 'l_guess' in method and method['l_guess'] in ['min_err','min_cut']:
+                if method['l_guess'] == 'min_err':
+                    min_dict = self.n_err.copy()
+                else:
+                    min_dict = self.cut.copy()
+                del_keys = [k for k in min_dict.keys() if k.startswith('mapr')]
+                for k in del_keys:
+                    min_dict.pop(k)
+                guess = min(min_dict, key=min_dict.get)
+                l_guess = self.l_est[guess]
             else:
                 l_guess = None
             t_start = time.time()
-            l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
-            t_stop = time.time()
             if 'is_unsupervised' in method and method['is_unsupervised']:
+                l_est = method['method'].estimate_labels(self.graph, labels=None, guess=l_guess)
+            else:
+                l_est = method['method'].estimate_labels(self.graph, labels=self.labels, guess=l_guess)
+            t_stop = time.time()
+            if ('is_unsupervised' in method and method['is_unsupervised']) or self.labels is None or len(self.labels['i']) == 0:
                 self.l_est[name] = find_min_err_label_permutation(l_est, self.graph.class_labels, self.graph.num_classes, self.graph.num_classes)
             else:
                 self.l_est[name] = l_est
             self.embedding[name] = method['method'].embedding
+            self.normalized_embedding[name] = method['method'].normalized_embedding
             self.t_run[name] = t_stop - t_start
-            n_err_sep = np.sum(self.l_est[name] != self.graph.class_labels)
-            print('n_err_{name}={n}'.format(name=name, n=n_err_sep))
+            self.n_err[name] = np.sum(self.l_est[name] != self.graph.class_labels)
+            self.cut[name] = calc_signed_cut(self.graph.weights, self.l_est[name])
+            print('n_err_{name}={n}'.format(name=name, n=self.n_err[name]))
+            print('cut {name}={c}'.format(name=name, c=self.cut[name]))
+            print('t_run {name}={c}'.format(name=name, c=self.t_run[name]))
         self.current_graph_config = graph_config.copy()
         self.current_percentage_labeled = percentage_labeled
         self.current_is_percentage = is_percentage
@@ -139,7 +161,7 @@ class ClassificationSimulation:
 
 
 
-    def save_results(self, results_dir, split_file=False):
+    def save_results(self, results_dir, split_file=False, save_degenerate_stats=False, reduce_data=False):
         if self.sim_id >= 0:
             # graph_config, percentage_labeled, is_percentage = self.__get_config(self.sim_id)
             # graph_config, num_nodes, num_classes, eps, percentage_labeled, scale_pi, scale_pe = self.get_config(self.sim_id)
@@ -149,7 +171,7 @@ class ClassificationSimulation:
 
             # embedding_gt = -np.ones((num_nodes,num_classes))
             # embedding_gt[np.arange(num_nodes), self.graph.class_labels] = 1
-            # tv_gt = TV(self.graph.W0,embedding_gt,1)
+            cut_gt = calc_signed_cut(self.graph.weights,self.graph.class_labels)
 
             results = {}
             results__ = {'pid': self.sim_id,
@@ -157,7 +179,7 @@ class ClassificationSimulation:
                          'graph_config': self.current_graph_config,
                          'percentage_labeled': self.current_percentage_labeled,
                          'num_nodes': num_nodes,
-                         # 'tv_gt': tv_gt
+                         'cut_gt': cut_gt
                          }
 
             if 'result_fields' in self.current_graph_config.keys():
@@ -182,19 +204,25 @@ class ClassificationSimulation:
 
                 # embedding = -np.ones((num_nodes,num_classes))
                 # embedding[np.arange(num_nodes), l_est] = 1
-                # tv = TV(self.graph.weights,embedding,1)
+                cut = calc_signed_cut(self.graph.weights,l_est)
 
                 results_ = {'n_err_total': n_err_total,
                             'n_err_labeled': n_err_labeled,
                             'n_err_unlabeled': n_err_unlabeled,
-                            'acc_total': acc_total,
-                            'acc_labeled': acc_labeled,
-                            'acc_unlabeled': acc_unlabeled,
-                            'ari': ari,
-                            'f1_micro': f1_micro,
-                            'f1_macro': f1_macro,
-                            # 'tv': tv,
+                            'cut': cut,
                             't_run': self.t_run[name]}
+
+                if not reduce_data:
+                    results_['acc_total'] = acc_total
+                    results_['acc_labeled'] = acc_labeled
+                    results_['acc_unlabeled'] = acc_unlabeled
+                    results_['ari'] = ari
+                    results_['f1_micro'] = f1_micro
+                    results_['f1_macro'] = f1_macro
+
+                if save_degenerate_stats:
+                    for i in range(8,20):
+                        results_['num_degenerate{i}'.format(i=int(5*i))] = int(np.sum(np.max(self.normalized_embedding[name], axis=1) <= i/20))
 
                 if not split_file:
                     keys = ['{k}_{n}'.format(k=key, n=name) for key in results_.keys()]

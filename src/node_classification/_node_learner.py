@@ -11,6 +11,7 @@ class NodeLearner:
         self.intermediate_results = None
         self.l_est = None
         self.embedding = None
+        self.normalized_embedding = None
 
     @abstractmethod
     def estimate_labels(self, graph, labels=None, guess=None):
